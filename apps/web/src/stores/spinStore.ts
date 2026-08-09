@@ -28,7 +28,7 @@ interface SpinState {
   addCustomCandidate: (name: string) => void;
   removeCustomCandidate: (id: string) => void;
   setCurrentResult: (restaurant: Restaurant | null) => void;
-  spin: () => void;
+  spin: (index?: number) => void;
 }
 
 // MOCK DATA for local testing
@@ -97,10 +97,10 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     };
   }),
   setCurrentResult: (result) => set({ currentResult: result }),
-  spin: () => {
+  spin: (index?: number) => {
     const { candidates } = get();
     if (candidates.length === 0) return;
-    const randomIndex = Math.floor(Math.random() * candidates.length);
-    set({ currentResult: candidates[randomIndex] });
+    const winnerIndex = index !== undefined ? index : Math.floor(Math.random() * candidates.length);
+    set({ currentResult: candidates[winnerIndex] });
   },
 }));

@@ -37,10 +37,16 @@ const GroupSpinFoodWheel: React.FC = () => {
     const newRotation = rotation + extraSpins + randomSegment;
     setRotation(newRotation);
     
+    // Calculate which candidate the pointer lands on
+    const pointerAngle = (360 - (newRotation % 360)) % 360;
+    const sliceAngle = 360 / displayCandidates.length;
+    const winnerIndex = Math.floor(pointerAngle / sliceAngle);
+
     setTimeout(() => {
       setIsSpinning(false);
-      const randomIndex = Math.floor(Math.random() * displayCandidates.length);
-      setCurrentResult(displayCandidates[randomIndex]);
+      if (displayCandidates.length > 0) {
+        setCurrentResult(displayCandidates[winnerIndex]);
+      }
       navigate('/group-spin/veto');
     }, 3000);
   };
