@@ -23,7 +23,6 @@ import WriteReview from './features/checkin/components/WriteReview';
 import ReviewSubmitted from './features/checkin/components/ReviewSubmitted';
 
 // Features - Groups
-import GroupSpinWhoSpins from './features/groups/components/GroupSpinWhoSpins';
 import GroupVoteVeto from './features/groups/components/GroupVoteVeto';
 import GroupVoteResult from './features/groups/components/GroupVoteResult';
 import GroupCheckInVerification from './features/groups/components/GroupCheckInVerification';
@@ -66,7 +65,6 @@ function App() {
           <Route path="/check-in/rewards" element={<CheckInCompleteRewards />} />
           <Route path="/review" element={<WriteReview />} />
           <Route path="/review/submitted" element={<ReviewSubmitted />} />
-          <Route path="/group-spin/who-spins" element={<GroupSpinWhoSpins />} />
           <Route path="/group-spin/spin" element={<GroupSpinFoodWheel />} />
           <Route path="/group-spin/veto" element={<GroupVoteVeto />} />
           <Route path="/group-spin/result" element={<GroupVoteResult />} />
