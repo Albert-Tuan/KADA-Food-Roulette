@@ -32,7 +32,6 @@ export const responseHelper = {
     }
     return res.status(200).json(payload);
   },
-  },
 
   error(res: Response, message: string, statusCode = 400) {
     return res.status(statusCode).json({
