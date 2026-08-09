@@ -50,7 +50,48 @@
 
 ## Changelog
 
-### 2026-08-09 — DevOps baseline (Thành Nam)
+### 2026-08-09
+
+### Added
+
+- **B2B Restaurant Partner Module**
+  - By: PM - AI Assistant
+  - Via: Cursor
+  - Spec: `brand/prompts.md` §4.2, `Content/explore/restaurant-partner-strategy.md`
+  - Files affected:
+    - `backend/prisma/schema.prisma` (added: RestaurantPartner, RestaurantVisit, PromoCode, CorporateAccount, CorporateMember)
+    - `backend/src/modules/partner/partner.types.ts` (new - TypeScript types)
+    - `backend/src/modules/partner/partner.service.ts` (new - Business logic)
+    - `backend/src/modules/partner/partner.controller.ts` (new - API handlers)
+    - `backend/src/modules/partner/partner.routes.ts` (new - API routes)
+    - `backend/src/index.ts` (updated - registered partner routes)
+
+  **API Endpoints Implemented:**
+  - `POST /api/v1/partners` - Register partner
+  - `GET /api/v1/partners/:id` - Get partner by ID
+  - `PUT /api/v1/partners/:id` - Update partner
+  - `PUT /api/v1/partners/:id/upgrade` - Upgrade tier
+  - `GET /api/v1/partners/restaurant/:id` - Get by restaurant
+  - `GET /api/v1/partners/:id/dashboard` - Partner dashboard
+  - `GET /api/v1/partners/:id/analytics` - Analytics
+  - `GET /api/v1/partners/:id/score` - Score breakdown
+  - `POST /api/v1/partners/visits` - Record visit (GPS verification)
+  - `GET /api/v1/partners/:id/billing/:month` - Monthly billing
+  - `POST /api/v1/partners/:id/billing/:month/confirm` - Confirm billing
+  - `GET /api/v1/partners/featured/:id` - Featured placement score
+  - `POST /api/v1/partners/:id/promo-codes` - Create promo code
+  - `GET /api/v1/partners/:id/promo-codes` - List promo codes
+  - `POST /api/v1/corporate/accounts` - Create corporate account
+  - `POST /api/v1/corporate/accounts/:id/members` - Add member
+
+  **Database Tables Added (5 tables):**
+  - `restaurant_partners` - B2B partner information
+  - `restaurant_visits` - Pay-per-visit tracking
+  - `promo_codes` - Partner promo codes
+  - `corporate_accounts` - Corporate B2B accounts
+  - `corporate_members` - Corporate seat management
+
+- **CI/CD workflows cho mobile + web**
 
 ### Added
 - **CI/CD workflows cho mobile + web**
@@ -164,6 +205,7 @@
   - Files affected:
     - `brand/prompts.md` §9 (resolved 5 open questions)
     - `brand/FOOD-ROULETTE-SITEMAP.md` §19.10 (resolved 5 open questions)
+>>>>>>> main
 
 ### 2026-08-08
 
@@ -358,7 +400,7 @@
 | `brand/prompts.md` | 2.6 | 2026-08-07 | Updated Pricing §4 with B2C + B2B model |
 | `brand/brand.md` | - | - | - |
 | `brand/FOOD-ROULETTE-SITEMAP.md` | 2.4 | 2026-08-06 | Added §19.15-16 |
-| `backend/prisma/schema.prisma` | 5.0 | 2026-08-06 | Synced with v5.0 schema |
+| `backend/prisma/schema.prisma` | 6.0 | 2026-08-09 | Added B2B tables (RestaurantPartner, Corporate) |
 | `backend/prisma/migrations/v5.0/complete_schema.sql` | 5.0 | 2026-08-06 | Complete schema (15 tables) |
 | `backend/prisma/migrations/v5.0/seed_data.sql` | 5.0 | 2026-08-06 | Seed data for testing |
 | `docs/food_roulette_erd.drawio.xml` | 2.5 | 2026-08-06 | Previous version (Menu + AI entities) |

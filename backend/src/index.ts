@@ -5,6 +5,7 @@ import morgan from 'morgan'
 import { corsMiddleware } from './middleware/cors.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import authRoutes from './modules/auth/auth.routes.js'
+import partnerRoutes from './modules/partner/partner.routes.js'
 import rouletteRoutes from './modules/roulette/roulette.routes.js'
 import restaurantRoutes from './modules/restaurants/restaurants.routes.js'
 import groupRoutes from './modules/groups/groups.routes.js'
@@ -44,6 +45,7 @@ app.get('/health', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/v1/auth', authRoutes)
+app.use('/api/v1/partners', partnerRoutes)
 app.use('/api/v1/spins', rouletteRoutes)
 app.use('/api/v1/restaurants', restaurantRoutes)
 app.use('/api/v1/groups', groupRoutes)
@@ -69,19 +71,19 @@ app.listen(PORT, () => {
 ║   Environment: ${process.env.NODE_ENV || 'development'}                          ║
 ║                                                           ║
 ║   Endpoints:                                              ║
-║   • GET  /health              - Health check              ║
-║   • POST /api/v1/auth/register - Register                  ║
-║   • POST /api/v1/auth/login    - Login                     ║
-║   • GET  /api/v1/auth/me     - Get current user           ║
-║   • POST /api/v1/auth/refresh - Refresh token             ║
-║   • POST /api/v1/spins        - Personal spin             ║
-║   • POST /api/v1/groups       - Create group              ║
-║   • POST /api/v1/lockets      - Upload locket             ║
-║   • GET  /api/v1/restaurants  - Search restaurants        ║
-║   • GET  /api/v1/preferences  - Get preferences           ║
-║   • GET  /api/v1/circles       - Get circles              ║
-║   • POST /api/v1/menu/parse   - Parse menu                ║
-║   • GET  /api/v1/steward      - Steward dashboard        ║
+║   • GET  /health              - Health check               ║
+║   • POST /api/v1/auth/register - Register                ║
+║   • POST /api/v1/auth/login    - Login                   ║
+║   • GET  /api/v1/auth/me     - Get current user         ║
+║   • POST /api/v1/partners    - Partner registration      ║
+║   • POST /api/v1/spins        - Personal spin            ║
+║   • POST /api/v1/groups       - Create group            ║
+║   • POST /api/v1/lockets      - Upload locket           ║
+║   • GET  /api/v1/restaurants  - Search restaurants      ║
+║   • GET  /api/v1/preferences  - Get preferences          ║
+║   • GET  /api/v1/circles      - Get circles             ║
+║   • POST /api/v1/menu/parse   - Parse menu              ║
+║   • GET  /api/v1/steward      - Steward dashboard       ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
   `)
