@@ -4,6 +4,7 @@
 // ============================================================
 
 import { PrismaClient } from '@prisma/client';
+import { describe, it } from 'vitest';
 
 const prisma = new PrismaClient();
 
@@ -226,6 +227,7 @@ async function validateApiIntegration() {
       userId: user.id,
       restaurantId: restaurant.id,
       imageUrl: 'http://example.com/locket.jpg',
+      dishName: 'API Test Dish',
       deviceHash: 'test_hash_123',
       capturedAt: new Date(),
       visibility: 'FRIENDS',
@@ -338,11 +340,9 @@ async function validateApiIntegration() {
   console.log('========================================');
 }
 
-validateApiIntegration()
-  .catch((e) => {
-    console.error('Validation failed:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
+describe.skipIf(process.env.RUN_DB_INTEGRATION !== 'true')('database API integration', () => {
+  it('validates Prisma CRUD against a configured MySQL database', async () => {
+    await validateApiIntegration();
     await prisma.$disconnect();
   });
+});
