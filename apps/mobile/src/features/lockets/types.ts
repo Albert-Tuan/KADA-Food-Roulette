@@ -13,12 +13,18 @@ export interface LocketLocation {
   longitude: number;
 }
 
+export interface LocketPermissions {
+  canDelete: boolean;
+  canEdit: boolean;
+}
+
 export interface Locket {
   id: string;
   ownerId: string;
   author: LocketAuthor;
   imageUrl: string;
   dishName: string;
+  restaurantId?: string;
   restaurantName?: string;
   note?: string;
   rating: number;
@@ -27,6 +33,7 @@ export interface Locket {
   capturedAt: string;
   location?: LocketLocation;
   canDisplayLocation: boolean;
+  permissions: LocketPermissions;
   createdAt: string;
 }
 
@@ -45,6 +52,12 @@ export interface CreateLocketInput {
   deviceHash: string;
 }
 
-export type UpdateLocketInput = Partial<
-  Pick<Locket, 'dishName' | 'restaurantName' | 'note' | 'rating' | 'tags' | 'visibility'>
->;
+export interface UpdateLocketInput {
+  dishName?: string;
+  restaurantId?: string | null;
+  restaurantName?: string | null;
+  note?: string | null;
+  rating?: number | null;
+  tags?: string[];
+  visibility?: LocketVisibility;
+}

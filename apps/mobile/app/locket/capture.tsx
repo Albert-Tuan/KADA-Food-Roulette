@@ -18,7 +18,7 @@ import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCreateLocket, type LocketVisibility } from '@/features/lockets';
-import { MAX_CAPTION_LENGTH } from '@/lib/constants';
+import { LOCKET_TIMESTAMP_TOLERANCE_SECONDS, MAX_CAPTION_LENGTH } from '@/lib/constants';
 import { getInstallationDeviceHash } from '@/lib/installationIdentity';
 
 interface CaptureDraft {
@@ -180,9 +180,17 @@ export default function CaptureLocketScreen() {
     }
     if (!dishName.trim()) return setFormError('Bạn nhập tên món nhé.'), false;
     if (dishName.trim().length > 80) return setFormError('Tên món tối đa 80 ký tự.'), false;
+    if (restaurantName.trim().length > 120) return setFormError('Tên nhà hàng tối đa 120 ký tự.'), false;
     if (rating < 1 || rating > 5) return setFormError('Rating phải từ 1 đến 5.'), false;
     if (note.length > MAX_CAPTION_LENGTH) {
       return setFormError(`Note tối đa ${MAX_CAPTION_LENGTH} ký tự.`), false;
+    }
+    const capturedAt = new Date(draft.capturedAt).getTime();
+    if (
+      !Number.isFinite(capturedAt)
+      || Math.abs(Date.now() - capturedAt) > LOCKET_TIMESTAMP_TOLERANCE_SECONDS * 1000
+    ) {
+      return setFormError('Ảnh đã quá thời gian xác nhận. Bạn chụp lại nhé.'), false;
     }
     return true;
   };

@@ -1,7 +1,7 @@
 import { ActivityIndicator, Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CURRENT_USER_ID, useDeleteLocket, useLocket, type Locket } from '@/features/lockets';
+import { useDeleteLocket, useLocket, type Locket } from '@/features/lockets';
 import { formatDate } from '@/lib';
 
 const VISIBILITY_LABELS = {
@@ -16,7 +16,7 @@ export default function LocketDetailScreen() {
   const deleteLocket = useDeleteLocket();
 
   const handleDelete = () => {
-    if (!locketQuery.data || locketQuery.data.ownerId !== CURRENT_USER_ID) return;
+    if (!locketQuery.data?.permissions.canDelete) return;
     Alert.alert('Xóa locket?', 'Locket sẽ không còn xuất hiện trong feed.', [
       { text: 'Giữ lại', style: 'cancel' },
       {
@@ -91,7 +91,7 @@ export default function LocketDetailScreen() {
             )}
           </View>
 
-          {locket.ownerId === CURRENT_USER_ID ? (
+          {locket.permissions.canDelete ? (
             <TouchableOpacity
               onPress={handleDelete}
               disabled={deleteLocket.isPending}

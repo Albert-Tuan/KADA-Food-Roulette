@@ -1,5 +1,6 @@
 import type { LocketRepository } from './repository';
 import type { CreateLocketInput, Locket, LocketFeedFilter, UpdateLocketInput } from './types';
+import { LOCKET_TIMESTAMP_TOLERANCE_SECONDS, MAX_CAPTION_LENGTH } from '../../lib/constants';
 
 export const CURRENT_USER_ID = 'current-user';
 
@@ -23,6 +24,7 @@ let lockets: Locket[] = [
     capturedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
     location: { latitude: 10.7769, longitude: 106.7009 },
     canDisplayLocation: false,
+    permissions: { canDelete: false, canEdit: false },
     createdAt: new Date(Date.now() - 44 * 60 * 1000).toISOString(),
   },
   {
@@ -44,6 +46,7 @@ let lockets: Locket[] = [
     capturedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
     location: { latitude: 10.7626, longitude: 106.6822 },
     canDisplayLocation: false,
+    permissions: { canDelete: true, canEdit: true },
     createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
   },
   {
@@ -64,9 +67,78 @@ let lockets: Locket[] = [
     visibility: 'PUBLIC',
     capturedAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
     canDisplayLocation: false,
+    permissions: { canDelete: false, canEdit: false },
     createdAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
   },
+  {
+    id: 'locket-private',
+    ownerId: CURRENT_USER_ID,
+    author: {
+      id: CURRENT_USER_ID,
+      publicId: 'gia-binh-food',
+      displayNamePublic: 'Bình Ăn Gì',
+      avatarUrl: 'https://i.pravatar.cc/160?img=12',
+    },
+    imageUrl: 'https://images.unsplash.com/photo-1562565652-a0d8f0c59eb4?auto=format&fit=crop&w=900&q=80',
+    dishName: 'Bánh mì chảo',
+    note: 'Bữa sáng mình muốn giữ riêng.',
+    rating: 4,
+    tags: ['bữa sáng'],
+    visibility: 'PRIVATE',
+    capturedAt: new Date(Date.now() - 50 * 60 * 60 * 1000).toISOString(),
+    canDisplayLocation: false,
+    permissions: { canDelete: true, canEdit: true },
+    createdAt: new Date(Date.now() - 50 * 60 * 60 * 1000).toISOString(),
+  },
 ];
+
+function validateLocketInput(input: CreateLocketInput): string[] {
+  const normalizedTags = input.tags.map((tag) => tag.trim()).filter(Boolean);
+  const capturedAt = new Date(input.capturedAt).getTime();
+  const timestampDelta = Math.abs(Date.now() - capturedAt);
+
+  if (!/^[a-f0-9]{64}$/.test(input.deviceHash)) throw new Error('Định danh thiết bị không hợp lệ.');
+  if (!input.localImageUri || !['image/jpeg', 'image/png', 'image/webp'].includes(input.mimeType)) {
+    throw new Error('Ảnh locket không hợp lệ.');
+  }
+  if (!input.dishName.trim() || input.dishName.trim().length > 80) {
+    throw new Error('Tên món phải có từ 1 đến 80 ký tự.');
+  }
+  if ((input.restaurantName?.trim().length ?? 0) > 120) {
+    throw new Error('Tên nhà hàng tối đa 120 ký tự.');
+  }
+  if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) {
+    throw new Error('Rating phải từ 1 đến 5.');
+  }
+  if ((input.note?.length ?? 0) > MAX_CAPTION_LENGTH) {
+    throw new Error(`Note tối đa ${MAX_CAPTION_LENGTH} ký tự.`);
+  }
+  if (!['PRIVATE', 'FRIENDS', 'PUBLIC'].includes(input.visibility)) {
+    throw new Error('Quyền hiển thị không hợp lệ.');
+  }
+  if (!Number.isFinite(capturedAt) || timestampDelta > LOCKET_TIMESTAMP_TOLERANCE_SECONDS * 1000) {
+    throw new Error('Ảnh đã quá thời gian xác nhận. Bạn chụp lại nhé.');
+  }
+  if (
+    normalizedTags.length > 5
+    || normalizedTags.some((tag) => tag.length > 24)
+    || new Set(normalizedTags.map((tag) => tag.toLocaleLowerCase('vi'))).size !== normalizedTags.length
+  ) {
+    throw new Error('Tags không hợp lệ hoặc bị trùng.');
+  }
+  if (
+    !Number.isFinite(input.location.latitude)
+    || input.location.latitude < -90
+    || input.location.latitude > 90
+    || !Number.isFinite(input.location.longitude)
+    || input.location.longitude < -180
+    || input.location.longitude > 180
+  ) {
+    throw new Error('Vị trí không hợp lệ.');
+  }
+
+  return normalizedTags;
+}
 
 function sortChronologically(items: Locket[]): Locket[] {
   return [...items].sort(
@@ -93,39 +165,7 @@ class MockLocketRepository implements LocketRepository {
   }
 
   async create(input: CreateLocketInput): Promise<Locket> {
-    if (!/^[a-f0-9]{64}$/.test(input.deviceHash)) {
-      throw new Error('Định danh thiết bị không hợp lệ.');
-    }
-    if (!input.localImageUri || !['image/jpeg', 'image/png', 'image/webp'].includes(input.mimeType)) {
-      throw new Error('Ảnh locket không hợp lệ.');
-    }
-    if (!input.dishName.trim() || input.dishName.trim().length > 80) {
-      throw new Error('Tên món phải có từ 1 đến 80 ký tự.');
-    }
-    if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) {
-      throw new Error('Rating phải từ 1 đến 5.');
-    }
-    if ((input.note?.length ?? 0) > 280) {
-      throw new Error('Note tối đa 280 ký tự.');
-    }
-    const normalizedTags = input.tags.map((tag) => tag.trim()).filter(Boolean);
-    if (
-      normalizedTags.length > 5
-      || normalizedTags.some((tag) => tag.length > 24)
-      || new Set(normalizedTags.map((tag) => tag.toLocaleLowerCase('vi'))).size !== normalizedTags.length
-    ) {
-      throw new Error('Tags không hợp lệ hoặc bị trùng.');
-    }
-    if (
-      !Number.isFinite(input.location.latitude)
-      || input.location.latitude < -90
-      || input.location.latitude > 90
-      || !Number.isFinite(input.location.longitude)
-      || input.location.longitude < -180
-      || input.location.longitude > 180
-    ) {
-      throw new Error('Vị trí không hợp lệ.');
-    }
+    const normalizedTags = validateLocketInput(input);
     const locket: Locket = {
       id: `local-${Date.now()}`,
       ownerId: CURRENT_USER_ID,
@@ -137,6 +177,7 @@ class MockLocketRepository implements LocketRepository {
       },
       imageUrl: input.localImageUri,
       dishName: input.dishName.trim(),
+      restaurantId: input.restaurantId,
       restaurantName: input.restaurantName?.trim(),
       note: input.note?.trim(),
       rating: input.rating,
@@ -145,6 +186,7 @@ class MockLocketRepository implements LocketRepository {
       capturedAt: input.capturedAt,
       location: input.location,
       canDisplayLocation: false,
+      permissions: { canDelete: true, canEdit: true },
       createdAt: new Date().toISOString(),
     };
     lockets = [locket, ...lockets];
@@ -155,7 +197,16 @@ class MockLocketRepository implements LocketRepository {
     const index = lockets.findIndex((item) => item.id === id);
     if (index < 0) throw new Error('Không tìm thấy locket.');
     if (lockets[index].ownerId !== CURRENT_USER_ID) throw new Error('Bạn không thể sửa locket này.');
-    lockets[index] = { ...lockets[index], ...input };
+    lockets[index] = {
+      ...lockets[index],
+      ...(input.dishName !== undefined ? { dishName: input.dishName } : {}),
+      ...(input.restaurantId !== undefined ? { restaurantId: input.restaurantId ?? undefined } : {}),
+      ...(input.restaurantName !== undefined ? { restaurantName: input.restaurantName ?? undefined } : {}),
+      ...(input.note !== undefined ? { note: input.note ?? undefined } : {}),
+      ...(input.rating !== undefined ? { rating: input.rating ?? 0 } : {}),
+      ...(input.tags !== undefined ? { tags: input.tags } : {}),
+      ...(input.visibility !== undefined ? { visibility: input.visibility } : {}),
+    };
     return { ...lockets[index] };
   }
 
@@ -167,4 +218,4 @@ class MockLocketRepository implements LocketRepository {
   }
 }
 
-export const locketRepository: LocketRepository = new MockLocketRepository();
+export const mockLocketRepository: LocketRepository = new MockLocketRepository();

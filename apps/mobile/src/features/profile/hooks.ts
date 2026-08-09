@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { profileRepository } from './mockProfileRepository';
+import { profileRepository } from './repositories';
 import type { UpdateProfileInput } from './types';
 
 export function useMyProfile() {

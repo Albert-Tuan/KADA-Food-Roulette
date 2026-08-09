@@ -1,4 +1,4 @@
-import { CURRENT_USER_ID, locketRepository } from '@/features/lockets';
+import { CURRENT_USER_ID, mockLocketRepository } from '../lockets/mockLocketRepository';
 import type { ProfileRepository } from './repository';
 import type { PrivateProfile, PublicProfile, UpdateProfileInput } from './types';
 
@@ -38,7 +38,7 @@ class MockProfileRepository implements ProfileRepository {
     const base = publicId === myProfile.publicId ? myProfile : publicPeople[publicId];
     if (!base) throw new Error('Không tìm thấy profile.');
 
-    const publicLockets = (await locketRepository.getFeed('DISCOVER')).filter(
+    const publicLockets = (await mockLocketRepository.getFeed('DISCOVER')).filter(
       (locket) => locket.author.publicId === publicId && locket.visibility === 'PUBLIC',
     );
     return {
@@ -81,4 +81,4 @@ class MockProfileRepository implements ProfileRepository {
   }
 }
 
-export const profileRepository: ProfileRepository = new MockProfileRepository();
+export const mockProfileRepository: ProfileRepository = new MockProfileRepository();
