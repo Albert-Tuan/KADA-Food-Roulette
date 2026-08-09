@@ -3,10 +3,12 @@ import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvo
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/authStore';
+import { authApi } from '@/api';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register, isLoading } = useAuthStore();
+  const login = useAuthStore((state) => state.login);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -36,11 +38,20 @@ export default function RegisterScreen() {
     }
 
     try {
+      setIsSubmitting(true);
       setError('');
-      await register(formData.email, formData.password, formData.displayName);
+      const response = await authApi.register({
+        email: formData.email.trim(),
+        password: formData.password,
+        displayNamePrivate: formData.displayName.trim(),
+        displayNamePublic: formData.displayName.trim(),
+      });
+      await login(response.token, response.user);
       router.replace('/(tabs)');
     } catch (err: any) {
       setError(err.message || 'Đăng ký thất bại');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -51,7 +62,7 @@ export default function RegisterScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1"
         >
-          <ScrollView contentContainerStyle="flex-grow px-6 pt-8">
+          <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 32 }}>
             {/* Header */}
             <View className="items-center mb-8">
               <Text className="text-4xl mb-3">🍜</Text>
@@ -118,9 +129,9 @@ export default function RegisterScreen() {
               <TouchableOpacity
                 className="bg-primary rounded-xl py-4 mt-4 shadow-lg disabled:opacity-50"
                 onPress={handleRegister}
-                disabled={isLoading}
+                disabled={isSubmitting}
               >
-                {isLoading ? (
+                {isSubmitting ? (
                   <ActivityIndicator color="white" />
                 ) : (
                   <Text className="text-white text-center font-bold text-lg">Tạo tài khoản</Text>

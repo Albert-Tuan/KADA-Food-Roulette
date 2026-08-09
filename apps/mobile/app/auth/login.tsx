@@ -3,10 +3,12 @@ import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvo
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/authStore';
+import { authApi } from '@/api';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, isLoading } = useAuthStore();
+  const login = useAuthStore((state) => state.login);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,11 +20,15 @@ export default function LoginScreen() {
     }
 
     try {
+      setIsSubmitting(true);
       setError('');
-      await login(email, password);
+      const response = await authApi.login({ email: email.trim(), password });
+      await login(response.token, response.user);
       router.replace('/(tabs)');
     } catch (err: any) {
       setError(err.message || 'Đăng nhập thất bại');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -75,9 +81,9 @@ export default function LoginScreen() {
             <TouchableOpacity
               className="bg-primary rounded-xl py-4 mt-4 shadow-lg disabled:opacity-50"
               onPress={handleLogin}
-              disabled={isLoading}
+              disabled={isSubmitting}
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <ActivityIndicator color="white" />
               ) : (
                 <Text className="text-white text-center font-bold text-lg">Đăng nhập</Text>

@@ -1,7 +1,5 @@
-import type { Config } from 'tailwindcss';
-
-export default {
-  content: ['./app/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}'],
+module.exports = {
+  content: ['./app/**/*.{js,jsx,ts,tsx}', './src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
@@ -46,4 +44,4 @@ export default {
     },
   },
   plugins: [],
-} satisfies Config;
+};

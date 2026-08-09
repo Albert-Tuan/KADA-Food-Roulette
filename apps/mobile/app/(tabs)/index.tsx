@@ -74,6 +74,9 @@ export default function HomeScreen() {
   );
 }
 
-const styles = {
-  container: 'p-4 pb-8',
-};
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+});
