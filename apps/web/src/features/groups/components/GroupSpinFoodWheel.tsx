@@ -11,7 +11,7 @@ const GroupSpinFoodWheel: React.FC = () => {
   const [rotation, setRotation] = useState(0);
   const [customFoods, setCustomFoods] = useState<Record<string, string>>({});
 
-  const { members } = useGroupSpinStore();
+
   const customCandidates = Object.entries(customFoods)
     .filter(([_, food]) => food.trim() !== '')
     .map(([memberId, food], index) => ({
