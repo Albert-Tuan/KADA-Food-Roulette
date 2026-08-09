@@ -50,6 +50,33 @@
 
 ## Changelog
 
+### 2026-08-09 — DevOps baseline (Thành Nam)
+
+### Added
+- **CI/CD workflows cho mobile + web**
+  - By: Nguyễn Thành Nam (AI-assisted via Cursor)
+  - Spec: `AGENTS.md` §10.4 (DevOps coverage)
+  - Files affected:
+    - `.github/workflows/mobile-ci-ios.yml` (new - iOS EAS build trigger)
+    - `.github/workflows/web-ci.yml` (new - Lint + Typecheck + Build)
+- **Dependabot config**
+  - By: Nguyễn Thành Nam
+  - Files affected:
+    - `.github/dependabot.yml` (new - 3 ecosystems: npm backend, npm mobile, npm web)
+- **CODEOWNERS (placeholder usernames)**
+  - By: Nguyễn Thành Nam
+  - Files affected:
+    - `.github/CODEOWNERS` (new - 5 roles mapped to folders, **cần replace placeholder** trước khi bật branch protection)
+- **Module-specific .gitignore**
+  - By: Nguyễn Thành Nam
+  - Files affected:
+    - `apps/mobile/.gitignore` (new - Expo, EAS, native)
+    - `backend/.gitignore` (new - Prisma, Node, uploads, secrets)
+
+### Notes
+- Workflow `mobile-ci-ios.yml` (mới) chạy song song với `mobile-ci.yml` (cũ của team) — cần review gộp hoặc bỏ 1 trong 2.
+- CODEOWNERS dùng placeholder GitHub handles (`@hoang-hieu-spin`, ...) — phải thay bằng username thật.
+
 ### 2026-08-08
 
 ### Added
