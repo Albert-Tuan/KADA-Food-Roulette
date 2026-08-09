@@ -1,5 +1,5 @@
 export { authApi } from './endpoints/auth';
-export type { LoginRequest, RegisterRequest, AuthResponse, UserProfile } from './endpoints/auth';
+export type { LoginRequest, RegisterRequest, AuthResponse, UserProfile, AuthResult } from './endpoints/auth';
 export { rouletteApi } from './endpoints/roulette';
 export type { SpinResult, SpinRequest } from './endpoints/roulette';
 export { restaurantApi } from './endpoints/restaurants';

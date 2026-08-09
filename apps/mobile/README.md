@@ -148,7 +148,7 @@ Mobile app kết nối với backend qua API:
 ```typescript
 // API Client (src/api/client.ts)
 import axios from 'axios';
-import { API_URL } from '@/lib/constants';
+import { API_URL } from '../src/lib/constants';
 
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -168,6 +168,25 @@ export default apiClient;
 ```
 
 **Base URL:** `http://localhost:3001/api` (development)
+
+---
+
+## Import Conventions
+
+Dự án sử dụng **relative imports** (không dùng path aliases):
+
+```typescript
+// ✅ Đúng
+import { authApi } from '../api';
+import { AUTH_TOKEN_KEY } from '../src/lib/constants';
+import { useAuthStore } from '../src/stores/authStore';
+
+// ❌ Sai - không còn hỗ trợ
+import { authApi } from '@/api';
+import { AUTH_TOKEN_KEY } from '@/lib/constants';
+```
+
+**Lý do:** TypeScript 7.0 sẽ loại bỏ `baseUrl`/`paths` nên chuyển sang relative imports để đảm bảo compatibility lâu dài.
 
 ---
 

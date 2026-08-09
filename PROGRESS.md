@@ -1,7 +1,7 @@
 # PROGRESS.md
 
 > **Theo dõi tiến độ implementation Food Roulette**
-> **Version:** 2.1 · **Date:** 2026-08-09
+> **Version:** 2.2 · **Date:** 2026-08-10
 > **Based on:** `brand/FOOD-ROULETTE-SITEMAP.md` v2.4
 
 ---
@@ -104,6 +104,7 @@
 - API client (`src/api/client.ts`)
 - API endpoints (`src/api/endpoints/*`)
 - Zustand stores (`src/stores/authStore.ts`)
+- TypeScript config (v2 - without path aliases for TS 7.0 compatibility)
 
 ### Đang làm 🟡
 - [ ] Spin wheel animation (Reanimated 3)
@@ -351,5 +352,5 @@ KADA-Food-Roulette/
 
 ---
 
-*Updated: 2026-08-09 · Last update by: Cursor AI*
+*Updated: 2026-08-10 · Last update by: Cursor AI*
 *Based on: `brand/FOOD-ROULETTE-SITEMAP.md` v2.4*

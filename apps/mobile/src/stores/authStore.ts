@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { UserProfile } from '@/api';
+import { authApi, UserProfile } from '../api';
 
 interface UserState {
   user: UserProfile | null;
@@ -12,7 +12,7 @@ interface UserState {
   // Actions
   setUser: (user: UserProfile | null) => void;
   setToken: (token: string | null) => void;
-  login: (token: string, user: UserProfile) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<UserProfile>) => void;
   checkAuth: () => Promise<void>;
@@ -35,9 +35,15 @@ export const useAuthStore = create<UserState>()((set, get) => ({
     set({ token });
   },
 
-  login: async (token, user) => {
-    await SecureStore.setItemAsync('token', token);
-    set({ token, user, isAuthenticated: true });
+  login: async (email: string, password: string) => {
+    try {
+      const result = await authApi.login({ email, password });
+      await SecureStore.setItemAsync('token', result.token);
+      set({ token: result.token, user: result.user, isAuthenticated: true });
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   },
 
   logout: async () => {

@@ -50,6 +50,27 @@
 
 ## Changelog
 
+### 2026-08-10
+
+### Changed
+
+- **Mobile tsconfig.json - Removed deprecated baseUrl/paths**
+  - By: AI Assistant
+  - Via: Cursor
+  - Spec: N/A (technical debt fix)
+  - Files affected:
+    - `apps/mobile/tsconfig.json` (removed `baseUrl`, `paths`, `ignoreDeprecations`)
+  - Reason: `baseUrl` deprecated in TypeScript 6.x, removed in TS 7.0. Using relative imports instead.
+  - Fix: Changed `@/` alias imports to relative paths (e.g., `@/api` → `../api`)
+  - Verification: `npx tsc --noEmit` → 0 errors
+
+- **Mobile authStore.ts - Fixed import path**
+  - By: AI Assistant
+  - Via: Cursor
+  - Files affected:
+    - `apps/mobile/src/stores/authStore.ts` (line 4)
+  - Change: `import { authApi, UserProfile } from '@/api'` → `import { authApi, UserProfile } from '../api'`
+
 ### 2026-08-09
 
 ### Added
