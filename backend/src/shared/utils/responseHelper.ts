@@ -22,11 +22,11 @@ export const responseHelper = {
     });
   },
 
-  successWithMessage(res: Response, message: string, data?: unknown) {
+  successWithMessage(res: Response, message: string, data?: Record<string, unknown>) {
     return res.status(200).json({
       success: true,
       message,
-      ...(data && { data }),
+      ...(data && typeof data === 'object' ? data : {}),
     });
   },
 
