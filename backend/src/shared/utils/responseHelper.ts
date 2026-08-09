@@ -22,12 +22,15 @@ export const responseHelper = {
     });
   },
 
-  successWithMessage(res: Response, message: string, data?: Record<string, unknown> | object) {
-    return res.status(200).json({
+  successWithMessage(res: Response, message: string, data?: object) {
+    const payload: { success: boolean; message: string; [key: string]: unknown } = {
       success: true,
       message,
-      ...(data && typeof data === 'object' ? data : {}),
-    });
+    };
+    if (data && typeof data === 'object') {
+      Object.assign(payload, data);
+    }
+    return res.status(200).json(payload);
   },
   },
 
