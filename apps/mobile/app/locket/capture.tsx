@@ -1,172 +1,375 @@
-import { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import * as ImagePicker from 'expo-image-picker';
+import { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Linking,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImageManipulator from 'expo-image-manipulator';
 import * as Location from 'expo-location';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { locketApi } from '@/api';
-import { generatePublicId } from '@/lib';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCreateLocket, type LocketVisibility } from '@/features/lockets';
+import { MAX_CAPTION_LENGTH } from '@/lib/constants';
+import { getInstallationDeviceHash } from '@/lib/installationIdentity';
+
+interface CaptureDraft {
+  uri: string;
+  capturedAt: string;
+  deviceHash: string;
+  latitude: number;
+  longitude: number;
+}
+
+const VISIBILITY_OPTIONS: { value: LocketVisibility; label: string; description: string }[] = [
+  { value: 'PRIVATE', label: 'Riêng tư', description: 'Chỉ mình bạn' },
+  { value: 'FRIENDS', label: 'Bạn bè', description: 'Bạn bè đã kết nối' },
+  { value: 'PUBLIC', label: 'Công khai', description: 'Hiện trên profile công khai' },
+];
 
 export default function CaptureLocketScreen() {
-  const [permission, requestPermission] = useCameraPermissions();
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [locationPermission, setLocationPermission] = useState<Location.PermissionStatus | null>(null);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [cameraFacing, setCameraFacing] = useState<'front' | 'back'>('back');
+  const [draft, setDraft] = useState<CaptureDraft | null>(null);
+  const [dishName, setDishName] = useState('');
+  const [restaurantName, setRestaurantName] = useState('');
+  const [note, setNote] = useState('');
+  const [rating, setRating] = useState(5);
+  const [tagInput, setTagInput] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [visibility, setVisibility] = useState<LocketVisibility>('FRIENDS');
   const [isCapturing, setIsCapturing] = useState(false);
+  const [permissionError, setPermissionError] = useState('');
+  const [formError, setFormError] = useState('');
   const cameraRef = useRef<CameraView>(null);
+  const createLocket = useCreateLocket();
+
+  const requestLocation = async () => {
+    try {
+      setPermissionError('');
+      const result = await Location.requestForegroundPermissionsAsync();
+      setLocationPermission(result.status);
+      if (result.status !== 'granted') {
+        setLocation(null);
+        return;
+      }
+      const currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      setLocation(currentLocation);
+    } catch {
+      setPermissionError('Không thể lấy vị trí. Bạn thử lại nhé.');
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        const loc = await Location.getCurrentPositionAsync({});
-        setLocation(loc);
-      }
-    })();
+    requestLocation();
   }, []);
 
   const handleCapture = async () => {
     if (!cameraRef.current || isCapturing) return;
+    if (!location) {
+      setPermissionError('Cần vị trí để tạo locket.');
+      return;
+    }
 
     try {
       setIsCapturing(true);
-      
-      // Take picture
+      setPermissionError('');
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
+        quality: 0.85,
         base64: false,
         skipProcessing: false,
+        exif: false,
+      });
+      if (!photo?.uri) throw new Error('Không thể chụp ảnh.');
+
+      const sanitizedPhoto = await ImageManipulator.manipulateAsync(photo.uri, [], {
+        compress: 0.85,
+        format: ImageManipulator.SaveFormat.JPEG,
       });
 
-      if (!photo?.uri) {
-        Alert.alert('Lỗi', 'Không thể chụp ảnh');
-        return;
-      }
-
-      // In real app, upload to server first
-      // For now, simulate with local URI
-      const capturedAt = new Date().toISOString();
-      const deviceHash = generatePublicId();
-
-      // Create locket
-      const locket = await locketApi.create({
-        imageUrl: photo.uri,
-        gpsLat: location?.coords.latitude || 0,
-        gpsLng: location?.coords.longitude || 0,
-        capturedAt,
+      const deviceHash = await getInstallationDeviceHash();
+      setDraft({
+        uri: sanitizedPhoto.uri,
+        capturedAt: new Date().toISOString(),
         deviceHash,
-        visibility: 'PUBLIC',
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
       });
-
-      Alert.alert('Thành công', 'Đã lưu locket!', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
     } catch (error) {
-      console.error('Capture error:', error);
-      Alert.alert('Lỗi', 'Không thể lưu locket');
+      setPermissionError(error instanceof Error ? error.message : 'Không thể chụp ảnh. Bạn thử lại nhé.');
     } finally {
       setIsCapturing(false);
     }
   };
 
-  const handlePickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-      allowsEditing: true,
-    });
+  const addTag = () => {
+    const normalized = tagInput.trim().replace(/^#/, '');
+    if (!normalized) return;
+    if (normalized.length > 24) {
+      setFormError('Mỗi tag tối đa 24 ký tự.');
+      return;
+    }
+    if (tags.some((tag) => tag.toLocaleLowerCase('vi') === normalized.toLocaleLowerCase('vi'))) {
+      setFormError('Tag này đã có rồi.');
+      return;
+    }
+    if (tags.length >= 5) {
+      setFormError('Bạn có thể thêm tối đa 5 tag.');
+      return;
+    }
+    setTags((current) => [...current, normalized]);
+    setTagInput('');
+    setFormError('');
+  };
 
-    if (!result.canceled && result.assets[0]) {
-      // In real app, navigate to confirm screen
-      console.log('Selected image:', result.assets[0].uri);
+  const validateForm = (): boolean => {
+    if (!draft?.uri) return setFormError('Bạn cần chụp ảnh trước khi đăng.'), false;
+    if (!Number.isFinite(draft.latitude) || !Number.isFinite(draft.longitude)) {
+      return setFormError('Cần vị trí để đăng locket.'), false;
+    }
+    if (!dishName.trim()) return setFormError('Bạn nhập tên món nhé.'), false;
+    if (dishName.trim().length > 80) return setFormError('Tên món tối đa 80 ký tự.'), false;
+    if (rating < 1 || rating > 5) return setFormError('Rating phải từ 1 đến 5.'), false;
+    if (note.length > MAX_CAPTION_LENGTH) {
+      return setFormError(`Note tối đa ${MAX_CAPTION_LENGTH} ký tự.`), false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm() || !draft) return;
+    try {
+      setFormError('');
+      const created = await createLocket.mutateAsync({
+        localImageUri: draft.uri,
+        mimeType: 'image/jpeg',
+        dishName: dishName.trim(),
+        restaurantName: restaurantName.trim() || undefined,
+        note: note.trim() || undefined,
+        rating,
+        tags,
+        visibility,
+        capturedAt: draft.capturedAt,
+        location: { latitude: draft.latitude, longitude: draft.longitude },
+        deviceHash: draft.deviceHash,
+      });
+      router.replace(`/locket/${created.id}`);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Không thể đăng locket. Bạn thử lại nhé.');
     }
   };
 
-  if (!permission) {
+  if (!cameraPermission) {
+    return <CenteredState message="Đang kiểm tra camera..." loading />;
+  }
+
+  if (!cameraPermission.granted) {
     return (
-      <SafeAreaView className="flex-1 bg-black items-center justify-center">
-        <Text className="text-white">Đang tải camera...</Text>
-      </SafeAreaView>
+      <CenteredState
+        title="Cần quyền camera"
+        message="Không thể tạo locket nếu không bật camera."
+        actionLabel={cameraPermission.canAskAgain ? 'Cho phép camera' : 'Mở cài đặt'}
+        onAction={cameraPermission.canAskAgain ? async () => { await requestCameraPermission(); } : Linking.openSettings}
+      />
     );
   }
 
-  if (!permission.granted) {
+  if (locationPermission === 'denied') {
     return (
-      <SafeAreaView className="flex-1 bg-background items-center justify-center p-6">
-        <Text className="text-6xl mb-4">📷</Text>
-        <Text className="text-xl font-bold text-secondary-800 mb-2 text-center">
-          Cần quyền truy cập camera
-        </Text>
-        <Text className="text-secondary-500 text-center mb-6">
-          Food Roulette cần camera để chụp ảnh món ăn của bạn
-        </Text>
-        <TouchableOpacity
-          className="bg-primary px-6 py-3 rounded-full"
-          onPress={requestPermission}
-        >
-          <Text className="text-white font-semibold">Cho phép</Text>
-        </TouchableOpacity>
+      <CenteredState
+        title="Cần quyền vị trí"
+        message="Locket cần GPS để xác nhận nơi và thời điểm chụp."
+        actionLabel="Mở cài đặt"
+        onAction={Linking.openSettings}
+        secondaryLabel="Thử lại"
+        onSecondaryAction={requestLocation}
+      />
+    );
+  }
+
+  if (draft) {
+    return (
+      <SafeAreaView className="flex-1 bg-background">
+        <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView contentContainerStyle={styles.formContent} keyboardShouldPersistTaps="handled">
+            <View className="flex-row items-center justify-between mb-4">
+              <TouchableOpacity onPress={() => setDraft(null)} className="px-3 py-2">
+                <Text className="text-secondary-700">Chụp lại</Text>
+              </TouchableOpacity>
+              <Text className="text-xl font-bold text-secondary-900">Locket mới</Text>
+              <View className="w-20" />
+            </View>
+
+            <Image source={{ uri: draft.uri }} className="w-full aspect-square rounded-3xl bg-secondary-100" />
+
+            <Field label="Tên món *">
+              <TextInput
+                value={dishName}
+                onChangeText={setDishName}
+                placeholder="Ví dụ: Bún bò Huế"
+                placeholderTextColor="#9C8B7A"
+                maxLength={80}
+                className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900"
+              />
+            </Field>
+
+            <Field label="Nhà hàng">
+              <TextInput
+                value={restaurantName}
+                onChangeText={setRestaurantName}
+                placeholder="Tên nhà hàng"
+                placeholderTextColor="#9C8B7A"
+                maxLength={120}
+                className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900"
+              />
+            </Field>
+
+            <Field label="Rating">
+              <View className="flex-row gap-3">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <TouchableOpacity key={value} onPress={() => setRating(value)} accessibilityLabel={`${value} sao`}>
+                    <Text className={`text-3xl ${value <= rating ? 'text-primary' : 'text-secondary-200'}`}>★</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </Field>
+
+            <Field label={`Note · ${note.length}/${MAX_CAPTION_LENGTH}`}>
+              <TextInput
+                value={note}
+                onChangeText={setNote}
+                placeholder="Món này có gì đáng nhớ?"
+                placeholderTextColor="#9C8B7A"
+                maxLength={MAX_CAPTION_LENGTH}
+                multiline
+                textAlignVertical="top"
+                className="min-h-24 bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900"
+              />
+            </Field>
+
+            <Field label="Tags">
+              <View className="flex-row gap-2">
+                <TextInput
+                  value={tagInput}
+                  onChangeText={setTagInput}
+                  onSubmitEditing={addTag}
+                  placeholder="Thêm tag"
+                  placeholderTextColor="#9C8B7A"
+                  maxLength={25}
+                  className="flex-1 bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900"
+                />
+                <TouchableOpacity onPress={addTag} className="bg-secondary-800 rounded-xl px-5 items-center justify-center">
+                  <Text className="text-white font-semibold">Thêm</Text>
+                </TouchableOpacity>
+              </View>
+              <View className="flex-row flex-wrap gap-2 mt-2">
+                {tags.map((tag) => (
+                  <TouchableOpacity
+                    key={tag.toLocaleLowerCase('vi')}
+                    onPress={() => setTags((current) => current.filter((item) => item !== tag))}
+                    className="bg-primary-50 border border-primary-200 rounded-full px-3 py-2"
+                  >
+                    <Text className="text-primary-800">#{tag} ×</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </Field>
+
+            <Field label="Ai có thể xem?">
+              <View className="gap-2">
+                {VISIBILITY_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    onPress={() => setVisibility(option.value)}
+                    className={`rounded-xl border p-4 ${
+                      visibility === option.value ? 'border-primary bg-primary-50' : 'border-secondary-200 bg-white'
+                    }`}
+                  >
+                    <Text className="font-semibold text-secondary-900">{option.label}</Text>
+                    <Text className="text-secondary-500 text-sm mt-1">{option.description}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </Field>
+
+            <View className="bg-secondary-50 rounded-xl p-4 gap-1">
+              <Text className="text-secondary-700 text-sm">GPS: {draft.latitude.toFixed(5)}, {draft.longitude.toFixed(5)}</Text>
+              <Text className="text-secondary-700 text-sm">Chụp lúc: {new Date(draft.capturedAt).toLocaleString('vi-VN')}</Text>
+            </View>
+
+            {formError ? <Text className="text-red-700 text-sm">{formError}</Text> : null}
+
+            <TouchableOpacity
+              onPress={handleSubmit}
+              disabled={createLocket.isPending}
+              className="bg-primary rounded-xl py-4 items-center disabled:opacity-50"
+            >
+              {createLocket.isPending ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-white font-bold text-base">Đăng locket</Text>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
 
   return (
     <View className="flex-1 bg-black">
-      <CameraView
-        ref={cameraRef}
-        style={styles.camera}
-        facing="back"
-      >
+      <CameraView ref={cameraRef} style={styles.camera} facing={cameraFacing}>
         <SafeAreaView className="flex-1">
-          {/* Top bar */}
           <View className="flex-row justify-between items-center p-4">
-            <TouchableOpacity
-              className="w-10 h-10 bg-black/50 rounded-full items-center justify-center"
-              onPress={() => router.back()}
-            >
-              <Text className="text-white text-xl">✕</Text>
+            <TouchableOpacity className="rounded-full bg-black/60 px-4 py-3" onPress={() => router.back()}>
+              <Text className="text-white font-semibold">Đóng</Text>
             </TouchableOpacity>
-            
-            <View className="bg-black/50 rounded-full px-4 py-2">
-              <Text className="text-white text-sm">
-                📍 {location ? 'Đã có vị trí' : 'Đang lấy vị trí...'}
-              </Text>
+            <View className="rounded-full bg-black/60 px-4 py-3">
+              <Text className="text-white text-sm">{location ? 'Đã có vị trí' : 'Đang lấy vị trí...'}</Text>
             </View>
           </View>
 
-          {/* Capture frame */}
-          <View className="flex-1 items-center justify-center">
-            <View className="w-72 h-72 border-2 border-white/50 rounded-2xl" />
+          <View className="flex-1 items-center justify-center px-8">
+            <View className="w-full aspect-square rounded-3xl border-2 border-white/70" />
+            {permissionError ? (
+              <View className="bg-black/70 rounded-xl px-4 py-3 mt-4">
+                <Text className="text-white text-center">{permissionError}</Text>
+              </View>
+            ) : null}
           </View>
 
-          {/* Bottom controls */}
-          <View className="p-6 items-center">
-            <View className="flex-row items-center gap-8">
-              {/* Gallery button */}
+          <View className="items-center p-7">
+            <View className="flex-row items-center gap-10">
+              <View className="w-14" />
               <TouchableOpacity
-                className="w-14 h-14 bg-black/50 rounded-full items-center justify-center"
-                onPress={handlePickImage}
-              >
-                <Text className="text-2xl">🖼️</Text>
-              </TouchableOpacity>
-
-              {/* Capture button */}
-              <TouchableOpacity
-                className="w-20 h-20 bg-white rounded-full items-center justify-center border-4 border-primary"
+                accessibilityLabel="Chụp ảnh"
+                className="w-20 h-20 rounded-full bg-white border-4 border-primary items-center justify-center disabled:opacity-50"
                 onPress={handleCapture}
                 disabled={isCapturing || !location}
               >
-                <View className={`w-16 h-16 bg-primary rounded-full ${isCapturing ? 'opacity-50' : ''}`} />
+                {isCapturing ? <ActivityIndicator color="#C68E17" /> : <View className="w-14 h-14 rounded-full bg-primary" />}
               </TouchableOpacity>
-
-              {/* Flip camera */}
-              <TouchableOpacity className="w-14 h-14 bg-black/50 rounded-full items-center justify-center">
-                <Text className="text-2xl">🔄</Text>
+              <TouchableOpacity
+                accessibilityLabel="Đổi camera"
+                className="w-14 h-14 rounded-full bg-black/60 items-center justify-center"
+                onPress={() => setCameraFacing((current) => (current === 'back' ? 'front' : 'back'))}
+              >
+                <Text className="text-white text-xl">↻</Text>
               </TouchableOpacity>
             </View>
-
-            <Text className="text-white/70 text-sm mt-4">
-              Chạm để chụp · Camera-only
-            </Text>
+            <Text className="text-white/80 text-sm mt-4">Chỉ chụp trực tiếp từ camera</Text>
           </View>
         </SafeAreaView>
       </CameraView>
@@ -174,8 +377,52 @@ export default function CaptureLocketScreen() {
   );
 }
 
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <View className="mt-5">
+      <Text className="text-secondary-800 font-semibold mb-2">{label}</Text>
+      {children}
+    </View>
+  );
+}
+
+function CenteredState({
+  title,
+  message,
+  loading,
+  actionLabel,
+  onAction,
+  secondaryLabel,
+  onSecondaryAction,
+}: {
+  title?: string;
+  message: string;
+  loading?: boolean;
+  actionLabel?: string;
+  onAction?: () => void | Promise<void>;
+  secondaryLabel?: string;
+  onSecondaryAction?: () => void | Promise<void>;
+}) {
+  return (
+    <SafeAreaView className="flex-1 bg-background items-center justify-center px-8">
+      {loading ? <ActivityIndicator color="#C68E17" size="large" /> : null}
+      {title ? <Text className="text-2xl font-bold text-secondary-900 text-center">{title}</Text> : null}
+      <Text className="text-secondary-600 text-center mt-3">{message}</Text>
+      {actionLabel && onAction ? (
+        <TouchableOpacity className="bg-primary rounded-xl px-6 py-4 mt-6" onPress={onAction}>
+          <Text className="text-white font-semibold">{actionLabel}</Text>
+        </TouchableOpacity>
+      ) : null}
+      {secondaryLabel && onSecondaryAction ? (
+        <TouchableOpacity className="px-6 py-3 mt-2" onPress={onSecondaryAction}>
+          <Text className="text-secondary-700 font-semibold">{secondaryLabel}</Text>
+        </TouchableOpacity>
+      ) : null}
+    </SafeAreaView>
+  );
+}
+
 const styles = StyleSheet.create({
-  camera: {
-    flex: 1,
-  },
+  camera: { flex: 1 },
+  formContent: { padding: 16, paddingBottom: 40 },
 });
