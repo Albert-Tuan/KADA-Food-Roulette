@@ -60,25 +60,6 @@ export const PRICE_LEVELS = [
   { value: 4, label: 'Sang trọng (trên 300k)' },
 ] as const;
 
-// Routes
-export const ROUTES = {
-  HOME: '/',
-  AUTH: {
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-  },
-  ROULETTE: '/roulette',
-  GROUPS: '/groups',
-  GROUP_DETAIL: (id: string) => `/groups/${id}`,
-  LOCKETS: '/lockets',
-  RESTAURANTS: '/restaurants',
-  RESTAURANT_DETAIL: (id: string) => `/restaurants/${id}`,
-  PROFILE: '/profile',
-  USER_PROFILE: (publicId: string) => `/profile/${publicId}`,
-  SETTINGS: '/settings',
-  LEADERBOARD: '/leaderboard',
-} as const;
-
 // Storage keys
 export const STORAGE_KEYS = {
   TOKEN: 'token',

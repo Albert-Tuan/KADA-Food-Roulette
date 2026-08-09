@@ -46,7 +46,7 @@ import PreferencesScreen from './features/profile/components/PreferencesScreen';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         {/* Auth Routes - No layout wrapper */}
         <Route path="/login" element={<LoginPage />} />
