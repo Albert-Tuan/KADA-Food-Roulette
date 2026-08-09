@@ -8,7 +8,7 @@ const SpinResult: React.FC = () => {
 
   useEffect(() => {
     if (!currentResult) {
-      navigate('/spin');
+      navigate('/');
       return;
     }
 
@@ -147,7 +147,7 @@ const SpinResult: React.FC = () => {
             </button>
             <div className="flex gap-stack-md w-full">
               <button 
-                onClick={() => navigate('/spin')} 
+                onClick={() => navigate('/')} 
                 className="btn-squish flex-1 bg-surface-container border-subtle-gray text-on-surface py-3 rounded-xl font-label-strong text-body-md flex items-center justify-center gap-2 shadow-sm hover:bg-surface-container-high active:bg-surface-variant"
               >
                 <span className="material-symbols-outlined">refresh</span>
