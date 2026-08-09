@@ -22,7 +22,7 @@ export const responseHelper = {
     });
   },
 
-  successWithMessage(res: Response, message: string, data?: Record<string, unknown>) {
+  successWithMessage(res: Response, message: string, data?: Record<string, unknown> | object) {
     return res.status(200).json({
       success: true,
       message,
