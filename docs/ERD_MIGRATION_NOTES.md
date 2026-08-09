@@ -1,8 +1,20 @@
 # ERD Migration Notes
 
 > SQL migration scripts and database trigger definitions
-> **Current Version:** v5.0
-> **Date:** 2026-08-06
+> **Current Version:** v5.1 (Locket + Profile MVP fields)
+> **Date:** 2026-08-09
+
+---
+
+## v5.1 — Locket + Profile structured fields
+
+Migration: `backend/prisma/migrations/20260809_add_locket_profile_fields/migration.sql`
+
+- `users.bio`: `VARCHAR(160) NULL`.
+- `lockets`: thêm `dish_name`, `restaurant_name`, `note`, `rating`, `tags`, `updated_at`, `deleted_at`.
+- Backfill Locket cũ với `dish_name = 'Món ăn'` trước khi áp dụng `NOT NULL`.
+- Thêm check constraint `rating` trong khoảng 1–5 và index cho soft delete.
+- `exif_stripped` tiếp tục là `FALSE` cho đến khi pipeline production của Thành Nam được triển khai.
 
 ---
 

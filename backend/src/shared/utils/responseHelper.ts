@@ -26,7 +26,7 @@ export const responseHelper = {
     return res.status(200).json({
       success: true,
       message,
-      ...(data && { data }),
+      ...(data !== undefined ? { data } : {}),
     });
   },
 

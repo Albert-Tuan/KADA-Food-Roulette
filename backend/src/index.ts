@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import { corsMiddleware } from './middleware/cors.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
+import { requestContext } from './middleware/requestContext.js'
 import authRoutes from './modules/auth/auth.routes.js'
 import rouletteRoutes from './modules/roulette/roulette.routes.js'
 import restaurantRoutes from './modules/restaurants/restaurants.routes.js'
@@ -13,12 +14,14 @@ import preferenceRoutes from './modules/preferences/preferences.routes.js'
 import circleRoutes from './modules/circle/circle.routes.js'
 import menuRoutes from './modules/menu/menu.routes.js'
 import stewardRoutes from './modules/steward/steward.routes.js'
+import userRoutes from './modules/users/users.routes.js'
 
 const app: Express = express()
 const PORT = process.env.PORT || 3000
 
 // Security middleware
 app.use(helmet())
+app.use(requestContext)
 
 // CORS
 app.use(corsMiddleware)
@@ -48,6 +51,7 @@ app.use('/api/v1/spins', rouletteRoutes)
 app.use('/api/v1/restaurants', restaurantRoutes)
 app.use('/api/v1/groups', groupRoutes)
 app.use('/api/v1/lockets', locketRoutes)
+app.use('/api/v1/users', userRoutes)
 app.use('/api/v1/preferences', preferenceRoutes)
 app.use('/api/v1/circles', circleRoutes)
 app.use('/api/v1/menu', menuRoutes)

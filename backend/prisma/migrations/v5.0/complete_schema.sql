@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
     display_name_public    VARCHAR(50) NOT NULL,
     public_id              VARCHAR(20) NOT NULL,
     avatar_url             VARCHAR(500) NULL,
+    bio                    VARCHAR(160) NULL,
     phone                  VARCHAR(20) NULL,
     role                   ENUM('USER', 'STEWARD', 'ADMIN') DEFAULT 'USER',
     subscription_tier      ENUM('FREE', 'PREMIUM') DEFAULT 'FREE',
@@ -257,18 +258,26 @@ CREATE TABLE IF NOT EXISTS lockets (
     user_id          CHAR(36) NOT NULL,
     restaurant_id    CHAR(36) NULL,
     image_url        VARCHAR(500) NOT NULL,
-    thumbnail_url    VARCHAR(500) NULL,
-    caption          VARCHAR(300) NULL,
-    visibility       ENUM('PUBLIC', 'FRIENDS', 'PRIVATE') DEFAULT 'PUBLIC',
+    dish_name        VARCHAR(80) NOT NULL,
+    restaurant_name  VARCHAR(120) NULL,
+    note             VARCHAR(280) NULL,
+    rating           INT NULL,
+    tags             JSON NOT NULL DEFAULT (JSON_ARRAY()),
+    exif_stripped    BOOLEAN NOT NULL DEFAULT FALSE,
+    lat              DECIMAL(10,8) NULL,
+    lng              DECIMAL(11,8) NULL,
+    visibility       ENUM('PRIVATE', 'FRIENDS', 'PUBLIC') DEFAULT 'FRIENDS',
     device_hash      VARCHAR(64) NOT NULL,
     captured_at      DATETIME NOT NULL COMMENT 'Must be within 60s of server time',
     created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at       DATETIME NULL,
 
-    INDEX idx_lockets_user (user_id),
+    INDEX idx_lockets_user_captured (user_id, captured_at),
     INDEX idx_lockets_restaurant (restaurant_id),
-    INDEX idx_lockets_visibility (visibility),
-    INDEX idx_lockets_captured_at (captured_at)
+    INDEX idx_lockets_visibility_captured (visibility, captured_at),
+    INDEX idx_lockets_deleted_at (deleted_at),
+    CONSTRAINT chk_lockets_rating CHECK (rating IS NULL OR rating BETWEEN 1 AND 5)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

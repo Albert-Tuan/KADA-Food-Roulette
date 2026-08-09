@@ -2,8 +2,8 @@
 
 ## FOOD ROULETTE
 
-> **Version:** 1.0 · **Date:** 2026-08-07  
-> **Base URL:** `https://api.foodroulette.app/v1`  
+> **Version:** 1.2 · **Date:** 2026-08-09
+> **Base URL:** `https://api.foodroulette.app/api/v1`
 > **Authentication:** Bearer Token (JWT)
 
 ---
@@ -513,12 +513,12 @@ GET /users/me
     "public_id": "minifoodie",
     "avatar_url": "https://cdn.foodroulette.app/avatars/xxx.jpg",
     "bio": "Food lover from Hanoi",
-    "cuisine_preferences": ["vietnamese", "italian"],
-    "dietary_preferences": ["none"],
-    "friends_count": 42,
-    "locket_count": 15,
-    "review_count": 8,
-    "total_points": 150,
+    "stats": {
+      "locket_count": 15,
+      "check_in_count": 8,
+      "group_count": 3
+    },
+    "public_lockets": [],
     "created_at": "2026-01-15T10:30:00Z"
   }
 }
@@ -539,11 +539,9 @@ PATCH /users/me
 **Request Body:**
 ```json
 {
-  "avatar": "<binary_file>",           // Optional, max 5MB, jpg/png
-  "bio": "Updated bio",                 // Optional, max 500 chars
+  "bio": "Updated bio",                 // Optional, max 160 chars
   "display_name_private": "NewMini",    // Optional
-  "cuisine_preferences": ["vietnamese", "thai"],
-  "dietary_preferences": ["vegetarian"]
+  "display_name_public": "NewPublicName" // Optional; public_id không đổi
 }
 ```
 
@@ -560,6 +558,8 @@ PATCH /users/me
 }
 ```
 
+**Storage boundary:** cập nhật avatar chưa được bật cho tới khi Supabase Storage/bucket policy được chốt; gửi `avatar` hoặc `avatar_uri` hiện trả `503 PROFILE_STORAGE_PENDING`.
+
 ---
 
 ### 3.3 Get Public Profile
@@ -573,10 +573,7 @@ GET /users/:public_id
 **Auth Required:** No (Optional)
 
 **Path Params:**
-- `public_id`: Display name public của user
-
-**Query Params:**
-- `viewer_id`: UUID của viewer (nếu đã đăng nhập)
+- `public_id`: Định danh công khai bất biến của user
 
 **Response (200):**
 ```json
@@ -587,10 +584,12 @@ GET /users/:public_id
     "display_name_public": "minifoodie",
     "avatar_url": "https://cdn.foodroulette.app/avatars/xxx.jpg",
     "bio": "Food lover from Hanoi",
-    "is_friend": true,
-    "friends_count": 42,
-    "locket_count": 15,
-    "review_count": 8,
+    "stats": {
+      "locket_count": 15,
+      "check_in_count": 8,
+      "group_count": 3
+    },
+    "public_lockets": [],
     "created_at": "2026-01-15T10:30:00Z"
   }
 }
@@ -603,6 +602,8 @@ GET /users/:public_id
 ---
 
 ### 3.4 Upload Avatar
+
+> **Trạng thái:** Chưa triển khai — đang chờ Supabase Storage/bucket policy từ Thành Nam.
 
 ```
 POST /users/me/avatar
@@ -630,6 +631,8 @@ POST /users/me/avatar
 ---
 
 ### 3.5 Delete Avatar
+
+> **Trạng thái:** Chưa triển khai — đang chờ Supabase Storage/bucket policy từ Thành Nam.
 
 ```
 DELETE /users/me/avatar
@@ -1574,28 +1577,27 @@ POST /lockets
 **Form Fields:**
 - `image`: File (required), max 10MB, jpg/png
 - `restaurant_id`: UUID (optional)
-- `note`: String (optional), max 500 chars
-- `rating`: Int 1-5 (optional)
-- `visibility`: `public` | `friends` | `private` (default: friends)
-- `latitude`: Float (optional)
-- `longitude`: Float (optional)
+- `restaurant_name`: String (optional), max 120 chars
+- `dish_name`: String (required), max 80 chars
+- `note`: String (optional), max 280 chars
+- `rating`: Int 1-5 (required)
+- `tags`: JSON String array (optional), max 5 tags, 24 chars/tag
+- `visibility`: `PUBLIC` | `FRIENDS` | `PRIVATE` (default: `FRIENDS`)
+- `latitude`: Float (required)
+- `longitude`: Float (required)
 
 **Validation Rules (LOCKET_QĐ_1, LOCKET_QĐ_2, LOCKET_QĐ_3):**
 - Image phải từ camera trong app (validated by device_hash + captured_at)
 - captured_at không lệch server time > 60s
 - Device hash phải match
 
-**Device Hash Validation Algorithm:**
+**Device Hash Validation Algorithm (MVP):**
 ```
-1. Client generates hash: SHA256(device_id + app_secret + timestamp_bucket)
-   - device_id: unique device identifier ( IDFA/GAID hashed )
-   - app_secret: app-specific secret embedded in binary
-   - timestamp_bucket: captured_at rounded to nearest 60s
-2. Server receives hash in X-Device-ID header
-3. Server re-generates hash using same algorithm with server's app_secret
-4. Server compares hashes (constant-time comparison)
-5. If match AND captured_at within 60s tolerance: accept
-6. If device_hash reset detected (user换了 phone): allow after re-verification
+1. App tạo App Installation ID ngẫu nhiên trong SecureStore.
+2. App chỉ gửi SHA256 hash 64 ký tự; Installation ID gốc không rời thiết bị.
+3. Server kiểm tra định dạng hash và lưu để audit/rate-abuse detection.
+4. Server yêu cầu X-Captured-At trong sai số tối đa 60 giây.
+5. Reset hash là flow user-initiated khi đổi máy (chưa thuộc endpoint này).
 ```
 
 **Request Headers:**
@@ -1609,25 +1611,40 @@ X-Captured-At: <ISO8601_timestamp>
 {
   "success": true,
   "data": {
-    "locket_id": "uuid",
-    "image_url": "https://cdn.foodroulette.app/lockets/xxx.jpg",
-    "thumbnail_url": "https://cdn.foodroulette.app/lockets/xxx_thumb.jpg",
-    "restaurant": { ... },
+    "id": "uuid",
+    "owner_id": "uuid",
+    "author": {
+      "id": "uuid",
+      "public_id": "minifoodie",
+      "display_name_public": "Mini Foodie",
+      "avatar_url": null
+    },
+    "image_url": "/api/v1/lockets/media/uuid.jpg",
+    "dish_name": "Bún bò Huế",
+    "restaurant_id": null,
+    "restaurant_name": "Bếp Huế Mộc",
     "note": "Bữa ăn ngon quá!",
     "rating": 5,
-    "visibility": "friends",
-    "like_count": 12,
-    "comment_count": 3,
+    "tags": ["món Việt", "cay nhẹ"],
+    "visibility": "FRIENDS",
+    "location": { "latitude": 10.7769, "longitude": 106.7009 },
+    "can_display_location": true,
+    "exif_stripped": false,
+    "permissions": { "can_edit": true, "can_delete": true },
+    "captured_at": "2026-08-07T11:59:45Z",
     "created_at": "2026-08-07T12:00:00Z"
   }
 }
 ```
 
 **Error Codes:**
-- `LOCKET_001`: Camera permission denied
-- `LOCKET_002`: Invalid image source (not from app camera)
-- `LOCKET_003`: GPS permission denied
-- `LOCKET_004`: Invalid captured_at timestamp
+- `AUTH_REQUIRED` / `AUTH_INVALID`: Thiếu hoặc sai JWT
+- `LOCKET_UPLOAD_INVALID`: Multipart hoặc kích thước file không hợp lệ
+- `LOCKET_IMAGE_REQUIRED` / `LOCKET_IMAGE_INVALID`: Thiếu ảnh hoặc MIME/magic bytes không hợp lệ
+- `LOCKET_DEVICE_INVALID`: Device hash không đúng định dạng SHA-256
+- `LOCKET_CAPTURE_EXPIRED`: `captured_at` không hợp lệ hoặc lệch quá 60 giây
+- `LOCKET_VALIDATION`: Metadata/GPS/visibility không hợp lệ
+- `LOCKET_STORAGE_PENDING`: Production storage chưa được cấu hình
 
 ---
 
@@ -1641,12 +1658,9 @@ GET /lockets
 
 **Auth Required:** Yes
 
-**Query Params (Cursor Pagination - recommended for performance):**
-- `cursor`: string (optional, from previous response)
-- `limit`: int (default: 20, max: 50)
-- `direction`: `forward` | `backward` (default: forward)
-- `type`: `all` | `friends` | `public` (default: all)
-- `restaurant_id`: UUID (optional filter)
+**Query Params (MVP):**
+- `type`: `ALL` | `MINE` | `FRIENDS` | `DISCOVER` (default: `ALL`)
+- MVP trả tối đa 50 bản ghi mới nhất. Cursor pagination sẽ được bổ sung trước khi mở rộng traffic.
 
 **Response (200):**
 ```json
@@ -1654,38 +1668,40 @@ GET /lockets
   "success": true,
   "data": [
     {
-      "locket_id": "uuid",
-      "user": {
+      "id": "uuid",
+      "dish_name": "Bún bò Huế",
+      "owner_id": "uuid",
+      "author": {
         "id": "uuid",
         "public_id": "minifoodie",
         "display_name_public": "minifoodie",
         "avatar_url": "..."
       },
       "image_url": "...",
-      "thumbnail_url": "...",
-      "restaurant": { ... },
+      "restaurant_id": null,
+      "restaurant_name": "Bếp Huế Mộc",
       "note": "Bữa ăn ngon quá!",
       "rating": 5,
-      "visibility": "friends",
-      "like_count": 12,
-      "comment_count": 3,
-      "is_liked": true,
+      "tags": ["món Việt", "cay nhẹ"],
+      "visibility": "FRIENDS",
+      "exif_stripped": false,
+      "permissions": { "can_edit": true, "can_delete": true },
       "created_at": "2026-08-07T12:00:00Z"
     }
   ],
   "meta": {
-    "cursor_next": "eyJpZCI6MTIzNH0=",
-    "cursor_prev": null,
-    "has_more": true,
-    "limit": 20
+    "has_more": false,
+    "limit": 50
   }
 }
 ```
 
+**Storage/EXIF boundary:** dev/test dùng adapter in-memory để tích hợp API. Production trả `503 LOCKET_STORAGE_PENDING` cho tới khi Supabase Storage và EXIF pipeline được triển khai; `exif_stripped` không được báo `true` khi chưa xử lý server-side.
+
+Ảnh `PRIVATE`/`FRIENDS` của adapter dev được trả bằng capability URL ký HMAC, hết hạn sau 5 phút. API vẫn kiểm tra visibility trước khi cấp URL; client không lưu hoặc chia sẻ URL này. Supabase adapter sau này phải trả signed URL tương đương.
+
 **Notes:**
-- Uses cursor-based pagination for optimal performance with large datasets
 - Feed is chronological (newest first)
-```
 
 ---
 
@@ -1699,10 +1715,7 @@ GET /lockets/me
 
 **Auth Required:** Yes
 
-**Query Params:**
-- `page`: int
-- `per_page`: int
-- `visibility`: `all` | `public` | `friends` | `private`
+**Query Params (MVP):** Không có; trả tối đa 50 bản ghi mới nhất của owner.
 
 **Response (200):**
 ```json
@@ -1723,31 +1736,24 @@ GET /lockets/:locket_id
 
 **Description:** Lấy chi tiết một locket
 
-**Auth Required:** Yes (Optional - public locket có thể xem không cần auth)
+**Auth Required:** Optional — Locket `PUBLIC` xem được không cần auth
 
 **Response (200):**
 ```json
 {
   "success": true,
   "data": {
-    "locket_id": "uuid",
-    "user": { ... },
+    "id": "uuid",
+    "owner_id": "uuid",
+    "author": { ... },
     "image_url": "...",
-    "restaurant": { ... },
+    "dish_name": "Bún bò Huế",
+    "restaurant_name": "Bếp Huế Mộc",
     "note": "...",
     "rating": 5,
-    "visibility": "friends",
-    "like_count": 12,
-    "comment_count": 3,
-    "is_liked": false,
-    "comments": [
-      {
-        "id": "uuid",
-        "user": { ... },
-        "text": "Ngon quá!",
-        "created_at": "2026-08-07T12:30:00Z"
-      }
-    ],
+    "tags": ["món Việt"],
+    "visibility": "FRIENDS",
+    "permissions": { "can_edit": false, "can_delete": false },
     "created_at": "2026-08-07T12:00:00Z"
   }
 }
@@ -1768,8 +1774,11 @@ PATCH /lockets/:locket_id
 **Request Body:**
 ```json
 {
+  "dish_name": "Bún bò Huế đặc biệt",
   "note": "Updated note",
-  "visibility": "public",
+  "rating": 5,
+  "tags": ["món Việt"],
+  "visibility": "PUBLIC",
   "restaurant_id": "uuid"  // null to remove
 }
 ```
@@ -2919,7 +2928,7 @@ GET /config
     "locket": {
       "max_file_size_mb": 10,
       "allowed_formats": ["jpg", "png"],
-      "max_note_length": 500
+      "max_note_length": 280
     },
     "review": {
       "max_photos": 5,
@@ -3185,7 +3194,7 @@ wss://api.foodroulette.app/ws?token=<jwt_token>
 
 ---
 
-*Document Version: 1.1*  
+*Document Version: 1.2*
 *Created: 2026-08-07*  
-*Updated: 2026-08-07*  
+*Updated: 2026-08-09*
 *Author: Food Roulette Team*
