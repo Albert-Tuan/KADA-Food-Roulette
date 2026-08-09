@@ -1,10 +1,17 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSpinStore } from '../../../stores/spinStore';
 
 const SpinResult: React.FC = () => {
   const navigate = useNavigate();
+  const { currentResult } = useSpinStore();
 
   useEffect(() => {
+    if (!currentResult) {
+      navigate('/spin');
+      return;
+    }
+
     const container = document.getElementById('confetti-container');
     if (!container) return;
     
@@ -75,7 +82,7 @@ const SpinResult: React.FC = () => {
           <img 
             alt="Restaurant Hero Image" 
             className="absolute inset-0 w-full h-full object-cover" 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPXkp_PqwHdeonWUy3cMkUvQLu0I6vRU2kzzfUP4Ni8SabeF7Cq5dl3DyJCibawkf_uUpTQdYEfyAoSNbTq49ri9QImqQ0KfkTvZTuYUz6qZBJWbHakxaJFSQ-e7sbekjgT2_-VyiccCC1q3A7vrNR2cjByhNlNbQhXuqD1QIUIB-MpLFLY-xIpwTH5H2jBVSo5a4nzxfa5hqSdJJKbz_zqpqUx8is_ZzYOYnevY8LPAUsR7S75qjNhQ" 
+            src={currentResult?.imageUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuDPXkp_PqwHdeonWUy3cMkUvQLu0I6vRU2kzzfUP4Ni8SabeF7Cq5dl3DyJCibawkf_uUpTQdYEfyAoSNbTq49ri9QImqQ0KfkTvZTuYUz6qZBJWbHakxaJFSQ-e7sbekjgT2_-VyiccCC1q3A7vrNR2cjByhNlNbQhXuqD1QIUIB-MpLFLY-xIpwTH5H2jBVSo5a4nzxfa5hqSdJJKbz_zqpqUx8is_ZzYOYnevY8LPAUsR7S75qjNhQ"} 
           />
           {/* Gradient Overlay for text readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
@@ -98,24 +105,24 @@ const SpinResult: React.FC = () => {
           <div className="absolute bottom-0 left-0 w-full p-margin-mobile flex flex-col gap-stack-sm z-10">
             <div className="flex gap-2 mb-1">
               <span className="bg-primary px-2 py-1 rounded-full text-on-primary font-label-strong text-[10px] uppercase tracking-wider">It's a Match!</span>
-              <span className="bg-surface-white/20 backdrop-blur-md px-2 py-1 rounded-full text-surface-white font-label-strong text-[10px] uppercase tracking-wider border border-surface-white/30">Vietnamese</span>
+              <span className="bg-surface-white/20 backdrop-blur-md px-2 py-1 rounded-full text-surface-white font-label-strong text-[10px] uppercase tracking-wider border border-surface-white/30">{currentResult?.category}</span>
             </div>
             <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-surface-white drop-shadow-md">
-                Bún Bò Bà Luân
+                {currentResult?.name}
             </h1>
             <div className="flex items-center gap-4 text-surface-white/90 font-body-md text-caption">
               <div className="flex items-center gap-1 bg-surface-black/30 backdrop-blur-sm px-2 py-1 rounded-full border border-surface-white/20">
                 <span className="material-symbols-outlined text-streak-gold text-[16px]">star</span>
-                <span className="font-label-strong">4.5</span>
-                <span className="opacity-75">(128)</span>
+                <span className="font-label-strong">{currentResult?.rating}</span>
+                <span className="opacity-75">({currentResult?.totalReviews})</span>
               </div>
               <div className="flex items-center gap-1 bg-surface-black/30 backdrop-blur-sm px-2 py-1 rounded-full border border-surface-white/20">
                 <span className="material-symbols-outlined text-[16px]">directions_walk</span>
-                <span className="font-label-strong">400m</span>
+                <span className="font-label-strong">{currentResult ? (currentResult.distance / 1000).toFixed(1) : 0}km</span>
               </div>
               <div className="flex items-center gap-1 bg-surface-black/30 backdrop-blur-sm px-2 py-1 rounded-full border border-surface-white/20">
                 <span className="material-symbols-outlined text-[16px]">payments</span>
-                <span className="font-label-strong">$$</span>
+                <span className="font-label-strong">{Array(currentResult?.priceLevel || 1).fill('$').join('')}</span>
               </div>
             </div>
           </div>

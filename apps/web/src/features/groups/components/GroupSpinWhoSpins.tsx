@@ -1,21 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 
 const GroupSpinWhoSpins: React.FC = () => {
   const navigate = useNavigate();
+  const { members, setSpinner } = useGroupSpinStore();
   const [isSpinning, setIsSpinning] = useState(false);
   const [winnerIndex, setWinnerIndex] = useState<number | null>(null);
   const [activeBlipIndex, setActiveBlipIndex] = useState<number | null>(null);
   const [wheelRotation, setWheelRotation] = useState(0);
   const wheelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-
-  const avatars = [
-    { id: 0, name: '@minh', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDry0kr29HhPE8mFsEqdpN_SZnmHQdF3nN5XZVx71RX4yznjlKxJe_Obv4tf1NHhYXDN-wte1g9V-9Tj2-wU0wt5HYOfKjNXymWNXN8gexLth17-9-7Fj4dpARUbBMUOZUF9TwjTI0w3lPzYSoW0iihH9KiiM3yTGZqIy04Zt4928o71u9cY57LKaTLNAQ3_HJImNGfxIghVcSutjnrlA_RkNeU0pTSnuugmzAl8xWCfcJG3AK8i7lDSA' },
-    { id: 1, name: '@tuan', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCzuS_Zoee4obVDRjy2FcR9ZGoaO7ZGOOEl7eW-QblB_TNeGRzz9OxLPk_PTOfRHHUGvd8bmPXRdGsCsiapabCTsssJ_jw-4EjxgfwOQiqloyGsEpN0GI5EY8hhQ67unSWC77LzZqBoE35zBydwIlDU63ZoxG3jwfzqL1HX9yqGREuZ9Q9nvuI_BBv-lOe1okvTaFA6LMuOTDCR_gLog7t3CM3UOH8UBhTLHqiKmnZAu0OPwFvQdCCClQ' },
-    { id: 2, name: '@lan', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBOHQen0JHf0q0RY-l_gD-wsz7esfYL7eV9ttMrxhS2DeSvuAFN6fNQolc99AkhIMCy77qON-tNbShgi5yygw8KRmTQ3SWrA8KBHCHT6Xs21A3ekNHfrY2TMUj1sSBuiqGZpBtSG7ExbrPkYlJygJ9FmgqlJaQkAdYnr8Ucj4drbpoYfDCaIZjozv0OIr0jXA1yBwShVLT_mF_LJrT1i9mmOdypc26i_zITkQollww4E9zVrtsLXO9aZg' },
-    { id: 3, name: '@hoa', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDXgt1o0UMHwhG45J2FyN63-5GmJVNj2yUgLOaIy8ThZ1YXN63dx0ZDNdCE5cpbTKniVJ4n5BPVDUqDYbQQLg-batsANih-8h8q9EfSMZG2iAdsnydsgsqaevhQ9Uy9xfQtqLkneY9gmwQydiq-Vrn8Dfkhg_OZiAMFeIDuV155wP3uloxSGsOJy2CU7feYUsIynkBy911-MokXF3MG5Zle64ckkrzbq4GBU3EsgDHw2DpbQzOlMmp0vg' }
-  ];
 
   const handleSpin = () => {
     if (isSpinning) return;
@@ -31,19 +26,19 @@ const GroupSpinWhoSpins: React.FC = () => {
     let currentAvatar = 0;
     const blipInterval = setInterval(() => {
         setActiveBlipIndex(currentAvatar);
-        currentAvatar = (currentAvatar + 1) % avatars.length;
+        currentAvatar = (currentAvatar + 1) % members.length;
     }, 100);
 
     setTimeout(() => {
         clearInterval(blipInterval);
-        const winner = Math.floor(Math.random() * avatars.length);
+        const winner = Math.floor(Math.random() * members.length);
         setWinnerIndex(winner);
         setActiveBlipIndex(null);
+        setSpinner(members[winner].id);
         
         setTimeout(() => {
             setIsSpinning(false);
-            // navigate to group veto maybe?
-            navigate('/group-spin/veto');
+            navigate('/group-spin/spin');
         }, 2000);
     }, 3000);
   };
@@ -106,37 +101,27 @@ const GroupSpinWhoSpins: React.FC = () => {
           </div>
 
           {/* Avatars */}
-          <div className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/4 flex flex-col items-center gap-1 avatar-pop ${activeBlipIndex === 0 || winnerIndex === 0 ? 'highlighted' : ''}`}>
-            <div className="relative">
-              <img className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-surface-white shadow-md object-cover relative z-10" alt="@minh" src={avatars[0].img} />
-              <div className="absolute inset-0 rounded-full bg-streak-gold blur-md transition-opacity duration-300 pointer-events-none" style={{ opacity: winnerIndex === 0 ? 0.7 : 0 }}></div>
-            </div>
-            <span className="font-label-strong text-caption text-on-surface bg-surface-white border border-subtle-gray px-2 py-0.5 rounded-full shadow-sm z-20">@minh</span>
-          </div>
+          {members.map((member, index) => {
+            const angle = (index * 360) / members.length;
+            const radius = 110; // adjusted for visual placement
+            const rad = angle * (Math.PI / 180) - Math.PI / 2; // -90 deg to start at top
+            const x = Math.cos(rad) * radius;
+            const y = Math.sin(rad) * radius;
 
-          <div className={`absolute top-1/2 right-0 translate-x-1/4 -translate-y-1/2 flex flex-col items-center gap-1 avatar-pop ${activeBlipIndex === 1 || winnerIndex === 1 ? 'highlighted' : ''}`}>
-            <div className="relative">
-              <img className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-surface-white shadow-md object-cover relative z-10" alt="@tuan" src={avatars[1].img} />
-              <div className="absolute inset-0 rounded-full bg-streak-gold blur-md transition-opacity duration-300 pointer-events-none" style={{ opacity: winnerIndex === 1 ? 0.7 : 0 }}></div>
-            </div>
-            <span className="font-label-strong text-caption text-on-surface bg-surface-white border border-subtle-gray px-2 py-0.5 rounded-full shadow-sm z-20">@tuan</span>
-          </div>
-
-          <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/4 flex flex-col items-center gap-1 avatar-pop ${activeBlipIndex === 2 || winnerIndex === 2 ? 'highlighted' : ''}`}>
-            <div className="relative">
-              <img className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-surface-white shadow-md object-cover relative z-10" alt="@lan" src={avatars[2].img} />
-              <div className="absolute inset-0 rounded-full bg-streak-gold blur-md transition-opacity duration-300 pointer-events-none" style={{ opacity: winnerIndex === 2 ? 0.7 : 0 }}></div>
-            </div>
-            <span className="font-label-strong text-caption text-on-surface bg-surface-white border border-subtle-gray px-2 py-0.5 rounded-full shadow-sm z-20">@lan</span>
-          </div>
-
-          <div className={`absolute top-1/2 left-0 -translate-x-1/4 -translate-y-1/2 flex flex-col items-center gap-1 avatar-pop ${activeBlipIndex === 3 || winnerIndex === 3 ? 'highlighted' : ''}`}>
-            <div className="relative">
-              <img className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-surface-white shadow-md object-cover relative z-10" alt="@hoa" src={avatars[3].img} />
-              <div className="absolute inset-0 rounded-full bg-streak-gold blur-md transition-opacity duration-300 pointer-events-none" style={{ opacity: winnerIndex === 3 ? 0.7 : 0 }}></div>
-            </div>
-            <span className="font-label-strong text-caption text-on-surface bg-surface-white border border-subtle-gray px-2 py-0.5 rounded-full shadow-sm z-20">@hoa</span>
-          </div>
+            return (
+              <div 
+                key={member.id}
+                className={`absolute left-1/2 top-1/2 flex flex-col items-center gap-1 avatar-pop ${activeBlipIndex === index || winnerIndex === index ? 'highlighted' : ''}`}
+                style={{ transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))` }}
+              >
+                <div className="relative">
+                  <img className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-surface-white shadow-md object-cover relative z-10" alt={member.name} src={member.avatarUrl} />
+                  <div className="absolute inset-0 rounded-full bg-streak-gold blur-md transition-opacity duration-300 pointer-events-none" style={{ opacity: winnerIndex === index ? 0.7 : 0 }}></div>
+                </div>
+                <span className="font-label-strong text-caption text-on-surface bg-surface-white border border-subtle-gray px-2 py-0.5 rounded-full shadow-sm z-20">{member.name}</span>
+              </div>
+            );
+          })}
 
           <div className="absolute z-20 w-16 h-16 rounded-full bg-surface-container-lowest flex items-center justify-center shadow-lg border-[3px] border-surface-variant flex-col">
             <span className={`material-symbols-outlined text-primary text-3xl mb-0.5 ${isSpinning ? 'animate-spin' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>sync</span>

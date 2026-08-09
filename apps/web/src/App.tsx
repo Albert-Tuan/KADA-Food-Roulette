@@ -4,7 +4,7 @@ import { LoginPage, RegisterPage } from './features/auth/components';
 
 // Features - Roulette
 import HomeSpinRewards from './features/roulette/components/HomeSpinRewards';
-import LuckySpinWheel from './features/roulette/components/LuckySpinWheel';
+import GroupSpinFoodWheel from './features/groups/components/GroupSpinFoodWheel';
 import SpinResult from './features/roulette/components/SpinResult';
 import MysteryBoxReveal from './features/roulette/components/MysteryBoxReveal';
 
@@ -58,7 +58,6 @@ function App() {
           <Route path="/locket" element={<LocketFeed />} />
           <Route path="/profile" element={<ProfileTasteProfile />} />
           <Route path="/preferences" element={<PreferencesScreen />} />
-          <Route path="/spin" element={<LuckySpinWheel />} />
           <Route path="/spin/result" element={<SpinResult />} />
           <Route path="/spin/menu-capture" element={<MenuCaptureScreen />} />
           <Route path="/spin/menu-review" element={<MenuReviewScreen />} />
@@ -68,6 +67,7 @@ function App() {
           <Route path="/review" element={<WriteReview />} />
           <Route path="/review/submitted" element={<ReviewSubmitted />} />
           <Route path="/group-spin/who-spins" element={<GroupSpinWhoSpins />} />
+          <Route path="/group-spin/spin" element={<GroupSpinFoodWheel />} />
           <Route path="/group-spin/veto" element={<GroupVoteVeto />} />
           <Route path="/group-spin/result" element={<GroupVoteResult />} />
           <Route path="/group-check-in" element={<GroupCheckInVerification />} />
