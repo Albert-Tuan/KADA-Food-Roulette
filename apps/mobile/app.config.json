@@ -1,0 +1,10 @@
+{
+  "expo-env-routerm": {
+    "lint": {
+      "enabled": true
+    },
+    "typecheck": {
+      "enabled": true
+    }
+  }
+}

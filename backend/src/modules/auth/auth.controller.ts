@@ -6,6 +6,36 @@ import { AuthRequest } from '../../shared/middleware/auth.middleware';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'food-roulette-super-secret-jwt-key-2026';
 
+const generateTokens = (userId: string, email: string, role: string) => {
+  const token = jwt.sign(
+    { id: userId, email, role },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  const refreshToken = jwt.sign(
+    { id: userId, type: 'refresh' },
+    JWT_SECRET,
+    { expiresIn: '30d' }
+  );
+
+  return { token, refreshToken };
+};
+
+const formatUserProfile = (user: any) => ({
+  id: user.id,
+  email: user.email,
+  displayNamePrivate: user.displayNamePrivate,
+  displayNamePublic: user.displayNamePublic,
+  publicId: user.publicId,
+  avatarUrl: user.avatarUrl,
+  xp: user.xp || 100,
+  streakDays: user.streakDays || 1,
+  coins: user.coins || 50,
+  role: user.role,
+  createdAt: user.createdAt,
+});
+
 export const authController = {
   // POST /api/auth/register
   register: async (req: Request, res: Response) => {
@@ -13,12 +43,18 @@ export const authController = {
       const { email, password, displayNamePrivate, displayNamePublic } = req.body;
 
       if (!email || !password || !displayNamePrivate || !displayNamePublic) {
-        return res.status(400).json({ error: 'Vui lòng điền đầy đủ các thông tin bắt buộc.' });
+        return res.status(400).json({
+          success: false,
+          error: 'Vui lòng điền đầy đủ các thông tin bắt buộc.'
+        });
       }
 
       const existingUser = await prisma.user.findUnique({ where: { email } });
       if (existingUser) {
-        return res.status(400).json({ error: 'Email này đã được sử dụng.' });
+        return res.status(400).json({
+          success: false,
+          error: 'Email này đã được sử dụng.'
+        });
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
@@ -36,30 +72,24 @@ export const authController = {
         },
       });
 
-      const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
-        JWT_SECRET,
-        { expiresIn: '7d' }
-      );
+      const { token, refreshToken } = generateTokens(user.id, user.email, user.role);
+      const userProfile = formatUserProfile(user);
 
-      const userProfile = {
-        id: user.id,
-        email: user.email,
-        displayNamePrivate: user.displayNamePrivate,
-        displayNamePublic: user.displayNamePublic,
-        publicId: user.publicId,
-        avatarUrl: user.avatarUrl,
-        xp: 100,
-        streakDays: 1,
-        coins: 50,
-        role: user.role,
-        createdAt: user.createdAt,
-      };
-
-      return res.status(201).json({ token, user: userProfile });
+      return res.status(201).json({
+        success: true,
+        data: {
+          user: userProfile,
+          access_token: token,
+          refresh_token: refreshToken,
+          expires_in: 604800
+        }
+      });
     } catch (error: any) {
       console.error('Register error:', error);
-      return res.status(500).json({ error: 'Lỗi máy chủ khi đăng ký tài khoản.' });
+      return res.status(500).json({
+        success: false,
+        error: 'Lỗi máy chủ khi đăng ký tài khoản.'
+      });
     }
   },
 
@@ -69,43 +99,46 @@ export const authController = {
       const { email, password } = req.body;
 
       if (!email || !password) {
-        return res.status(400).json({ error: 'Vui lòng điền email và mật khẩu.' });
+        return res.status(400).json({
+          success: false,
+          error: 'Vui lòng điền email và mật khẩu.'
+        });
       }
 
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
-        return res.status(401).json({ error: 'Email hoặc mật khẩu không chính xác.' });
+        return res.status(401).json({
+          success: false,
+          error: 'Email hoặc mật khẩu không chính xác.'
+        });
       }
 
       const isMatch = await bcrypt.compare(password, user.passwordHash);
       if (!isMatch) {
-        return res.status(401).json({ error: 'Email hoặc mật khẩu không chính xác.' });
+        return res.status(401).json({
+          success: false,
+          error: 'Email hoặc mật khẩu không chính xác.'
+        });
       }
 
-      const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
-        JWT_SECRET,
-        { expiresIn: '7d' }
-      );
+      const { token, refreshToken } = generateTokens(user.id, user.email, user.role);
+      const userProfile = formatUserProfile(user);
 
-      const userProfile = {
-        id: user.id,
-        email: user.email,
-        displayNamePrivate: user.displayNamePrivate,
-        displayNamePublic: user.displayNamePublic,
-        publicId: user.publicId,
-        avatarUrl: user.avatarUrl,
-        xp: 150,
-        streakDays: 3,
-        coins: 120,
-        role: user.role,
-        createdAt: user.createdAt,
-      };
-
-      return res.json({ token, user: userProfile });
+      return res.json({
+        success: true,
+        data: {
+          user: userProfile,
+          access_token: token,
+          refresh_token: refreshToken,
+          expires_in: 604800
+        }
+      });
     } catch (error: any) {
       console.error('Login error:', error);
-      return res.status(500).json({ error: 'Lỗi máy chủ khi đăng nhập.' });
+      return res.status(500).json({
+        success: false,
+        error: 'Lỗi máy chủ khi đăng nhập.'
+      });
     }
   },
 
@@ -113,29 +146,29 @@ export const authController = {
   me: async (req: AuthRequest, res: Response) => {
     try {
       if (!req.user) {
-        return res.status(401).json({ error: 'Chưa đăng nhập.' });
+        return res.status(401).json({
+          success: false,
+          error: 'Chưa đăng nhập.'
+        });
       }
 
       const user = await prisma.user.findUnique({ where: { id: req.user.id } });
       if (!user) {
-        return res.status(404).json({ error: 'Không tìm thấy thông tin người dùng.' });
+        return res.status(404).json({
+          success: false,
+          error: 'Không tìm thấy thông tin người dùng.'
+        });
       }
 
       return res.json({
-        id: user.id,
-        email: user.email,
-        displayNamePrivate: user.displayNamePrivate,
-        displayNamePublic: user.displayNamePublic,
-        publicId: user.publicId,
-        avatarUrl: user.avatarUrl,
-        xp: 150,
-        streakDays: 3,
-        coins: 120,
-        role: user.role,
-        createdAt: user.createdAt,
+        success: true,
+        data: formatUserProfile(user)
       });
     } catch (error: any) {
-      return res.status(500).json({ error: 'Lỗi máy chủ khi lấy thông tin.' });
+      return res.status(500).json({
+        success: false,
+        error: 'Lỗi máy chủ khi lấy thông tin.'
+      });
     }
   },
 
@@ -143,6 +176,7 @@ export const authController = {
   google: async (req: Request, res: Response) => {
     try {
       const { idToken } = req.body;
+      // In production, verify idToken with Google
       const mockEmail = `user_${Date.now()}@google.com`;
       const publicId = `u_${Math.random().toString(36).substring(2, 9)}`;
 
@@ -150,7 +184,7 @@ export const authController = {
         id: `google_${Date.now()}`,
         email: mockEmail,
         displayNamePrivate: 'Google User',
-        displayNamePublic: 'Google Explorer',
+        displayNamePublic: 'GoogleExplorer',
         publicId,
         avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
         xp: 200,
@@ -160,15 +194,23 @@ export const authController = {
         createdAt: new Date().toISOString(),
       };
 
-      const token = jwt.sign(
-        { id: userProfile.id, email: userProfile.email, role: 'USER' },
-        JWT_SECRET,
-        { expiresIn: '7d' }
-      );
+      const { token, refreshToken } = generateTokens(userProfile.id, userProfile.email, 'USER');
 
-      return res.json({ token, user: userProfile });
+      return res.json({
+        success: true,
+        data: {
+          user: userProfile,
+          access_token: token,
+          refresh_token: refreshToken,
+          is_new_user: true,
+          expires_in: 604800
+        }
+      });
     } catch (error: any) {
-      return res.status(500).json({ error: 'Lỗi đăng nhập Google.' });
+      return res.status(500).json({
+        success: false,
+        error: 'Lỗi đăng nhập Google.'
+      });
     }
   },
 
@@ -176,7 +218,10 @@ export const authController = {
   onboarding: async (req: AuthRequest, res: Response) => {
     try {
       if (!req.user) {
-        return res.status(401).json({ error: 'Chưa đăng nhập.' });
+        return res.status(401).json({
+          success: false,
+          error: 'Chưa đăng nhập.'
+        });
       }
 
       const {
@@ -190,7 +235,6 @@ export const authController = {
 
       const userId = req.user.id;
 
-      // Update User display names and set isOnboarded = true
       const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: {
@@ -201,7 +245,6 @@ export const authController = {
         },
       });
 
-      // Prepare initial cuisine scores from array if provided
       const cuisineScores: Record<string, number> = {};
       if (Array.isArray(cuisinePreferences)) {
         for (const c of cuisinePreferences) {
@@ -209,7 +252,6 @@ export const authController = {
         }
       }
 
-      // Upsert UserPreference
       const preference = await prisma.userPreference.upsert({
         where: { userId },
         create: {
@@ -228,20 +270,19 @@ export const authController = {
       });
 
       return res.json({
+        success: true,
         message: 'Hoàn tất thiết lập ban đầu thành công!',
-        user: {
-          id: updatedUser.id,
-          email: updatedUser.email,
-          displayNamePrivate: updatedUser.displayNamePrivate,
-          displayNamePublic: updatedUser.displayNamePublic,
-          publicId: updatedUser.publicId,
-          isOnboarded: updatedUser.isOnboarded,
-        },
-        preference,
+        data: {
+          user: formatUserProfile(updatedUser),
+          preference
+        }
       });
     } catch (error: any) {
       console.error('Onboarding error:', error);
-      return res.status(500).json({ error: 'Lỗi khi lưu thông tin onboarding.' });
+      return res.status(500).json({
+        success: false,
+        error: 'Lỗi khi lưu thông tin onboarding.'
+      });
     }
   },
 
@@ -250,30 +291,37 @@ export const authController = {
     try {
       const { email } = req.body;
       if (!email) {
-        return res.status(400).json({ error: 'Vui lòng cung cấp email.' });
+        return res.status(400).json({
+          success: false,
+          error: 'Vui lòng cung cấp email.'
+        });
       }
 
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
-        // Return 200 for security to prevent user enumeration
         return res.json({
-          message: 'Nếu email tồn tại trong hệ thống, hướng dẫn khôi phục mật khẩu đã được gửi.',
+          success: true,
+          message: 'Nếu email tồn tại trong hệ thống, hướng dẫn khôi phục mật khẩu đã được gửi.'
         });
       }
 
-      // Generate temporary reset token (valid for 15 mins)
-      const resetToken = jwt.sign({ id: user.id, purpose: 'reset-password' }, JWT_SECRET, {
-        expiresIn: '15m',
-      });
+      const resetToken = jwt.sign(
+        { id: user.id, purpose: 'reset-password' },
+        JWT_SECRET,
+        { expiresIn: '15m' }
+      );
 
       console.log(`[AUTH] Password reset token for ${email}: ${resetToken}`);
 
       return res.json({
-        message: 'Hướng dẫn khôi phục mật khẩu đã được gửi đến email của bạn.',
-        resetToken, // Included in response for development convenience
+        success: true,
+        message: 'Hướng dẫn khôi phục mật khẩu đã được gửi đến email của bạn.'
       });
     } catch (error: any) {
-      return res.status(500).json({ error: 'Lỗi gửi yêu cầu quên mật khẩu.' });
+      return res.status(500).json({
+        success: false,
+        error: 'Lỗi gửi yêu cầu quên mật khẩu.'
+      });
     }
   },
 
@@ -282,22 +330,34 @@ export const authController = {
     try {
       const { resetToken, newPassword } = req.body;
       if (!resetToken || !newPassword) {
-        return res.status(400).json({ error: 'Vui lòng cung cấp mã khôi phục và mật khẩu mới.' });
+        return res.status(400).json({
+          success: false,
+          error: 'Vui lòng cung cấp mã khôi phục và mật khẩu mới.'
+        });
       }
 
       if (newPassword.length < 6) {
-        return res.status(400).json({ error: 'Mật khẩu phải có ít nhất 6 ký tự.' });
+        return res.status(400).json({
+          success: false,
+          error: 'Mật khẩu phải có ít nhất 6 ký tự.'
+        });
       }
 
       let payload: any;
       try {
         payload = jwt.verify(resetToken, JWT_SECRET);
       } catch (err) {
-        return res.status(400).json({ error: 'Mã khôi phục không hợp lệ hoặc đã hết hạn.' });
+        return res.status(400).json({
+          success: false,
+          error: 'Mã khôi phục không hợp lệ hoặc đã hết hạn.'
+        });
       }
 
       if (payload.purpose !== 'reset-password') {
-        return res.status(400).json({ error: 'Mã khôi phục không hợp lệ.' });
+        return res.status(400).json({
+          success: false,
+          error: 'Mã khôi phục không hợp lệ.'
+        });
       }
 
       const passwordHash = await bcrypt.hash(newPassword, 10);
@@ -310,9 +370,68 @@ export const authController = {
         },
       });
 
-      return res.json({ message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.' });
+      return res.json({
+        success: true,
+        message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.'
+      });
     } catch (error: any) {
-      return res.status(500).json({ error: 'Lỗi đặt lại mật khẩu.' });
+      return res.status(500).json({
+        success: false,
+        error: 'Lỗi đặt lại mật khẩu.'
+      });
+    }
+  },
+
+  // POST /api/auth/refresh
+  refresh: async (req: Request, res: Response) => {
+    try {
+      const { refresh_token } = req.body;
+      if (!refresh_token) {
+        return res.status(400).json({
+          success: false,
+          error: 'Refresh token is required.'
+        });
+      }
+
+      let payload: any;
+      try {
+        payload = jwt.verify(refresh_token, JWT_SECRET);
+      } catch (err) {
+        return res.status(401).json({
+          success: false,
+          error: 'Refresh token không hợp lệ hoặc đã hết hạn.'
+        });
+      }
+
+      if (payload.type !== 'refresh') {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid token type.'
+        });
+      }
+
+      const user = await prisma.user.findUnique({ where: { id: payload.id } });
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not found.'
+        });
+      }
+
+      const { token } = generateTokens(user.id, user.email, user.role);
+
+      return res.json({
+        success: true,
+        data: {
+          access_token: token,
+          expires_in: 604800
+        }
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        error: 'Lỗi làm mới token.'
+      });
     }
   },
 };

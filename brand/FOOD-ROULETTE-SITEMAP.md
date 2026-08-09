@@ -771,7 +771,7 @@ interface User {
   public_id: string;                // ngẫu nhiên, dùng cho /u/:public_id
   avatar_url?: string;
   bio?: string;
-  is_steward: boolean;              // role duyệt quán
+  role: 'USER' | 'STEWARD' | 'ADMIN';  // role duyệt quán
   created_at: Date;
   preferences: {
     cuisines: string[];
@@ -795,8 +795,8 @@ interface Friendship {
 interface Group {
   id: string;
   name: string;
-  owner_id: string;
-  member_ids: string[];             // max 20
+  owner_id: string;              // chủ phòng (tạo group)
+  member_ids: string[];          // max 20 - tất cả thành viên đều có thể thêm người khác
   created_at: Date;
 }
 
@@ -1031,14 +1031,14 @@ interface CircleRecommendation {
 11. `Menu.status = 'VERIFIED'` trước khi dùng cho spin.
 12. `CircleRecommendation` được tạo cho mỗi group spin.
 
-### 19.10 Open questions còn lại (để thống nhất sau)
+### 19.10 Open questions còn lại (đã resolve)
 
-- [ ] Steward role: có phải là `is_steward = true` trên `User`, hay một bảng `steward_team` riêng?
-- [ ] Bạn bè có thể mời vào group, hay chỉ owner mới thêm?
-- [ ] Group spin lưu vĩnh viễn hay có thể "giải tán" nhóm sau khi quay?
-- [ ] Ảnh locket có tự hủy (24h) hay giữ vĩnh viễn?
-- [ ] Push notification khi bạn bè đăng locket mới — bật/tắt riêng từng người?
-- [ ] `device_hash` có thể reset khi user đổi máy? (cần chiến lược chống false-positive)
+- [x] Steward role: ✅ Dùng `role ENUM('USER', 'STEWARD', 'ADMIN')` trên bảng User
+- [x] Mời vào group: ✅ Có chủ phòng tạo, nhưng **tất cả thành viên** đều có thể thêm người mới
+- [x] Vòng đời group: ✅ Group bị **xóa khi tất cả thành viên out**
+- [x] Vòng đời locket: ✅ **Vĩnh viễn** (không tự hủy)
+- [x] Push notification: ✅ **Per-type toggle** - bật/tắt theo loại (locket mới, spin, group...)
+- [x] `device_hash` reset: ✅ **User-initiated reset** - user chủ động confirm đổi máy trong app
 - [ ] AI OCR engine: dùng Google ML Kit, AWS Textract, hay custom model?
 - [ ] Preference learning: real-time update hay batch update daily?
 

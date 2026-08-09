@@ -117,12 +117,18 @@ interface User {
   public_id: string;                // immutable, dùng cho URL
   avatar_url?: string;
   bio?: string;
-  is_steward: boolean;
+  role: 'USER' | 'STEWARD' | 'ADMIN';  // role duyệt quán
   created_at: Date;
   preferences: { cuisines: string[]; price_range: 1|2|3|4; dietary: string[] };
 }
 interface Friendship { id: string; user_a: string; user_b: string; status: 'pending'|'accepted'|'blocked'; requested_by: string; created_at: Date; accepted_at?: Date; }
-interface Group { id: string; name: string; owner_id: string; member_ids: string[]; created_at: Date; } // max 20 member_ids
+interface Group { 
+  id: string; 
+  name: string; 
+  owner_id: string;  // chủ phòng (tạo group)
+  member_ids: string[];  // max 20 - tất cả thành viên đều có thể thêm người khác
+  created_at: Date; 
+}
 interface Restaurant {
   id: string; source: 'google_places'|'user_submitted'; google_place_id?: string;
   name: string; address: string; location: GeoJSON<Point>;          // PostGIS geography(Point,4326)
@@ -580,14 +586,14 @@ Xưng "mình – bạn"                          Xưng "quý khách"
 
 ---
 
-## §9 · Open questions còn lại (cần user quyết định)
+## §9 · Open questions còn lại (đã resolve)
 
-- [ ] **Steward role:** `is_steward` boolean trên `User`, hay bảng `steward_team` riêng?
-- [ ] **Mời vào group:** bạn bè có thể mời, hay chỉ owner mới thêm thành viên?
-- [ ] **Vòng đời group:** tồn tại vĩnh viễn, hay có thể "giải tán" sau khi quay?
-- [ ] **Vòng đời ảnh locket:** tự hủy 24h, hay giữ vĩnh viễn?
-- [ ] **Push notification:** bật/tắt riêng từng người bạn?
-- [ ] **`device_hash` reset** khi user đổi máy — chiến lược chống false-positive?
+- [x] **Steward role:** ✅ Dùng `role ENUM('USER', 'STEWARD', 'ADMIN')` trên bảng User
+- [x] **Mời vào group:** ✅ Có chủ phòng tạo, nhưng **tất cả thành viên** (kể cả chủ phòng) đều có thể thêm người mới sau khi vào phòng
+- [x] **Vòng đời group:** ✅ Group bị **xóa khi tất cả thành viên out**
+- [x] **Vòng đời locket:** ✅ **Vĩnh viễn** (không tự hủy)
+- [x] **Push notification:** ✅ **Per-type toggle** - bật/tắt theo loại (locket mới, spin, group...)
+- [x] **`device_hash` reset:** ✅ **User-initiated reset** - user chủ động confirm đổi máy trong app
 - [x] **Pricing** (Free/Pro/Business): ✅ Đã triển khai Spin System + B2B trong v1.0
 
 ---

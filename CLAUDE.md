@@ -52,8 +52,27 @@ KADA-Food-Roulette/
 │   │   │   └── pages/              # Route pages (thin wrappers)
 │   │   └── package.json
 │   │
-│   └── mobile/                       # Expo + React Native (future)
-│       └── app/                      # Expo Router pages
+│   └── mobile/                       # Expo + React Native
+│       └── app/                       # Expo Router pages (file-based routing)
+│           ├── _layout.tsx            # Root layout
+│           ├── +not-found.tsx         # 404 page
+│           ├── auth/                  # Auth screens
+│           │   ├── login.tsx
+│           │   └── register.tsx
+│           ├── locket/                # Locket screens
+│           │   └── capture.tsx
+│           ├── restaurant/            # Restaurant screens
+│           │   └── [id].tsx
+│           └── (tabs)/                # Tab navigation
+│               ├── _layout.tsx        # Tab layout
+│               ├── index.tsx          # Home
+│               ├── spin.tsx           # Spin/Roulette
+│               ├── lockets.tsx        # Locket feed
+│               └── profile.tsx        # Profile
+│       └── src/
+│           ├── api/                   # API client & endpoints
+│           ├── lib/                   # Utils & constants
+│           └── stores/                # Zustand stores
 │
 ├── packages/                         # Shared code (published as npm)
 │   ├── ui/                          # Design system
@@ -68,8 +87,12 @@ KADA-Food-Roulette/
 ├── backend/                          # Main backend (Express.js + Prisma)
 │   ├── prisma/                      # Database schema
 │   └── src/
-│       ├── modules/                 # Feature modules
-│       └── shared/                  # Shared middleware & utils
+│       ├── index.ts                # Express app entry
+│       ├── modules/                # Feature modules (auth, roulette, groups...)
+│       ├── shared/                 # Shared services & utilities
+│       ├── middleware/             # CORS, error handling
+│       ├── utils/                  # JWT, hash, response helpers
+│       └── lib/                    # Prisma client
 │
 ├── docker/                           # Docker configs
 ├── scripts/                          # Dev scripts
@@ -128,7 +151,7 @@ brand/prompts.md  >  brand/brand.md  >  brand/FOOD-ROULETTE-SITEMAP.md  >  conte
 | Data fetching | TanStack Query |
 | HTTP | Axios |
 
-### Frontend (Mobile - Future)
+### Frontend (Mobile)
 | Layer | Lựa chọn |
 |-------|----------|
 | Framework | Expo SDK 52 + Expo Router |
@@ -136,7 +159,7 @@ brand/prompts.md  >  brand/brand.md  >  brand/FOOD-ROULETTE-SITEMAP.md  >  conte
 | Animation | Reanimated 3 + Moti |
 | State | Zustand + TanStack Query |
 | Map | react-native-maps + OpenStreetMap |
-| Camera | expo-image-picker |
+| Camera | expo-image-picker + expo-camera |
 | GPS | expo-location |
 
 ### Infrastructure

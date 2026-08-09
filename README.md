@@ -2,72 +2,131 @@
 
 > *"Không biết ăn gì? Để vòng quyết định."*
 
-**Food Roulette** là mobile app (React Native + Expo) giúp người Việt Nam chọn quán ăn ngẫu nhiên xung quanh vị trí hiện tại bằng cách quay một bánh xe.
+**Food Roulette** là mobile app (React Native + Expo, iOS + Android) giúp người Việt Nam chọn quán ăn ngẫu nhiên xung quanh vị trí hiện tại bằng cách quay một bánh xe.
 
 ---
 
-## Tính năng nổi bật
+## Tinh nang noi bat
 
-| Tính năng | Mô tả |
+| Tinh nang | Mo ta |
 |------------|--------|
-| **Spin cá nhân** | Quay bánh xe chọn quán trong 3 giây, filter theo loại món / khoảng cách / giá |
-| **Group Spin** | Quay chung cho nhóm tối đa 20 người, vote chấp nhận hoặc quay lại |
-| **Locket (camera-only)** | Chụp ảnh món ăn trực tiếp từ camera, có GPS + timestamp chống ảnh giả |
-| **Menu Capture** | Chụp menu tại quán, AI đọc và parse thành danh sách món |
-| **AI Personalization** | Gợi ý best match cho từng member trong circle dựa trên sở thích |
-| **Review thật** | Hệ thống đánh giá từ người dùng thật, không quảng cáo trá hình |
+| **Spin ca nhan** | Quay banh xe chon quan trong 3 giay, filter theo loai mon / khoang cach / gia |
+| **Group Spin** | Quay chung cho nhom toi da 20 nguoi, vote chap nhan hoac quay lai |
+| **Locket (camera-only)** | Chap anh mon an truc tiep tu camera, co GPS + timestamp chong anh gia |
+| **Menu Capture** | Chap menu tai quan, AI doc va parse thanh danh sach mon |
+| **AI Personalization** | Goi y best match cho tung member trong circle dua tren so thich |
+| **Review that** | He thong danh gia tu nguoi dung that, khong quang cao tra hinh |
 
 ---
 
 ## Tech Stack
 
+### Frontend (Mobile)
 | Layer | Công nghệ |
 |-------|-----------|
-| Mobile App | Expo SDK 52 + Expo Router + TypeScript |
-| UI | NativeWind (Tailwind cho RN) + Design tokens Earthy |
+| Framework | Expo SDK 52 + Expo Router |
+| Language | TypeScript |
+| Styling | NativeWind (Tailwind cho RN) |
 | Animation | Reanimated 3 + Moti |
 | State | Zustand + TanStack Query |
-| Backend | Supabase (Postgres + Auth + Storage + Realtime) |
-| Database | Postgres + PostGIS |
-| Map | react-native-maps + OpenStreetMap |
+| Camera | expo-camera + expo-image-picker |
+| GPS | expo-location |
+| HTTP | Axios |
+| Design | Earthy/warm-light-first |
+
+### Frontend (Web)
+| Layer | Công nghệ |
+|-------|-----------|
+| Framework | React 19 + Vite 6 + TypeScript |
+| Styling | Tailwind CSS 3 |
+| Routing | React Router DOM 7 |
+| State | Zustand |
+| Data fetching | TanStack Query |
+| HTTP | Axios |
+| UI | Design tokens Earthy/warm-light-first |
+
+### Backend
+| Layer | Cong nghe |
+|-------|-----------|
+| Runtime | Node.js 20 LTS |
+| Framework | Express.js |
+| ORM | Prisma |
+| Database | MySQL 8.0 (Docker local) |
+| Auth | JWT + bcryptjs |
+| API | REST |
 
 ---
 
-## Bắt đầu
+## Bat dau
 
-### Yêu cầu
+### Yeu cau
 
 - Node.js 20+
-- npm hoặc yarn
-- Expo CLI (`npm install -g expo-cli`)
-- Expo account (để build)
+- npm hoac yarn
+- Docker (cho MySQL)
 
 ### Setup
 
+**1. Clone repo**
 ```bash
-# Clone repo
 git clone https://github.com/your-org/food-roulette.git
 cd food-roulette
-
-# Install dependencies
-npm install
-
-# Copy env template
-cp .env.example .env
-
-# Start development
-npm start
 ```
+
+**2. Setup Database (Docker MySQL)**
+```bash
+cd docker
+docker-compose up -d
+```
+
+**3. Setup Backend**
+```bash
+cd backend
+npm install
+cp .env.example .env
+# Edit .env with your settings (DATABASE_URL already configured for Docker)
+npx prisma generate
+npx prisma db push
+npm run dev
+```
+Backend chay tai: http://localhost:3000
+
+**4. Setup Web App**
+```bash
+cd apps/web
+npm install
+cp .env.example .env
+# Edit .env - set VITE_API_URL=http://localhost:3000/api (hoac de mac dinh)
+npm run dev
+```
+Web app chay tai: http://localhost:5173
+
+**5. Setup Mobile App**
+```bash
+cd apps/mobile
+npm install
+# Create assets/icon.png and assets/splash.png (1024x1024)
+npx expo prebuild
+# iOS:
+npx expo run:ios
+# Android:
+npx expo run:android
+```
+Mobile app: Expo Go (development) hoặc build APK/IPA
 
 ### Environment Variables
 
+**Backend (.env)**
 ```env
-# Supabase
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+DATABASE_URL="mysql://food_user:foodpassword@localhost:3306/food_roulette"
+JWT_SECRET="your-secret-key-min-32-characters-long"
+PORT=3000
+CLIENT_URL=http://localhost:5173
+```
 
-# Google Maps (optional)
-EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_key
+**Web App (.env)**
+```env
+VITE_API_URL=http://localhost:3000/api
 ```
 
 ---
@@ -77,122 +136,98 @@ EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_key
 ```
 KADA-Food-Roulette/
 ├── apps/
-│   └── mobile/                    # Expo + React Native app
-│       └── app/                  # Expo Router pages
-├── backend/
-│   └── prisma/
-│       ├── schema.prisma         # Prisma schema v5.0
-│       └── migrations/
-│           └── v5.0/            # MySQL migration scripts
-│               ├── 000_create_database.sql
-│               ├── complete_schema.sql
-│               ├── seed_data.sql
-│               └── csv_data/     # CSV import scripts
-├── brand/                        # Brand & specs
-│   ├── prompts.md               # Master prompt (single source of truth)
-│   ├── brand.md                 # Brand kit
-│   └── FOOD-ROULETTE-SITEMAP.md # Feature specs
-├── content/                     # Content & exploration
-│   └── explore/                 # Strategy docs
-├── docs/                        # Documentation
-│   └── *.xml                    # ERD diagrams (v2.6 - v4.1)
-├── VIBE_RULES.md               # Vibe coding rules
-├── AGENTS.md                   # AI agent conventions
-├── CHANGELOG_SPEC.md           # Spec change log
-└── PROMPT_TEMPLATES/          # AI context templates
+│   ├── web/                         # React + Vite web app
+│   │   └── src/
+│   │       ├── api/                 # API client layer
+│   │       ├── features/            # Feature-based modules
+│   │       ├── hooks/              # Global hooks
+│   │       ├── stores/             # Zustand stores
+│   │       └── lib/                # Utils & constants
+│   │
+│   └── mobile/                      # Expo + React Native mobile app
+│       └── app/                     # Expo Router pages
+│           ├── auth/                # Auth screens
+│           ├── locket/              # Locket screens
+│           ├── restaurant/          # Restaurant screens
+│           └── (tabs)/              # Tab navigation
+│
+├── backend/                          # Express.js + Prisma backend
+├── docker/                           # Docker configs
+├── docs/                             # Documentation
+├── brand/                            # Brand & specs
+├── CLAUDE.md                         # AI entry point
+├── VIBE_RULES.md                    # Golden rules
+└── AGENTS.md                         # AI conventions
 ```
 
 ---
 
-## Database Setup (MySQL)
+## API Endpoints
 
-### Yêu cầu
+### Auth
+| Method | Endpoint | Mo ta |
+|--------|----------|-------|
+| POST | /api/v1/auth/register | Dang ky |
+| POST | /api/v1/auth/login | Dang nhap |
+| GET | /api/v1/auth/me | Lay thong tin user hien tai |
+| POST | /api/v1/auth/refresh | Lam moi token |
+| POST | /api/v1/auth/forgot-password | Quen mat khau |
+| POST | /api/v1/auth/reset-password | Dat lai mat khau |
 
-- MySQL 8.0+
-- Docker (recommended) hoặc local MySQL
+### Spins
+| Method | Endpoint | Mo ta |
+|--------|----------|-------|
+| POST | /api/v1/spins/personal | Quay banh xe ca nhan |
+| POST | /api/v1/spins/accept | Chap nhan ket qua |
+| POST | /api/v1/spins/reroll | Quay lai |
+| GET | /api/v1/spins/history | Lay lich su quay |
 
-### Setup với Docker
+### Groups
+| Method | Endpoint | Mo ta |
+|--------|----------|-------|
+| POST | /api/v1/groups | Tao nhom moi |
+| GET | /api/v1/groups | Lay danh sach nhom |
+| GET | /api/v1/groups/:id | Lay chi tiet nhom |
+| POST | /api/v1/groups/:id/spin | Bat dau quay nhom |
+| POST | /api/v1/groups/:id/vote | Binh chon ket qua |
 
-```bash
-# Pull MySQL image
-docker pull mysql:8.0
+### Restaurants
+| Method | Endpoint | Mo ta |
+|--------|----------|-------|
+| GET | /api/v1/restaurants | Tim kiem quan an |
+| GET | /api/v1/restaurants/:id | Lay chi tiet quan |
+| POST | /api/v1/restaurants | Them quan moi |
 
-# Run container
-docker run -d \
-  --name food_roulette_mysql \
-  -p 3306:3306 \
-  -e MYSQL_ROOT_PASSWORD=rootpassword \
-  -e MYSQL_DATABASE=food_roulette \
-  mysql:8.0
-```
+### Lockets
+| Method | Endpoint | Mo ta |
+|--------|----------|-------|
+| GET | /api/v1/lockets/feed | Lay feed locket |
+| POST | /api/v1/lockets | Upload locket moi |
 
-### Setup Database
+---
 
-```bash
-# 1. Create database
-mysql -u root -p < backend/prisma/migrations/v5.0/000_create_database.sql
+## Tai lieu
 
-# 2. Create tables
-mysql -u root -p food_roulette < backend/prisma/migrations/v5.0/complete_schema.sql
-
-# 3. Seed test data
-mysql -u root -p food_roulette < backend/prisma/migrations/v5.0/seed_data.sql
-```
-
-### Migrations
-
-| File | Mục đích |
-|------|----------|
-| `000_create_database.sql` | Tạo database + user |
-| `complete_schema.sql` | Tạo tất cả 15 tables |
-| `seed_data.sql` | Seed data cho testing |
-| `csv_data/import_csv.sql` | Import từ CSV (future) |
-| `validation_queries.sql` | 5 complex validation queries |
-
-### Tables (v5.0)
-
-| Table | Entity | Priority |
-|-------|--------|----------|
-| `users` | User accounts | P0 |
-| `restaurants` | Restaurant data | P0 |
-| `restaurant_hours` | Opening hours (4NF) | P0 |
-| `restaurant_photos` | Photos (4NF) | P0 |
-| `friendships` | Social connections | P0 |
-| `spin_groups` | Group spin sessions | P0 |
-| `group_members` | Group members | P0 |
-| `spin_sessions` | Spin results | P0 |
-| `spin_session_candidates` | Restaurant candidates | P0 |
-| `votes` | Group votes | P0 |
-| `spin_wallets` | Spin balance | P0 |
-| `spin_logs` | Spin history | P0 |
-| `lockets` | Food photos | P1 |
-| `check_ins` | Check-in records | P1 |
-| `spin_packs` | Purchased spin packs | P1 |
+| File | Mo ta |
+|------|--------|
+| `brand/prompts.md` | Master prompt cho AI |
+| `brand/brand.md` | Brand kit (mau, font, tone) |
+| `brand/FOOD-ROULETTE-SITEMAP.md` | Sitemap & feature specs |
+| `docs/API_SPEC.md` | Chi tiet API specification |
+| `VIBE_RULES.md` | Golden rules cho vibe coding |
+| `AGENTS.md` | AI agent conventions |
 
 ---
 
 ## Team
 
-| Role | Người | MSSV |
-|------|-------|------|
-| PM / Fullstack Lead | Đặng Tuấn Anh | N23DCAT003 |
-| Frontend Developer | Lê Văn Hoàng Hiếu | N24DECE018 |
-| Frontend / Content | Trần Gia Bình | N24DECE005 |
-| Backend Developer | Lê Huy Trường | N23DCCN064 |
-| Backend / DevOps | Nguyễn Thành Nam | N23DCCN108 |
-
----
-
-## Tài liệu
-
-| File | Mô tả |
-|------|--------|
-| `brand/prompts.md` | Master prompt cho AI (copy/paste vào AI) |
-| `brand/brand.md` | Brand kit (màu, font, tone) |
-| `brand/FOOD-ROULETTE-SITEMAP.md` | Sitemap & feature specs |
-| `VIBE_RULES.md` | Golden rules cho vibe coding |
-| `AGENTS.md` | AI agent conventions & role templates |
-| `docs/food_roulette_erd.drawio.xml` | Entity Relationship Diagram |
+| Role | Nguoi | MSSV |
+|------|-------|-------|
+| PM / Fullstack Lead | Dang Tuan Anh | N23DCAT003 |
+| Frontend Developer | Le Van Hoang Hieu | N24DECE018 |
+| Frontend / Content | Tran Gia Binh | N24DECE005 |
+| Backend Developer | Le Huy Truong | N23DCCN064 |
+| Backend / DevOps | Nguyen Thanh Nam | N23DCCN108 |
 
 ---
 

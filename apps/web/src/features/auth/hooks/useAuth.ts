@@ -43,7 +43,7 @@ export function useAuth() {
     onSuccess: () => {
       logout();
       queryClient.clear();
-      navigate(ROUTES.AUTH.LOGIN);
+      navigate(ROUTES.LOGIN);
     },
   });
 

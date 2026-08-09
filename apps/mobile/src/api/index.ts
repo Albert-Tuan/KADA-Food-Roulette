@@ -1,0 +1,13 @@
+export { authApi } from './endpoints/auth';
+export type { LoginRequest, RegisterRequest, AuthResponse, UserProfile } from './endpoints/auth';
+export { rouletteApi } from './endpoints/roulette';
+export type { SpinResult, SpinRequest } from './endpoints/roulette';
+export { restaurantApi } from './endpoints/restaurants';
+export type { Restaurant, CreateRestaurantRequest, RestaurantFilters } from './endpoints/restaurants';
+export { groupsApi } from './endpoints/groups';
+export type { Group, GroupMember, SpinSession, Vote } from './endpoints/groups';
+export { locketApi } from './endpoints/lockets';
+export type { Locket, CreateLocketRequest } from './endpoints/lockets';
+export { preferencesApi } from './endpoints/preferences';
+export type { UserPreference, UpdatePreferenceInput } from './endpoints/preferences';
+export { apiClient } from './client';

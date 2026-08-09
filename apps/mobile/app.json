@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "Food Roulette",
+    "slug": "food-roulette",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "foodroulette",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFF8E7"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.foodroulette.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Food Roulette cần camera để chụp ảnh món ăn",
+        "NSLocationWhenInUseUsageDescription": "Food Roulette cần vị trí để tìm quán ăn gần bạn"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFF8E7"
+      },
+      "package": "com.foodroulette.app",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Cho phép Food Roulette truy cập vị trí để tìm quán ăn gần bạn"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phép Food Roulette truy cập ảnh để tải lên locket"
+        },
+        {
+          "cameraPermission": "Cho phép Food Roulette sử dụng camera để chụp ảnh"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

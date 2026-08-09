@@ -6,6 +6,14 @@ import { corsMiddleware } from './middleware/cors.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import authRoutes from './modules/auth/auth.routes.js'
 import partnerRoutes from './modules/partner/partner.routes.js'
+import rouletteRoutes from './modules/roulette/roulette.routes.js'
+import restaurantRoutes from './modules/restaurants/restaurants.routes.js'
+import groupRoutes from './modules/groups/groups.routes.js'
+import locketRoutes from './modules/lockets/lockets.routes.js'
+import preferenceRoutes from './modules/preferences/preferences.routes.js'
+import circleRoutes from './modules/circle/circle.routes.js'
+import menuRoutes from './modules/menu/menu.routes.js'
+import stewardRoutes from './modules/steward/steward.routes.js'
 
 const app: Express = express()
 const PORT = process.env.PORT || 3000
@@ -38,13 +46,14 @@ app.get('/health', (req: Request, res: Response) => {
 // API Routes
 app.use('/api/v1/auth', authRoutes)
 app.use('/api/v1/partners', partnerRoutes)
-
-// TODO: Add more routes as they are implemented
-// app.use('/api/v1/users', userRoutes)
-// app.use('/api/v1/restaurants', restaurantRoutes)
-// app.use('/api/v1/spins', spinRoutes)
-// app.use('/api/v1/lockets', locketRoutes)
-// app.use('/api/v1/groups', groupRoutes)
+app.use('/api/v1/spins', rouletteRoutes)
+app.use('/api/v1/restaurants', restaurantRoutes)
+app.use('/api/v1/groups', groupRoutes)
+app.use('/api/v1/lockets', locketRoutes)
+app.use('/api/v1/preferences', preferenceRoutes)
+app.use('/api/v1/circles', circleRoutes)
+app.use('/api/v1/menu', menuRoutes)
+app.use('/api/v1/steward', stewardRoutes)
 
 // 404 handler
 app.use(notFoundHandler)
@@ -55,19 +64,28 @@ app.use(errorHandler)
 // Start server
 app.listen(PORT, () => {
   console.log(`
-╔═══════════════════════════════════════════════════════╗
-║                                                       ║
-║   🍜 Food Roulette API Server                         ║
-║   Running on: http://localhost:${PORT}                   ║
-║   Environment: ${process.env.NODE_ENV || 'development'}                        ║
-║                                                       ║
-║   Endpoints:                                          ║
-║   • GET  /health              - Health check          ║
-║   • POST /api/v1/auth/register - Register              ║
-║   • POST /api/v1/auth/login    - Login                 ║
-║   • GET  /api/v1/auth/me      - Get current user      ║
-║                                                       ║
-╚═══════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════╗
+║                                                           ║
+║   🍜 Food Roulette API Server                             ║
+║   Running on: http://localhost:${PORT}                       ║
+║   Environment: ${process.env.NODE_ENV || 'development'}                          ║
+║                                                           ║
+║   Endpoints:                                              ║
+║   • GET  /health              - Health check               ║
+║   • POST /api/v1/auth/register - Register                ║
+║   • POST /api/v1/auth/login    - Login                   ║
+║   • GET  /api/v1/auth/me     - Get current user         ║
+║   • POST /api/v1/partners    - Partner registration      ║
+║   • POST /api/v1/spins        - Personal spin            ║
+║   • POST /api/v1/groups       - Create group            ║
+║   • POST /api/v1/lockets      - Upload locket           ║
+║   • GET  /api/v1/restaurants  - Search restaurants      ║
+║   • GET  /api/v1/preferences  - Get preferences          ║
+║   • GET  /api/v1/circles      - Get circles             ║
+║   • POST /api/v1/menu/parse   - Parse menu              ║
+║   • GET  /api/v1/steward      - Steward dashboard       ║
+║                                                           ║
+╚═══════════════════════════════════════════════════════════╝
   `)
 })
 

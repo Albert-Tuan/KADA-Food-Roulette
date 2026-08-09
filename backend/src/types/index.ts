@@ -20,7 +20,7 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 }
 
 export interface JwtPayload {
-  userId: string
+  id: string
   email: string
   role: string
 }

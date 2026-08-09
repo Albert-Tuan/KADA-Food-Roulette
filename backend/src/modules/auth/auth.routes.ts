@@ -11,5 +11,6 @@ router.post('/google', authController.google);
 router.post('/onboarding', authenticateJWT, authController.onboarding);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
+router.post('/refresh', authController.refresh);
 
 export default router;
