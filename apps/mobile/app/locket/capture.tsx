@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -35,6 +35,37 @@ const VISIBILITY_OPTIONS: { value: LocketVisibility; label: string; description:
   { value: 'PUBLIC', label: 'Công khai', description: 'Hiện trên profile công khai' },
 ];
 
+const LOCATION_TIMEOUT_MS = 10_000;
+
+async function getFreshLocation(): Promise<Location.LocationObject> {
+  const servicesEnabled = await Location.hasServicesEnabledAsync();
+  if (!servicesEnabled) {
+    throw new Error('Dịch vụ vị trí đang tắt. Bạn bật GPS rồi thử lại nhé.');
+  }
+
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error('Không nhận được vị trí mới. Bạn kiểm tra GPS rồi thử lại nhé.'));
+    }, LOCATION_TIMEOUT_MS);
+
+    Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })
+      .then((currentLocation) => {
+        clearTimeout(timeoutId);
+        resolve(currentLocation);
+      })
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
+
+function getLocationStatusLabel(isLocating: boolean, location: Location.LocationObject | null): string {
+  if (isLocating) return 'Đang lấy vị trí...';
+  if (!location) return 'Chưa có vị trí';
+  return `GPS ${location.coords.latitude.toFixed(5)}, ${location.coords.longitude.toFixed(5)}`;
+}
+
 export default function CaptureLocketScreen() {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [locationPermission, setLocationPermission] = useState<Location.PermissionStatus | null>(null);
@@ -49,13 +80,16 @@ export default function CaptureLocketScreen() {
   const [tags, setTags] = useState<string[]>([]);
   const [visibility, setVisibility] = useState<LocketVisibility>('FRIENDS');
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isLocating, setIsLocating] = useState(true);
   const [permissionError, setPermissionError] = useState('');
   const [formError, setFormError] = useState('');
   const cameraRef = useRef<CameraView>(null);
   const createLocket = useCreateLocket();
 
-  const requestLocation = async () => {
+  const requestLocation = useCallback(async () => {
     try {
+      setIsLocating(true);
+      setLocation(null);
       setPermissionError('');
       const result = await Location.requestForegroundPermissionsAsync();
       setLocationPermission(result.status);
@@ -63,29 +97,32 @@ export default function CaptureLocketScreen() {
         setLocation(null);
         return;
       }
-      const currentLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
+      const currentLocation = await getFreshLocation();
       setLocation(currentLocation);
-    } catch {
-      setPermissionError('Không thể lấy vị trí. Bạn thử lại nhé.');
+    } catch (error) {
+      setLocation(null);
+      setPermissionError(error instanceof Error ? error.message : 'Không thể lấy vị trí. Bạn thử lại nhé.');
+    } finally {
+      setIsLocating(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    requestLocation();
-  }, []);
+    void requestLocation();
+  }, [requestLocation]);
 
   const handleCapture = async () => {
     if (!cameraRef.current || isCapturing) return;
-    if (!location) {
-      setPermissionError('Cần vị trí để tạo locket.');
-      return;
-    }
 
     try {
       setIsCapturing(true);
+      setIsLocating(true);
+      setLocation(null);
       setPermissionError('');
+      const currentLocation = await getFreshLocation();
+      setLocation(currentLocation);
+
+      const capturedAt = new Date().toISOString();
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.85,
         base64: false,
@@ -102,14 +139,16 @@ export default function CaptureLocketScreen() {
       const deviceHash = await getInstallationDeviceHash();
       setDraft({
         uri: sanitizedPhoto.uri,
-        capturedAt: new Date().toISOString(),
+        capturedAt,
         deviceHash,
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
+        latitude: currentLocation.coords.latitude,
+        longitude: currentLocation.coords.longitude,
       });
     } catch (error) {
+      setLocation(null);
       setPermissionError(error instanceof Error ? error.message : 'Không thể chụp ảnh. Bạn thử lại nhé.');
     } finally {
+      setIsLocating(false);
       setIsCapturing(false);
     }
   };
@@ -337,7 +376,7 @@ export default function CaptureLocketScreen() {
               <Text className="text-white font-semibold">Đóng</Text>
             </TouchableOpacity>
             <View className="rounded-full bg-black/60 px-4 py-3">
-              <Text className="text-white text-sm">{location ? 'Đã có vị trí' : 'Đang lấy vị trí...'}</Text>
+              <Text className="text-white text-sm">{getLocationStatusLabel(isLocating, location)}</Text>
             </View>
           </View>
 
@@ -357,7 +396,7 @@ export default function CaptureLocketScreen() {
                 accessibilityLabel="Chụp ảnh"
                 className="w-20 h-20 rounded-full bg-white border-4 border-primary items-center justify-center disabled:opacity-50"
                 onPress={handleCapture}
-                disabled={isCapturing || !location}
+                disabled={isCapturing || isLocating}
               >
                 {isCapturing ? <ActivityIndicator color="#C68E17" /> : <View className="w-14 h-14 rounded-full bg-primary" />}
               </TouchableOpacity>
