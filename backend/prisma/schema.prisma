@@ -49,6 +49,8 @@ model User {
   photosUploaded         RestaurantPhoto[] @relation("PhotoUploader")
   menusCaptured          Menu[]           @relation("MenuCapturer")
   preference             UserPreference?
+  partnerVisits          RestaurantVisit[] // B2B: Restaurant visits
+  corporateMemberships   CorporateMember[] // B2B: Corporate memberships
 
   @@index([subscriptionTier])
   @@index([deletedAt]) // v5.0: soft delete filter
@@ -118,6 +120,7 @@ model Restaurant {
   spinResults       SpinSession[] @relation("SpinResult")
   spinCandidates    SpinSessionCandidate[]
   menus             Menu[]
+  partner           RestaurantPartner? // B2B: Restaurant Partner relation
 
   @@index([status])
   @@index([status, category])
@@ -522,12 +525,177 @@ model CircleRecommendation {
 }
 
 // ============================================================
+// P2 - B2B RESTAURANT PARTNER (Restaurant Partner Program)
+// ============================================================
+
+// RestaurantPartner - B2B Restaurant Partnership
+model RestaurantPartner {
+  id                String           @id @default(uuid())
+  restaurantId      String           @unique @map("restaurant_id")
+  ownerName         String           @map("owner_name") @db.VarChar(100)
+  ownerEmail        String           @map("owner_email") @db.VarChar(255)
+  ownerPhone        String?          @map("owner_phone") @db.VarChar(20)
+  tier              PartnerTier      @default(BASIC)
+  fixedFeeVND       Int              @default(0) @map("fixed_fee_vnd")
+  ppvRateVND        Int              @default(0) @map("ppv_rate_vnd") // Pay-per-visit rate
+  status            PartnerStatus    @default(ACTIVE)
+  referralCode      String?          @unique @map("referral_code") @db.VarChar(20)
+  subscriptionStart DateTime?       @map("subscription_start")
+  subscriptionEnd   DateTime?       @map("subscription_end")
+  analytics         Json             @default("{}") // Denormalized analytics
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  restaurant Restaurant          @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  visits     RestaurantVisit[]
+  promoCodes PromoCode[]
+
+  @@index([tier])
+  @@index([status])
+  @@index([subscriptionEnd])
+  @@map("restaurant_partners")
+}
+
+enum PartnerTier {
+  BASIC
+  BRONZE
+  SILVER
+  GOLD
+}
+
+enum PartnerStatus {
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+  TRIAL
+}
+
+// RestaurantVisit - Pay-per-visit tracking
+model RestaurantVisit {
+  id            String       @id @default(uuid())
+  partnerId     String       @map("partner_id")
+  userId        String       @map("user_id")
+  checkInId     String?      @map("check_in_id")
+  lat           Decimal      @db.Decimal(10, 8) @map("lat")
+  lng           Decimal      @db.Decimal(11, 8) @map("lng")
+  accuracy      Float?       @map("accuracy") // GPS accuracy in meters
+  verifiedAt    DateTime     @default(now()) @map("verified_at")
+  billingMonth  String       @map("billing_month") @db.VarChar(7) // YYYY-MM format
+  billed        Boolean      @default(false)
+  billedAt      DateTime?    @map("billed_at")
+
+  partner RestaurantPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId, billingMonth])
+  @@index([billed])
+  @@map("restaurant_visits")
+}
+
+// PromoCode - Partner promo codes
+model PromoCode {
+  id           String       @id @default(uuid())
+  partnerId    String       @map("partner_id")
+  code         String       @unique @db.VarChar(20)
+  description  String?      @db.VarChar(255)
+  discountType DiscountType @default(PERCENTAGE)
+  discountValue Int         @map("discount_value")
+  minOrderVND  Int          @default(0) @map("min_order_vnd")
+  maxUses      Int          @default(100) @map("max_uses")
+  usedCount    Int          @default(0) @map("used_count")
+  validFrom    DateTime     @map("valid_from")
+  validUntil   DateTime     @map("valid_until")
+  status       PromoStatus  @default(ACTIVE)
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  partner RestaurantPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@index([status])
+  @@map("promo_codes")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_VND
+}
+
+enum PromoStatus {
+  ACTIVE
+  EXPIRED
+  DEPLETED
+}
+
+// CorporateAccount - B2B Corporate Partnership
+model CorporateAccount {
+  id               String           @id @default(uuid())
+  companyName      String           @map("company_name") @db.VarChar(255)
+  companyEmail     String           @map("company_email") @db.VarChar(255)
+  companyPhone     String?          @map("company_phone") @db.VarChar(20)
+  taxId            String?          @unique @map("tax_id") @db.VarChar(20)
+  address          String?          @db.VarChar(500)
+  tier             CorporateTier    @default(BASIC)
+  maxSeats         Int              @default(10) @map("max_seats")
+  status           CorporateStatus  @default(TRIAL)
+  subscriptionStart DateTime?       @map("subscription_start")
+  subscriptionEnd  DateTime?       @map("subscription_end")
+  billingMonthly   Int              @default(0) @map("billing_monthly")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  members CorporateMember[]
+
+  @@index([status])
+  @@map("corporate_accounts")
+}
+
+enum CorporateTier {
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum CorporateStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+// CorporateMember - B2B Corporate Seats
+model CorporateMember {
+  id           String             @id @default(uuid())
+  accountId    String             @map("account_id")
+  userId       String             @unique @map("user_id")
+  role         CorporateUserRole  @default(USER)
+  status       CorporateMemStatus @default(ACTIVE)
+  joinedAt     DateTime           @default(now()) @map("joined_at")
+  expiresAt    DateTime?          @map("expires_at")
+
+  account CorporateAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, status])
+  @@map("corporate_members")
+}
+
+enum CorporateUserRole {
+  USER
+  ADMIN
+  MANAGER
+}
+
+enum CorporateMemStatus {
+  ACTIVE
+  EXPIRED
+  REMOVED
+}
+
+// ============================================================
 // P2 - DEFERRED TABLES (not implemented yet)
 // ============================================================
 // The following will be added in future versions:
 // - TasteBoard / TasteBoardItem (replaces User.savedRestaurants)
-// - B2B: RestaurantPartner, CorporateAccount, CorporateMember
-// - RestaurantVisit
 // - Review
 // - Commitment
 // - AdWatchLog (referenced in SpinLog)

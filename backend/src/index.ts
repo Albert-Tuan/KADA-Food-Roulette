@@ -5,6 +5,7 @@ import morgan from 'morgan'
 import { corsMiddleware } from './middleware/cors.js'
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js'
 import authRoutes from './modules/auth/auth.routes.js'
+import partnerRoutes from './modules/partner/partner.routes.js'
 
 const app: Express = express()
 const PORT = process.env.PORT || 3000
@@ -36,6 +37,7 @@ app.get('/health', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/v1/auth', authRoutes)
+app.use('/api/v1/partners', partnerRoutes)
 
 // TODO: Add more routes as they are implemented
 // app.use('/api/v1/users', userRoutes)
