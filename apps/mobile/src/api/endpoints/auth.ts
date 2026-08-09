@@ -16,18 +16,7 @@ export interface RegisterRequest {
 export interface AuthResponse {
   success: boolean;
   data?: {
-    user: {
-      id: string;
-      email: string;
-      displayNamePrivate: string;
-      displayNamePublic: string;
-      publicId: string;
-      avatarUrl?: string;
-      xp: number;
-      streakDays: number;
-      coins: number;
-      role: 'USER' | 'STEWARD' | 'ADMIN';
-    };
+    user: UserProfile;
     access_token: string;
     refresh_token?: string;
     expires_in?: number;
@@ -50,8 +39,13 @@ export interface UserProfile {
   createdAt?: string;
 }
 
+export interface AuthResult {
+  token: string;
+  user: UserProfile;
+}
+
 export const authApi = {
-  login: async (data: LoginRequest): Promise<{ token: string; user: AuthResponse['data'] extends { user: infer U } ? U : never }> => {
+  login: async (data: LoginRequest): Promise<AuthResult> => {
     const response = await apiClient.post<AuthResponse>('/auth/login', data);
     const { data: responseData } = response;
     if (!responseData?.success || !responseData.data) {
@@ -63,7 +57,7 @@ export const authApi = {
     };
   },
 
-  register: async (data: RegisterRequest): Promise<{ token: string; user: AuthResponse['data'] extends { user: infer U } ? U : never }> => {
+  register: async (data: RegisterRequest): Promise<AuthResult> => {
     const response = await apiClient.post<AuthResponse>('/auth/register', data);
     const { data: responseData } = response;
     if (!responseData?.success || !responseData.data) {
@@ -80,7 +74,7 @@ export const authApi = {
     return response.data;
   },
 
-  google: async (idToken: string): Promise<{ token: string; user: AuthResponse['data'] extends { user: infer U } ? U : never }> => {
+  google: async (idToken: string): Promise<AuthResult> => {
     const response = await apiClient.post<AuthResponse>('/auth/google', { idToken });
     const { data: responseData } = response;
     if (!responseData?.success || !responseData.data) {
