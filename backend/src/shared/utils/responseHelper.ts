@@ -23,11 +23,11 @@ export const responseHelper = {
   },
 
   successWithMessage(res: Response, message: string, data?: unknown) {
-    return res.status(200).json({
-      success: true,
-      message,
-      ...(data && { data }),
-    });
+    const payload: Record<string, unknown> = { success: true, message };
+    if (data !== undefined && data !== null) {
+      payload.data = data;
+    }
+    return res.status(200).json(payload);
   },
 
   error(res: Response, message: string, statusCode = 400) {
