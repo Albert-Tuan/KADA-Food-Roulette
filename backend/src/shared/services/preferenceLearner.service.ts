@@ -60,12 +60,13 @@ export class PreferenceLearnerService {
           scores[action.cuisine] = Math.min((scores[action.cuisine] || 0) + 0.05, 1.0);
         }
         break;
-      case 'REVIEW_WRITTEN':
+      case 'REVIEW_WRITTEN': {
         const keywords = this.extractKeywords(action.content);
         for (const kw of keywords) {
           scores[kw] = Math.min((scores[kw] || 0) + 0.02, 1.0);
         }
         break;
+      }
     }
     
     await prisma.userPreference.update({

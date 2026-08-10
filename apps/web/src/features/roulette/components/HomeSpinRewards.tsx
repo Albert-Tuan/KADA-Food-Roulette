@@ -139,13 +139,17 @@ const HomeSpinRewards: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="w-full max-w-md grid grid-cols-2 gap-stack-md mb-stack-lg">
-        <Link to="/group-spin/spin" className="w-full bg-surface-white border-2 border-subtle-gray text-on-surface font-label-strong py-3 rounded-xl hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
-          <span className="material-symbols-outlined">group</span>
+      <div className="w-full max-w-md grid grid-cols-3 gap-2 mb-stack-lg">
+        <Link to="/spin/menu-capture" className="w-full bg-amber-500 text-white font-label-strong py-3 px-2 rounded-xl hover:bg-amber-600 transition-colors flex flex-col items-center justify-center text-xs gap-1 shadow-sm">
+          <span className="material-symbols-outlined text-lg">document_scanner</span>
+          Quét Menu AI
+        </Link>
+        <Link to="/group-spin/spin" className="w-full bg-surface-white border-2 border-subtle-gray text-on-surface font-label-strong py-3 px-2 rounded-xl hover:bg-surface-container-low transition-colors flex flex-col items-center justify-center text-xs gap-1">
+          <span className="material-symbols-outlined text-lg">group</span>
           Group Spin
         </Link>
-        <Link to="/locket" className="w-full bg-surface-white border-2 border-subtle-gray text-on-surface font-label-strong py-3 rounded-xl hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
-          <span className="material-symbols-outlined">photo_library</span>
+        <Link to="/locket" className="w-full bg-surface-white border-2 border-subtle-gray text-on-surface font-label-strong py-3 px-2 rounded-xl hover:bg-surface-container-low transition-colors flex flex-col items-center justify-center text-xs gap-1">
+          <span className="material-symbols-outlined text-lg">photo_library</span>
           Locket Feed
         </Link>
       </div>

@@ -27,6 +27,7 @@ model User {
   displayNamePublic   String    @map("display_name_public") @db.VarChar(50)
   publicId           String    @unique @map("public_id") @db.VarChar(20)
   avatarUrl          String?   @map("avatar_url") @db.VarChar(500)
+  bio                 String?   @db.VarChar(500)
   phone              String?   @map("phone") @db.VarChar(20) // v5.0: SMS auth future
   role               UserRole  @default(USER)
   subscriptionTier   SubTier   @default(FREE) @map("subscription_tier")
@@ -51,6 +52,7 @@ model User {
   preference             UserPreference?
   partnerVisits          RestaurantVisit[] // B2B: Restaurant visits
   corporateMemberships   CorporateMember[] // B2B: Corporate memberships
+  notifications          Notification[]
 
   @@index([subscriptionTier])
   @@index([deletedAt]) // v5.0: soft delete filter
@@ -384,13 +386,21 @@ model Locket {
   userId       String           @map("user_id")
   restaurantId String?          @map("restaurant_id")
   imageUrl     String           @map("image_url") @db.VarChar(500)
+  thumbnailUrl  String?          @map("thumbnail_url") @db.VarChar(500)
+  dishName      String?          @map("dish_name") @db.VarChar(200)
+  note          String?          @db.Text
+  rating        Int?             @db.SmallInt
+  tags          Json?            @default("[]")
   deviceHash   String           @map("device_hash") @db.VarChar(64)
   capturedAt   DateTime         @map("captured_at")
   exifStripped Boolean          @default(false) @map("exif_stripped") // v5.0: Audit trail
   lat          Decimal?         @db.Decimal(10, 8) // v5.0: Fixed precision (was Float)
   lng          Decimal?         @db.Decimal(11, 8) // v5.0: Fixed precision (was Float)
   visibility   LocketVisibility @default(FRIENDS)
-  createdAt    DateTime         @default(now()) @map("created_at")
+  groupId       String?          @map("group_id") @db.VarChar(36)
+  status        LocketStatus     @default(ACTIVE)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
 
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   restaurant Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
@@ -407,6 +417,12 @@ enum LocketVisibility {
   PRIVATE
   FRIENDS
   PUBLIC
+}
+
+enum LocketStatus {
+  ACTIVE
+  REMOVED
+  REPORTED
 }
 
 // CheckIn - Location verification
@@ -699,6 +715,32 @@ enum CorporateMemStatus {
 // - Review
 // - Commitment
 // - AdWatchLog (referenced in SpinLog)
+
+// Notification System (v5.2)
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String           @db.VarChar(255)
+  message   String           @db.Text
+  data      Json?
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  FRIEND_REQUEST
+  FRIEND_ACCEPTED
+  GROUP_INVITE
+  LOCKET_NEW
+  SYSTEM
+}
 
 // ============================================================
 // IMPLEMENTATION NOTES

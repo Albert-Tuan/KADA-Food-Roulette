@@ -1,66 +1,221 @@
 import { Request, Response } from 'express';
-import { AuthRequest } from '../../shared/middleware/auth.middleware';
+import prisma from '../../shared/utils/prisma';
+import { responseHelper } from '../../shared/utils/responseHelper';
+
+interface AuthRequest extends Request {
+  user?: { id: string; email: string; role: string };
+}
 
 export const locketsController = {
-  // GET /api/lockets/feed
-  getFeed: async (req: Request, res: Response) => {
-    try {
-      const locketsFeed = [
-        {
-          id: 'locket-1',
-          userPublicName: 'Tuấn Anh',
-          userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150',
-          restaurantName: 'Cơm Tấm Ba Cường',
-          imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800',
-          caption: 'Sườn bì chả ngon xuất sắc trưa nay! 🔥',
-          rating: 5,
-          timestamp: new Date().toISOString(),
-          lat: 10.762622,
-          lng: 106.682200,
-          verifiedCamera: true,
-        },
-        {
-          id: 'locket-2',
-          userPublicName: 'Hoàng Hiếu',
-          userAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=150',
-          restaurantName: 'Phở Thìn Hà Nội',
-          imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=800',
-          caption: 'Nước dùng ngậy thơm, phở tái lăn chuẩn vị 🍲',
-          rating: 4.8,
-          timestamp: new Date(Date.now() - 3600000 * 3).toISOString(),
-          lat: 10.778000,
-          lng: 106.691000,
-          verifiedCamera: true,
-        },
-      ];
-
-      return res.json(locketsFeed);
-    } catch (error: any) {
-      return res.status(500).json({ error: 'Lỗi lấy bảng tin Locket Feed.' });
-    }
-  },
-
-  // POST /api/lockets - Camera only upload
   create: async (req: AuthRequest, res: Response) => {
     try {
-      const { restaurantId, caption, rating, lat, lng, imageUrl } = req.body;
-
-      const newLocket = {
-        id: `locket_${Date.now()}`,
-        userId: req.user?.id,
+      const {
         restaurantId,
-        imageUrl: imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800',
-        caption,
-        rating: rating || 5,
+        dishName,
+        note,
+        rating,
+        tags,
+        imageUrl,
+        thumbnailUrl,
+        deviceHash,
+        capturedAt,
         lat,
         lng,
-        verifiedCamera: true,
-        createdAt: new Date().toISOString(),
-      };
+        visibility,
+        groupId
+      } = req.body;
 
-      return res.status(201).json(newLocket);
+      if (!req.user?.id) {
+        return responseHelper.error(res, 'Chưa xác thực', 401);
+      }
+
+      if (rating && (rating < 1 || rating > 5)) {
+        return responseHelper.error(res, 'Đánh giá không hợp lệ', 400);
+      }
+
+      const captureTime = new Date(capturedAt);
+      const serverTime = new Date();
+      if (Math.abs(serverTime.getTime() - captureTime.getTime()) > 60000) {
+        return responseHelper.error(res, 'Thời gian không hợp lệ', 400);
+      }
+
+      const locket = await prisma.locket.create({
+        data: {
+          userId: req.user.id,
+          restaurantId,
+          dishName,
+          note,
+          rating,
+          tags: tags ? JSON.stringify(tags) : undefined,
+          imageUrl,
+          thumbnailUrl,
+          deviceHash,
+          capturedAt: captureTime,
+          lat,
+          lng,
+          visibility: visibility || 'FRIENDS',
+          groupId
+        },
+        include: {
+          restaurant: true
+        }
+      });
+
+      return responseHelper.created(res, locket);
     } catch (error: any) {
-      return res.status(500).json({ error: 'Lỗi tạo bài đăng Locket.' });
+      return responseHelper.error(res, 'Lỗi tạo locket', 500);
     }
   },
+
+  getFeed: async (req: AuthRequest, res: Response) => {
+    try {
+      const { cursor, limit = 20 } = req.query;
+      const take = Number(limit);
+      const userId = req.user?.id;
+
+      let whereClause: any = { visibility: 'PUBLIC', status: 'ACTIVE' };
+
+      if (userId) {
+        const friendships = await prisma.friendship.findMany({
+          where: {
+            OR: [
+              { requesterId: userId },
+              { addresseeId: userId }
+            ],
+            status: 'ACCEPTED'
+          }
+        });
+
+        const friendIds = friendships.map(f =>
+          f.requesterId === userId ? f.addresseeId : f.requesterId
+        );
+
+        whereClause = {
+          status: 'ACTIVE',
+          OR: [
+            { userId: userId },
+            { userId: { in: friendIds }, visibility: { in: ['PUBLIC', 'FRIENDS'] } },
+            { visibility: 'PUBLIC' }
+          ]
+        };
+      }
+
+      const lockets = await prisma.locket.findMany({
+        take,
+        skip: cursor ? 1 : 0,
+        cursor: cursor ? { id: String(cursor) } : undefined,
+        where: whereClause,
+        orderBy: { capturedAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              publicId: true,
+              displayNamePublic: true,
+              avatarUrl: true
+            }
+          },
+          restaurant: {
+            select: {
+              id: true,
+              name: true,
+              address: true,
+              category: true
+            }
+          }
+        }
+      });
+
+      const nextCursor = lockets.length === take ? lockets[take - 1].id : null;
+
+      return res.status(200).json({
+        success: true,
+        data: lockets,
+        meta: { nextCursor }
+      });
+    } catch (error: any) {
+      return responseHelper.error(res, 'Lỗi lấy bảng tin', 500);
+    }
+  },
+
+  getMyLockets: async (req: AuthRequest, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return responseHelper.error(res, 'Chưa xác thực', 401);
+      }
+
+      const lockets = await prisma.locket.findMany({
+        where: { userId: req.user.id, status: 'ACTIVE' },
+        orderBy: { capturedAt: 'desc' },
+        include: { restaurant: true }
+      });
+
+      return responseHelper.success(res, lockets);
+    } catch (error: any) {
+      return responseHelper.error(res, 'Lỗi lấy danh sách', 500);
+    }
+  },
+
+  getById: async (req: AuthRequest, res: Response) => {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const locket = await prisma.locket.findUnique({
+        where: { id },
+        include: {
+          user: true,
+          restaurant: true
+        }
+      });
+
+      if (!locket || locket.status === 'REMOVED') {
+        return responseHelper.error(res, 'Không tìm thấy locket', 404);
+      }
+
+      return responseHelper.success(res, locket);
+    } catch (error: any) {
+      return responseHelper.error(res, 'Lỗi máy chủ', 500);
+    }
+  },
+
+  update: async (req: AuthRequest, res: Response) => {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const { dishName, note, rating, tags, visibility } = req.body;
+
+      if (rating && (rating < 1 || rating > 5)) {
+        return responseHelper.error(res, 'Đánh giá không hợp lệ', 400);
+      }
+
+      const locket = await prisma.locket.update({
+        where: { id },
+        data: {
+          ...(dishName !== undefined && { dishName }),
+          ...(note !== undefined && { note }),
+          ...(rating !== undefined && { rating }),
+          ...(tags !== undefined && { tags: JSON.stringify(tags) }),
+          ...(visibility !== undefined && { visibility })
+        }
+      });
+
+      return responseHelper.success(res, locket);
+    } catch (error: any) {
+      return responseHelper.error(res, 'Lỗi cập nhật locket', 500);
+    }
+  },
+
+  remove: async (req: AuthRequest, res: Response) => {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+
+      await prisma.locket.update({
+        where: { id },
+        data: {
+          status: 'REMOVED'
+        }
+      });
+
+      return responseHelper.success(res, { message: 'Đã xoá locket' });
+    } catch (error: any) {
+      return responseHelper.error(res, 'Lỗi xoá locket', 500);
+    }
+  }
 };
