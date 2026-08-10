@@ -55,7 +55,7 @@ export function LocketCard({ data, onLike, onComment, onShare }: LocketCardProps
       >
         <View style={styles.imageContainer}>
           <Image source={{ uri: data.imageUrl }} style={styles.image} />
-          
+
           {/* Verified GPS Badge */}
           {data.isVerifiedGps && (
             <View style={styles.verifiedBadge}>
@@ -63,7 +63,7 @@ export function LocketCard({ data, onLike, onComment, onShare }: LocketCardProps
               <Text style={styles.verifiedText}>Đã xác minh GPS</Text>
             </View>
           )}
-          
+
           {/* Rating Badge */}
           {data.rating && (
             <View style={styles.ratingBadge}>
@@ -92,7 +92,7 @@ export function LocketCard({ data, onLike, onComment, onShare }: LocketCardProps
               <Text style={styles.actionIcon}>❤️</Text>
               <Text style={styles.actionCount}>{data.likes}</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity style={styles.actionButton} onPress={onComment}>
               <Text style={styles.actionIcon}>💬</Text>
               <Text style={styles.actionCount}>{data.comments}</Text>

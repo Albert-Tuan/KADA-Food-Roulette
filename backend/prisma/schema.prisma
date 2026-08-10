@@ -19,15 +19,15 @@ datasource db {
 // User - Authentication and Profile
 // v5.0: Added phone, isOnboarded, lastActiveAt
 model User {
-  id                  String    @id @default(uuid())
-  email               String    @unique @db.VarChar(255)
-  passwordHash        String    @map("password_hash") @db.VarChar(255)
-  passwordVersion     Int       @default(1) @map("password_version")
-  displayNamePrivate  String    @map("display_name_private") @db.VarChar(50)
-  displayNamePublic   String    @map("display_name_public") @db.VarChar(50)
+  id                 String    @id @default(uuid())
+  email              String    @unique @db.VarChar(255)
+  passwordHash       String    @map("password_hash") @db.VarChar(255)
+  passwordVersion    Int       @default(1) @map("password_version")
+  displayNamePrivate String    @map("display_name_private") @db.VarChar(50)
+  displayNamePublic  String    @map("display_name_public") @db.VarChar(50)
   publicId           String    @unique @map("public_id") @db.VarChar(20)
   avatarUrl          String?   @map("avatar_url") @db.VarChar(500)
-  bio                 String?   @db.VarChar(500)
+  bio                String?   @db.VarChar(160)
   phone              String?   @map("phone") @db.VarChar(20) // v5.0: SMS auth future
   role               UserRole  @default(USER)
   subscriptionTier   SubTier   @default(FREE) @map("subscription_tier")
@@ -38,18 +38,18 @@ model User {
   updatedAt          DateTime  @updatedAt @map("updated_at")
   deletedAt          DateTime? @map("deleted_at")
 
-  friendshipsRequested  Friendship[] @relation("FriendshipRequester")
-  friendshipsReceived   Friendship[] @relation("FriendshipAddressee")
+  friendshipsRequested  Friendship[]      @relation("FriendshipRequester")
+  friendshipsReceived   Friendship[]      @relation("FriendshipAddressee")
   groupMemberships      GroupMember[]
-  spinSessionsInitiated SpinSession[] @relation("SpinInitiator")
-  spinSessionsPersonal   SpinSession[] @relation("SpinPersonal")
-  votes                  Vote[]
-  spinWallet             SpinWallet?
-  lockets                Locket[]
-  checkIns               CheckIn[]
-  photosUploaded         RestaurantPhoto[] @relation("PhotoUploader")
-  menusCaptured          Menu[]           @relation("MenuCapturer")
-  preference             UserPreference?
+  spinSessionsInitiated SpinSession[]     @relation("SpinInitiator")
+  spinSessionsPersonal  SpinSession[]     @relation("SpinPersonal")
+  votes                 Vote[]
+  spinWallet            SpinWallet?
+  lockets               Locket[]
+  checkIns              CheckIn[]
+  photosUploaded        RestaurantPhoto[] @relation("PhotoUploader")
+  menusCaptured         Menu[]            @relation("MenuCapturer")
+  preference            UserPreference?
   partnerVisits          RestaurantVisit[] // B2B: Restaurant visits
   corporateMemberships   CorporateMember[] // B2B: Corporate memberships
   notifications          Notification[]
@@ -73,12 +73,12 @@ enum SubTier {
 
 // Friendship - Social Foundation
 model Friendship {
-  id           String          @id @default(uuid())
-  requesterId  String         @map("requester_id")
-  addresseeId  String         @map("addressee_id")
-  status       FriendshipStatus @default(PENDING)
-  createdAt    DateTime       @default(now()) @map("created_at")
-  updatedAt    DateTime       @updatedAt @map("updated_at")
+  id          String           @id @default(uuid())
+  requesterId String           @map("requester_id")
+  addresseeId String           @map("addressee_id")
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
 
   requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
   addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
@@ -99,29 +99,29 @@ enum FriendshipStatus {
 // Restaurant - Main entity with geo support
 // v5.0: Added googlePlaceId, rating, phone, Decimal lat/lng
 model Restaurant {
-  id              String           @id @default(uuid())
-  name            String           @db.VarChar(255)
-  address         String?          @db.VarChar(500)
-  googlePlaceId   String?          @map("google_place_id") @unique // v5.0: Google Places sync
-  lat             Decimal?         @db.Decimal(10, 8) // v5.0: Fixed precision (was Float)
-  lng             Decimal?         @db.Decimal(11, 8) // v5.0: Fixed precision (was Float)
-  source          RestaurantSource @default(USER_SUBMITTED)
-  category        String?          @db.VarChar(100)
-  priceLevel      Int?            @map("price_level")
-  rating          Float?          @default(0) // v5.0: Display rating
-  phone           String?          @map("phone") @db.VarChar(20) // v5.0: Contact info
-  status          RestaurantStatus @default(PENDING)
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @updatedAt @map("updated_at")
-  deletedAt       DateTime?       @map("deleted_at")
+  id            String           @id @default(uuid())
+  name          String           @db.VarChar(255)
+  address       String?          @db.VarChar(500)
+  googlePlaceId String?          @unique @map("google_place_id") // v5.0: Google Places sync
+  lat           Decimal?         @db.Decimal(10, 8) // v5.0: Fixed precision (was Float)
+  lng           Decimal?         @db.Decimal(11, 8) // v5.0: Fixed precision (was Float)
+  source        RestaurantSource @default(USER_SUBMITTED)
+  category      String?          @db.VarChar(100)
+  priceLevel    Int?             @map("price_level")
+  rating        Float?           @default(0) // v5.0: Display rating
+  phone         String?          @map("phone") @db.VarChar(20) // v5.0: Contact info
+  status        RestaurantStatus @default(PENDING)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  deletedAt     DateTime?        @map("deleted_at")
 
-  hours             RestaurantHours[]
-  photos            RestaurantPhoto[]
-  lockets           Locket[]
-  checkIns          CheckIn[]
-  spinResults       SpinSession[] @relation("SpinResult")
-  spinCandidates    SpinSessionCandidate[]
-  menus             Menu[]
+  hours          RestaurantHours[]
+  photos         RestaurantPhoto[]
+  lockets        Locket[]
+  checkIns       CheckIn[]
+  spinResults    SpinSession[]          @relation("SpinResult")
+  spinCandidates SpinSessionCandidate[]
+  menus          Menu[]
   partner           RestaurantPartner? // B2B: Restaurant Partner relation
 
   @@index([status])
@@ -147,12 +147,12 @@ enum RestaurantStatus {
 // RestaurantHours - 4NF normalized
 // v5.0: Fixed DateTime -> VARCHAR(5) for MySQL compatibility
 model RestaurantHours {
-  id           String   @id @default(uuid())
-  restaurantId String   @map("restaurant_id")
-  dayOfWeek    Int      @map("day_of_week") // 0=Sunday, 6=Saturday
-  openTime     String?  @db.VarChar(5) // v5.0: Fixed - "HH:MM" format (was DateTime)
-  closeTime    String?  @db.VarChar(5) // v5.0: Fixed - "HH:MM" format (was DateTime)
-  isClosed     Boolean  @default(false) @map("is_closed")
+  id           String  @id @default(uuid())
+  restaurantId String  @map("restaurant_id")
+  dayOfWeek    Int     @map("day_of_week") // 0=Sunday, 6=Saturday
+  openTime     String? @db.VarChar(5) // v5.0: Fixed - "HH:MM" format (was DateTime)
+  closeTime    String? @db.VarChar(5) // v5.0: Fixed - "HH:MM" format (was DateTime)
+  isClosed     Boolean @default(false) @map("is_closed")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
@@ -163,16 +163,16 @@ model RestaurantHours {
 
 // RestaurantPhoto - 4NF normalized
 model RestaurantPhoto {
-  id           String   @id @default(uuid())
-  restaurantId String   @map("restaurant_id")
-  photoUrl     String   @db.VarChar(500)
-  displayOrder Int      @default(0) @map("display_order")
-  caption      String? @db.VarChar(255)
-  uploadedBy   String?  @map("uploaded_by")
+  id           String    @id @default(uuid())
+  restaurantId String    @map("restaurant_id")
+  photoUrl     String    @db.VarChar(500)
+  displayOrder Int       @default(0) @map("display_order")
+  caption      String?   @db.VarChar(255)
+  uploadedBy   String?   @map("uploaded_by")
   uploadedAt   DateTime? @map("uploaded_at")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  uploader   User?     @relation("PhotoUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
+  uploader   User?      @relation("PhotoUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
 
   @@unique([restaurantId, photoUrl])
   @@index([restaurantId, displayOrder])
@@ -181,13 +181,13 @@ model RestaurantPhoto {
 
 // Group - For group spin sessions
 model Group {
-  id         String       @id @default(uuid())
-  name       String?      @db.VarChar(100)
-  maxMembers Int          @default(20) @map("max_members")
-  status     GroupStatus  @default(WAITING)
-  createdAt  DateTime     @default(now()) @map("created_at")
-  updatedAt  DateTime     @updatedAt @map("updated_at")
-  deletedAt  DateTime?    @map("deleted_at")
+  id         String      @id @default(uuid())
+  name       String?     @db.VarChar(100)
+  maxMembers Int         @default(20) @map("max_members")
+  status     GroupStatus @default(WAITING)
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+  deletedAt  DateTime?   @map("deleted_at")
 
   members         GroupMember[]
   spinSessions    SpinSession[]
@@ -209,14 +209,14 @@ enum GroupStatus {
 // GroupMember - Membership with host role
 // v5.0: Added invitedBy field
 model GroupMember {
-  id        String         @id @default(uuid())
-  groupId   String         @map("group_id")
-  userId    String         @map("user_id")
-  invitedBy String?        @map("invited_by") // v5.0: Invitation tracking
-  role      GroupRole      @default(MEMBER)
-  status    MemberStatus   @default(PENDING)
-  joinedAt  DateTime       @default(now()) @map("joined_at")
-  updatedAt DateTime       @updatedAt @map("updated_at")
+  id        String       @id @default(uuid())
+  groupId   String       @map("group_id")
+  userId    String       @map("user_id")
+  invitedBy String?      @map("invited_by") // v5.0: Invitation tracking
+  role      GroupRole    @default(MEMBER)
+  status    MemberStatus @default(PENDING)
+  joinedAt  DateTime     @default(now()) @map("joined_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
 
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -241,20 +241,20 @@ enum MemberStatus {
 // SpinSession - Individual or group spin
 // v5.0: Added categoryFilter, status index, createdAt index
 model SpinSession {
-  id             String      @id @default(uuid())
-  groupId        String?     @map("group_id")
-  userId         String?     @map("user_id")
-  initiatorId    String      @map("initiator_id")
-  categoryFilter String?     @map("category_filter") @db.VarChar(100) // v5.0: Filter restaurants
-  resultId       String?     @map("result_id")
-  status         SpinStatus  @default(ACTIVE)
-  createdAt      DateTime    @default(now()) @map("created_at")
-  completedAt    DateTime?   @map("completed_at")
+  id             String     @id @default(uuid())
+  groupId        String?    @map("group_id")
+  userId         String?    @map("user_id")
+  initiatorId    String     @map("initiator_id")
+  categoryFilter String?    @map("category_filter") @db.VarChar(100) // v5.0: Filter restaurants
+  resultId       String?    @map("result_id")
+  status         SpinStatus @default(ACTIVE)
+  createdAt      DateTime   @default(now()) @map("created_at")
+  completedAt    DateTime?  @map("completed_at")
 
-  group      Group?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  user       User?       @relation("SpinPersonal", fields: [userId], references: [id], onDelete: SetNull)
-  initiator  User        @relation("SpinInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
-  result     Restaurant? @relation("SpinResult", fields: [resultId], references: [id], onDelete: SetNull)
+  group          Group?                 @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  user           User?                  @relation("SpinPersonal", fields: [userId], references: [id], onDelete: SetNull)
+  initiator      User                   @relation("SpinInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  result         Restaurant?            @relation("SpinResult", fields: [resultId], references: [id], onDelete: SetNull)
   votes          Vote[]
   candidates     SpinSessionCandidate[] // v5.0: Junction table
   recommendation CircleRecommendation?
@@ -272,9 +272,9 @@ model SpinSessionCandidate {
   id            String   @id @default(uuid())
   spinSessionId String   @map("spin_session_id")
   restaurantId  String   @map("restaurant_id")
-  displayOrder Int      @default(0) @map("display_order")
+  displayOrder  Int      @default(0) @map("display_order")
   isSelected    Boolean  @default(false) @map("is_selected") // Winner flag
-  createdAt    DateTime @default(now()) @map("created_at")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   spinSession SpinSession @relation(fields: [spinSessionId], references: [id], onDelete: Cascade)
   restaurant  Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
@@ -295,12 +295,12 @@ enum SpinStatus {
 // Vote - Group voting on spin result
 // v5.0: Added [spinSessionId, value] index for vote tally
 model Vote {
-  id            String     @id @default(uuid())
-  spinSessionId String     @map("spin_session_id")
-  userId        String     @map("user_id")
+  id            String    @id @default(uuid())
+  spinSessionId String    @map("spin_session_id")
+  userId        String    @map("user_id")
   value         VoteValue
-  createdAt     DateTime   @default(now()) @map("created_at")
-  updatedAt     DateTime   @updatedAt @map("updated_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
   spinSession SpinSession @relation(fields: [spinSessionId], references: [id], onDelete: Cascade)
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -320,7 +320,7 @@ enum VoteValue {
 model SpinWallet {
   id        String   @id @default(uuid())
   userId    String   @unique @map("user_id")
-  balance   BigInt  @default(0) // v5.0: Fixed - BigInt for overflow (was Int)
+  balance   BigInt   @default(0) // v5.0: Fixed - BigInt for overflow (was Int)
   version   Int      @default(0) @map("version") // v5.0: Optimistic locking
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -335,11 +335,11 @@ model SpinWallet {
 // SpinLog - Transaction history
 // v5.0: Fixed Int -> BigInt for amount
 model SpinLog {
-  id           String      @id @default(uuid())
-  walletId     String      @map("wallet_id")
-  amount       BigInt      // v5.0: Fixed - BigInt for overflow (was Int)
+  id           String     @id @default(uuid())
+  walletId     String     @map("wallet_id")
+  amount       BigInt // v5.0: Fixed - BigInt for overflow (was Int)
   source       SpinSource
-  purchaseId   String?     @map("purchase_id")
+  purchaseId   String?    @map("purchase_id")
   adWatchLogId String?    @map("ad_watch_log_id")
   giftId       String?    @map("gift_id")
   referralId   String?    @map("referral_id")
@@ -382,25 +382,29 @@ model SpinPack {
 // Locket - Camera-only photo capture
 // v5.0: Added exifStripped, Decimal lat/lng, visibility index
 model Locket {
-  id           String           @id @default(uuid())
-  userId       String           @map("user_id")
-  restaurantId String?          @map("restaurant_id")
-  imageUrl     String           @map("image_url") @db.VarChar(500)
-  thumbnailUrl  String?          @map("thumbnail_url") @db.VarChar(500)
-  dishName      String?          @map("dish_name") @db.VarChar(200)
-  note          String?          @db.Text
-  rating        Int?             @db.SmallInt
-  tags          Json?            @default("[]")
-  deviceHash   String           @map("device_hash") @db.VarChar(64)
-  capturedAt   DateTime         @map("captured_at")
-  exifStripped Boolean          @default(false) @map("exif_stripped") // v5.0: Audit trail
-  lat          Decimal?         @db.Decimal(10, 8) // v5.0: Fixed precision (was Float)
-  lng          Decimal?         @db.Decimal(11, 8) // v5.0: Fixed precision (was Float)
-  visibility   LocketVisibility @default(FRIENDS)
-  groupId       String?          @map("group_id") @db.VarChar(36)
-  status        LocketStatus     @default(ACTIVE)
-  createdAt     DateTime         @default(now()) @map("created_at")
-  updatedAt     DateTime         @updatedAt @map("updated_at")
+  id             String           @id @default(uuid())
+  userId         String           @map("user_id")
+  restaurantId   String?          @map("restaurant_id")
+  imageUrl       String           @map("image_url") @db.VarChar(500)
+  thumbnailUrl   String?          @map("thumbnail_url") @db.VarChar(500)
+  imageWidth     Int?             @map("image_width")
+  imageHeight    Int?             @map("image_height")
+  imageBytes     Int?             @map("image_bytes")
+  thumbnailBytes Int?             @map("thumbnail_bytes")
+  dishName       String           @map("dish_name") @db.VarChar(80)
+  restaurantName String?          @map("restaurant_name") @db.VarChar(120)
+  note           String?          @db.VarChar(280)
+  rating         Int?
+  tags           Json             @default("[]")
+  deviceHash     String           @map("device_hash") @db.VarChar(64)
+  capturedAt     DateTime         @map("captured_at")
+  exifStripped   Boolean          @default(false) @map("exif_stripped") // v5.0: Audit trail
+  lat            Decimal?         @db.Decimal(10, 8) // v5.0: Fixed precision (was Float)
+  lng            Decimal?         @db.Decimal(11, 8) // v5.0: Fixed precision (was Float)
+  visibility     LocketVisibility @default(FRIENDS)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  deletedAt      DateTime?        @map("deleted_at")
 
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   restaurant Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
@@ -409,6 +413,7 @@ model Locket {
   @@index([userId, capturedAt])
   @@index([visibility, capturedAt]) // v5.0: Feed queries
   @@index([restaurantId]) // v5.0: Restaurant lockets
+  @@index([deletedAt])
   // DB TRIGGER: capturedAt within 60s (see docs/DB_SCHEMA_REVIEW_v5.0.md)
   @@map("lockets")
 }
@@ -419,28 +424,22 @@ enum LocketVisibility {
   PUBLIC
 }
 
-enum LocketStatus {
-  ACTIVE
-  REMOVED
-  REPORTED
-}
-
 // CheckIn - Location verification
 // v5.0: Added verificationMethod, accuracy, fixed index
 model CheckIn {
-  id                 String          @id @default(uuid())
-  userId             String          @map("user_id")
-  restaurantId       String          @map("restaurant_id")
-  locketId           String?         @map("locket_id")
-  verificationMethod CheckInMethod   @default(GPS) @map("verification_method") // v5.0
-  accuracy           Float?         @map("accuracy") // v5.0: GPS accuracy in meters
-  status             CheckInStatus   @default(ACTIVE)
-  createdAt          DateTime        @default(now()) @map("created_at")
-  expiresAt          DateTime        @map("expires_at")
+  id                 String        @id @default(uuid())
+  userId             String        @map("user_id")
+  restaurantId       String        @map("restaurant_id")
+  locketId           String?       @map("locket_id")
+  verificationMethod CheckInMethod @default(GPS) @map("verification_method") // v5.0
+  accuracy           Float?        @map("accuracy") // v5.0: GPS accuracy in meters
+  status             CheckInStatus @default(ACTIVE)
+  createdAt          DateTime      @default(now()) @map("created_at")
+  expiresAt          DateTime      @map("expires_at")
 
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  locket     Locket?   @relation(fields: [locketId], references: [id], onDelete: SetNull)
+  locket     Locket?    @relation(fields: [locketId], references: [id], onDelete: SetNull)
 
   @@index([userId, status, expiresAt]) // v5.0: Fixed - Critical query index
   @@index([restaurantId, createdAt]) // v5.0: Restaurant check-ins

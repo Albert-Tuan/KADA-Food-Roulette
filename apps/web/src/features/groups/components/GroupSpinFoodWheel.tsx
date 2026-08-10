@@ -24,18 +24,18 @@ const GroupSpinFoodWheel: React.FC = () => {
       priceLevel: 2 as const,
       imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400' // Generic food image
     }));
-    
+
   const displayCandidates = customCandidates.length > 0 ? customCandidates : candidates;
 
   const handleSpin = () => {
     if (isSpinning) return;
     setIsSpinning(true);
-    
+
     const extraSpins = (Math.floor(Math.random() * 4) + 3) * 360;
     const randomSegment = Math.floor(Math.random() * 360);
     const newRotation = rotation + extraSpins + randomSegment;
     setRotation(newRotation);
-    
+
     // Calculate which candidate the pointer lands on
     const pointerAngle = (360 - (newRotation % 360)) % 360;
     const sliceAngle = 360 / displayCandidates.length;
@@ -79,9 +79,9 @@ const GroupSpinFoodWheel: React.FC = () => {
               <div key={member.id} className="flex items-center gap-3">
                 <img src={member.avatarUrl} alt={member.name} className="w-8 h-8 rounded-full border border-subtle-gray" />
                 <span className="font-label-strong text-sm w-16 truncate">{member.name}</span>
-                <input 
-                  type="text" 
-                  placeholder="Ví dụ: Cơm tấm, Pizza..." 
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Cơm tấm, Pizza..."
                   className="flex-1 bg-surface-container-lowest border border-subtle-gray rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary transition-colors"
                   value={customFoods[member.id] || ''}
                   onChange={(e) => setCustomFoods(prev => ({ ...prev, [member.id]: e.target.value }))}
@@ -92,7 +92,7 @@ const GroupSpinFoodWheel: React.FC = () => {
         </div>
 
         {/* AI Menu Scanner Button for Group */}
-        <div 
+        <div
           onClick={() => navigate('/spin/menu-capture')}
           className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl p-3.5 shadow-md mb-stack-lg flex items-center justify-between cursor-pointer hover:brightness-105 active:scale-[0.99] transition-all"
         >
@@ -115,12 +115,12 @@ const GroupSpinFoodWheel: React.FC = () => {
           <div className="relative w-[300px] h-[300px] md:w-[350px] md:h-[350px] mx-auto">
             {/* Wheel Pointer */}
             <div className="absolute -top-[15px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[30px] border-t-primary z-10 drop-shadow-md"></div>
-            
+
             {/* Wheel */}
-            <div 
+            <div
               className="w-full h-full rounded-full border-8 border-surface-white shadow-xl relative overflow-hidden bg-surface-container-low"
               style={{
-                background: displayCandidates.length > 0 
+                background: displayCandidates.length > 0
                   ? `conic-gradient(${displayCandidates.map((_, i) => {
                       const colors = ['#ff5a5f', '#ffab69', '#55a37a', '#FFC107', '#b52330', '#88d7aa'];
                       const start = (i * 360) / displayCandidates.length;
@@ -136,9 +136,9 @@ const GroupSpinFoodWheel: React.FC = () => {
                 const sliceAngle = 360 / displayCandidates.length;
                 const rotationAngle = (i * sliceAngle) + (sliceAngle / 2) - 90;
                 return (
-                  <div 
+                  <div
                     key={candidate.id}
-                    className="absolute top-1/2 left-1/2 origin-top-left text-white font-bold text-[12px] md:text-[14px] drop-shadow-md pointer-events-none w-[120px] md:w-[150px] text-right pr-[20px] line-clamp-2" 
+                    className="absolute top-1/2 left-1/2 origin-top-left text-white font-bold text-[12px] md:text-[14px] drop-shadow-md pointer-events-none w-[120px] md:w-[150px] text-right pr-[20px] line-clamp-2"
                     style={{ transform: `rotate(${rotationAngle}deg) translateY(-50%)` }}
                   >
                     {candidate.name}
@@ -146,13 +146,13 @@ const GroupSpinFoodWheel: React.FC = () => {
                 );
               })}
             </div>
-            
+
             {/* Wheel Center */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] bg-surface-white rounded-full border-4 border-surface-container-low shadow-inner z-10"></div>
           </div>
         </div>
 
-        <button 
+        <button
           className={`w-full bg-primary text-on-primary font-headline-md text-headline-md-mobile py-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 ${isSpinning ? 'opacity-50 cursor-not-allowed translate-y-1' : 'hover:brightness-110 active:brightness-95 active:translate-y-1'}`}
           onClick={handleSpin}
           style={{ boxShadow: isSpinning ? 'none' : '0 4px 0 #61000e' }}

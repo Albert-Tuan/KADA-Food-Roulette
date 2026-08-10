@@ -11,7 +11,7 @@ class FriendsController {
       if (!target) {
         return responseHelper.error(res, 'Vui lòng cung cấp ID người dùng', 400);
       }
-      
+
       const userId = req.user?.id;
       if (!userId) {
         return responseHelper.error(res, 'Chưa xác thực', 401);

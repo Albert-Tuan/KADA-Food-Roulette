@@ -34,7 +34,7 @@ export const notificationService = {
     const notification = await prisma.notification.findFirst({
       where: { id: notificationId, userId },
     });
-    
+
     if (!notification) {
       throw new Error('Không tìm thấy thông báo');
     }

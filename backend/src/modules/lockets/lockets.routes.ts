@@ -1,15 +1,38 @@
-import { Router } from 'express';
-import { locketsController } from './lockets.controller';
-import { authenticate, optionalAuth } from '../../middleware/auth';
-import { checkLocketOwner, checkLocketVisibility } from '../../middleware/locketAuth';
+import { Router, type NextFunction, type Request, type Response } from 'express';
+import multer from 'multer';
+import { optionalJWT, requireJWT } from '../../shared/middleware/auth.middleware.js';
+import { locketsController } from './lockets.controller.js';
+import { MAX_LOCKET_FILE_SIZE } from './lockets.validation.js';
 
 const router = Router();
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_LOCKET_FILE_SIZE, files: 1, fields: 12 },
+});
 
-router.post('/', authenticate, locketsController.create);
-router.get('/feed', optionalAuth, locketsController.getFeed);
-router.get('/me', authenticate, locketsController.getMyLockets);
-router.get('/:id', optionalAuth, checkLocketVisibility, locketsController.getById);
-router.patch('/:id', authenticate, checkLocketOwner, locketsController.update);
-router.delete('/:id', authenticate, checkLocketOwner, locketsController.remove);
+function uploadLocketImage(req: Request, res: Response, next: NextFunction) {
+  upload.single('image')(req, res, (error: unknown) => {
+    if (!error) return next();
+    const message = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE'
+      ? 'Ảnh vượt quá giới hạn 10 MB.'
+      : 'Multipart upload không hợp lệ.';
+    return res.status(400).json({
+      success: false,
+      error: { code: 'LOCKET_UPLOAD_INVALID', message },
+    });
+  });
+}
+
+router.get(
+  '/media/:namespace/:userId/:locketId/:fileName',
+  optionalJWT,
+  locketsController.getMedia,
+);
+router.get('/me', requireJWT, locketsController.getMine);
+router.get('/', requireJWT, locketsController.getFeed);
+router.post('/', requireJWT, uploadLocketImage, locketsController.create);
+router.get('/:id', optionalJWT, locketsController.getById);
+router.patch('/:id', requireJWT, locketsController.update);
+router.delete('/:id', requireJWT, locketsController.delete);
 
 export default router;

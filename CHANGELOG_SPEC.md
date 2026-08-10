@@ -226,7 +226,6 @@
   - Files affected:
     - `brand/prompts.md` §9 (resolved 5 open questions)
     - `brand/FOOD-ROULETTE-SITEMAP.md` §19.10 (resolved 5 open questions)
->>>>>>> main
 
 ### 2026-08-08
 
@@ -290,13 +289,13 @@
     - `backend/package.json` (new - Node.js project setup)
     - `backend/.env` (new - DATABASE_URL config)
     - `backend/prisma/schema.prisma` (updated - restored DATABASE_URL)
-    - `backend/prisma/migrations/v5.0/index_performance.sql` (new)
-    - `backend/prisma/migrations/v5.0/constraints_validation.sql` (new)
-    - `backend/prisma/migrations/v5.0/enum_validation.sql` (new)
-    - `backend/prisma/migrations/v5.0/cascade_delete_validation.sql` (new)
-    - `backend/prisma/migrations/v5.0/edge_cases_validation.sql` (new)
+    - `backend/prisma/sql/v5.0/index_performance.sql` (new)
+    - `backend/prisma/sql/v5.0/constraints_validation.sql` (new)
+    - `backend/prisma/sql/v5.0/enum_validation.sql` (new)
+    - `backend/prisma/sql/v5.0/cascade_delete_validation.sql` (new)
+    - `backend/prisma/sql/v5.0/edge_cases_validation.sql` (new)
     - `backend/src/test/api-integration.test.ts` (new)
-    - `backend/prisma/migrations/v5.0/README_VALIDATION.md` (new)
+    - `backend/prisma/sql/v5.0/README_VALIDATION.md` (new)
 
   **Prisma Version Decision:**
   - Attempted: Prisma 7.x (breaking changes, `@prisma/adapter-mysql` not available)
@@ -421,9 +420,9 @@
 | `brand/prompts.md` | 2.6 | 2026-08-07 | Updated Pricing §4 with B2C + B2B model |
 | `brand/brand.md` | - | - | - |
 | `brand/FOOD-ROULETTE-SITEMAP.md` | 2.4 | 2026-08-06 | Added §19.15-16 |
-| `backend/prisma/schema.prisma` | 6.0 | 2026-08-09 | Added B2B tables (RestaurantPartner, Corporate) |
-| `backend/prisma/migrations/v5.0/complete_schema.sql` | 5.0 | 2026-08-06 | Complete schema (15 tables) |
-| `backend/prisma/migrations/v5.0/seed_data.sql` | 5.0 | 2026-08-06 | Seed data for testing |
+| `backend/prisma/schema.prisma` | 6.0 | 2026-08-09 | Added B2B tables while preserving Taste Board media fields |
+| `backend/prisma/sql/v5.0/complete_schema.sql` | 5.0 | 2026-08-06 | Complete schema (15 tables) |
+| `backend/prisma/sql/v5.0/seed_data.sql` | 5.0 | 2026-08-06 | Seed data for testing |
 | `docs/food_roulette_erd.drawio.xml` | 2.5 | 2026-08-06 | Previous version (Menu + AI entities) |
 | `docs/food_roulette_erd_v2.6.drawio.xml` | 2.6 | 2026-08-06 | SQL Architecture Review fixes (P0-P2) |
 | `docs/food_roulette_erd_v3.0_normalized.xml` | 3.0 | 2026-08-06 | BCNF+4NF Normalized (26 entities) |
@@ -587,10 +586,10 @@
   - By: AI Assistant
   - Via: Cursor
   - Files affected:
-    - `backend/prisma/migrations/v5.0/000_create_database.sql` (new)
-    - `backend/prisma/migrations/v5.0/complete_schema.sql` (new - 15 tables)
-    - `backend/prisma/migrations/v5.0/seed_data.sql` (new - test data)
-    - `backend/prisma/migrations/v5.0/csv_data/` (import scripts)
+    - `backend/prisma/sql/v5.0/000_create_database.sql` (new)
+    - `backend/prisma/sql/v5.0/complete_schema.sql` (new - 15 tables)
+    - `backend/prisma/sql/v5.0/seed_data.sql` (new - test data)
+    - `backend/prisma/sql/v5.0/csv_data/` (import scripts)
     - `backend/prisma/schema.prisma` (synced with v5.0)
     - `CHANGELOG_SPEC.md` (this update)
     - `README.md` (updated with DB setup)

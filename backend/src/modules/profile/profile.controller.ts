@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { profileService, UpdateProfileData } from './profile.service';
-import { responseHelper } from '../../shared/utils/responseHelper';
+import { profileService, UpdateProfileData } from './profile.service.js';
+import { responseHelper } from '../../shared/utils/responseHelper.js';
 
 interface AuthRequest extends Request {
   user?: {

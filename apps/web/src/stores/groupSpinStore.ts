@@ -24,7 +24,7 @@ interface GroupSpinState {
   votes: Record<string, VoteDecision>;
   phase: 'LOBBY' | 'WHO_SPINS' | 'SPINNING' | 'VOTING' | 'RESULT';
   spinnerId: string | null;
-  
+
   // Actions
   joinGroup: (groupId: string, user: GroupMember) => void;
   setPhase: (phase: GroupSpinState['phase']) => void;
@@ -56,19 +56,19 @@ export const useGroupSpinStore = create<GroupSpinState>((set) => ({
     groupId,
     members: [...state.members, user]
   })),
-  
+
   setPhase: (phase) => set({ phase }),
-  
+
   setSpinner: (spinnerId) => set({ spinnerId }),
-  
+
   setResult: (restaurant) => set({ currentResult: restaurant }),
-  
+
   castVote: (memberId, decision) => set((state) => ({
     votes: {
       ...state.votes,
       [memberId]: decision
     }
   })),
-  
+
   resetVotes: () => set({ votes: {} }),
 }));

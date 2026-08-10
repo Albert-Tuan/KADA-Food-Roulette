@@ -8,10 +8,10 @@ export const notificationController = {
     try {
       const userId = req.user!.id;
       const { isRead, limit, cursor } = req.query;
-      
+
       const parsedLimit = limit ? parseInt(limit as string, 10) : 20;
       let parsedIsRead: boolean | undefined;
-      
+
       if (isRead !== undefined) {
         parsedIsRead = isRead === 'true';
       }
@@ -43,7 +43,7 @@ export const notificationController = {
     try {
       const userId = req.user!.id;
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      
+
       await notificationService.markAsRead(userId, id);
       return responseHelper.successWithMessage(res, 'Đã đánh dấu là đã đọc');
     } catch (error: any) {
@@ -54,7 +54,7 @@ export const notificationController = {
   async markAllAsRead(req: AuthRequest, res: Response) {
     try {
       const userId = req.user!.id;
-      
+
       await notificationService.markAllAsRead(userId);
       return responseHelper.successWithMessage(res, 'Đã đánh dấu tất cả là đã đọc');
     } catch (error: any) {

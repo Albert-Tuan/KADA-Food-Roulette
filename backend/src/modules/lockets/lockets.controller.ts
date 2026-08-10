@@ -1,221 +1,143 @@
-import { Request, Response } from 'express';
-import prisma from '../../shared/utils/prisma';
-import { responseHelper } from '../../shared/utils/responseHelper';
+import type { Response } from 'express';
+import type { AuthRequest } from '../../shared/middleware/auth.middleware.js';
+import { logger } from '../../shared/utils/logger.js';
+import { LocketApiError } from './lockets.errors.js';
+import { mediaCacheControl, verifyMediaSignature } from './lockets.mediaAccess.js';
+import { locketsService, serializeLocket } from './lockets.service.js';
+import { locketStorage } from './lockets.storage.js';
+import {
+  parseCreateLocket,
+  parseFeedType,
+  parseRouteParam,
+  parseUpdateLocket,
+  validateImageFile,
+} from './lockets.validation.js';
 
-interface AuthRequest extends Request {
-  user?: { id: string; email: string; role: string };
+function sendError(res: Response, error: unknown, requestId?: string) {
+  if (error instanceof LocketApiError) {
+    logger.warn('locket_request_rejected', { requestId, code: error.code, statusCode: error.statusCode });
+    return res.status(error.statusCode).json({
+      success: false,
+      error: { code: error.code, message: error.message },
+    });
+  }
+
+  logger.error('locket_request_failed', { requestId, code: 'LOCKET_INTERNAL', statusCode: 500 });
+  return res.status(500).json({
+    success: false,
+    error: { code: 'LOCKET_INTERNAL', message: 'Không thể xử lý Locket lúc này.' },
+  });
 }
 
 export const locketsController = {
-  create: async (req: AuthRequest, res: Response) => {
-    try {
-      const {
-        restaurantId,
-        dishName,
-        note,
-        rating,
-        tags,
-        imageUrl,
-        thumbnailUrl,
-        deviceHash,
-        capturedAt,
-        lat,
-        lng,
-        visibility,
-        groupId
-      } = req.body;
-
-      if (!req.user?.id) {
-        return responseHelper.error(res, 'Chưa xác thực', 401);
-      }
-
-      if (rating && (rating < 1 || rating > 5)) {
-        return responseHelper.error(res, 'Đánh giá không hợp lệ', 400);
-      }
-
-      const captureTime = new Date(capturedAt);
-      const serverTime = new Date();
-      if (Math.abs(serverTime.getTime() - captureTime.getTime()) > 60000) {
-        return responseHelper.error(res, 'Thời gian không hợp lệ', 400);
-      }
-
-      const locket = await prisma.locket.create({
-        data: {
-          userId: req.user.id,
-          restaurantId,
-          dishName,
-          note,
-          rating,
-          tags: tags ? JSON.stringify(tags) : undefined,
-          imageUrl,
-          thumbnailUrl,
-          deviceHash,
-          capturedAt: captureTime,
-          lat,
-          lng,
-          visibility: visibility || 'FRIENDS',
-          groupId
-        },
-        include: {
-          restaurant: true
-        }
-      });
-
-      return responseHelper.created(res, locket);
-    } catch (error: any) {
-      return responseHelper.error(res, 'Lỗi tạo locket', 500);
-    }
-  },
-
   getFeed: async (req: AuthRequest, res: Response) => {
     try {
-      const { cursor, limit = 20 } = req.query;
-      const take = Number(limit);
-      const userId = req.user?.id;
-
-      let whereClause: any = { visibility: 'PUBLIC', status: 'ACTIVE' };
-
-      if (userId) {
-        const friendships = await prisma.friendship.findMany({
-          where: {
-            OR: [
-              { requesterId: userId },
-              { addresseeId: userId }
-            ],
-            status: 'ACCEPTED'
-          }
-        });
-
-        const friendIds = friendships.map(f =>
-          f.requesterId === userId ? f.addresseeId : f.requesterId
-        );
-
-        whereClause = {
-          status: 'ACTIVE',
-          OR: [
-            { userId: userId },
-            { userId: { in: friendIds }, visibility: { in: ['PUBLIC', 'FRIENDS'] } },
-            { visibility: 'PUBLIC' }
-          ]
-        };
-      }
-
-      const lockets = await prisma.locket.findMany({
-        take,
-        skip: cursor ? 1 : 0,
-        cursor: cursor ? { id: String(cursor) } : undefined,
-        where: whereClause,
-        orderBy: { capturedAt: 'desc' },
-        include: {
-          user: {
-            select: {
-              publicId: true,
-              displayNamePublic: true,
-              avatarUrl: true
-            }
-          },
-          restaurant: {
-            select: {
-              id: true,
-              name: true,
-              address: true,
-              category: true
-            }
-          }
-        }
-      });
-
-      const nextCursor = lockets.length === take ? lockets[take - 1].id : null;
-
-      return res.status(200).json({
-        success: true,
-        data: lockets,
-        meta: { nextCursor }
-      });
-    } catch (error: any) {
-      return responseHelper.error(res, 'Lỗi lấy bảng tin', 500);
+      const type = parseFeedType(req.query.type);
+      const data = await locketsService.getFeed(req.user!.id, type);
+      return res.json({ success: true, data, meta: { limit: 50, has_more: false } });
+    } catch (error) {
+      return sendError(res, error, req.requestId);
     }
   },
 
-  getMyLockets: async (req: AuthRequest, res: Response) => {
+  getMine: async (req: AuthRequest, res: Response) => {
     try {
-      if (!req.user?.id) {
-        return responseHelper.error(res, 'Chưa xác thực', 401);
-      }
-
-      const lockets = await prisma.locket.findMany({
-        where: { userId: req.user.id, status: 'ACTIVE' },
-        orderBy: { capturedAt: 'desc' },
-        include: { restaurant: true }
-      });
-
-      return responseHelper.success(res, lockets);
-    } catch (error: any) {
-      return responseHelper.error(res, 'Lỗi lấy danh sách', 500);
+      const data = await locketsService.getFeed(req.user!.id, 'MINE');
+      return res.json({ success: true, data, meta: { limit: 50, has_more: false } });
+    } catch (error) {
+      return sendError(res, error, req.requestId);
     }
   },
 
   getById: async (req: AuthRequest, res: Response) => {
     try {
-      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const locket = await prisma.locket.findUnique({
-        where: { id },
-        include: {
-          user: true,
-          restaurant: true
-        }
+      const id = parseRouteParam(req.params.id, 'Mã locket');
+      const record = await locketsService.getById(id, req.user?.id);
+      return res.json({ success: true, data: await serializeLocket(record, req.user?.id) });
+    } catch (error) {
+      return sendError(res, error, req.requestId);
+    }
+  },
+
+  create: async (req: AuthRequest, res: Response) => {
+    const startedAt = Date.now();
+    try {
+      validateImageFile(req.file);
+      const input = parseCreateLocket(req.body as Record<string, unknown>, {
+        deviceHash: req.header('x-device-id'),
+        capturedAt: req.header('x-captured-at'),
       });
-
-      if (!locket || locket.status === 'REMOVED') {
-        return responseHelper.error(res, 'Không tìm thấy locket', 404);
-      }
-
-      return responseHelper.success(res, locket);
-    } catch (error: any) {
-      return responseHelper.error(res, 'Lỗi máy chủ', 500);
+      const record = await locketsService.create(req.user!.id, input, req.file);
+      logger.info('locket_created', {
+        requestId: req.requestId,
+        locketId: record.id,
+        visibility: record.visibility,
+        storageMode: locketStorage.mode,
+        exifStripped: record.exifStripped,
+        inputBytes: req.file.size,
+        outputBytes: record.imageBytes,
+        durationMs: Date.now() - startedAt,
+      });
+      return res.status(201).json({
+        success: true,
+        data: await serializeLocket(record, req.user!.id),
+      });
+    } catch (error) {
+      return sendError(res, error, req.requestId);
     }
   },
 
   update: async (req: AuthRequest, res: Response) => {
     try {
-      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const { dishName, note, rating, tags, visibility } = req.body;
-
-      if (rating && (rating < 1 || rating > 5)) {
-        return responseHelper.error(res, 'Đánh giá không hợp lệ', 400);
-      }
-
-      const locket = await prisma.locket.update({
-        where: { id },
-        data: {
-          ...(dishName !== undefined && { dishName }),
-          ...(note !== undefined && { note }),
-          ...(rating !== undefined && { rating }),
-          ...(tags !== undefined && { tags: JSON.stringify(tags) }),
-          ...(visibility !== undefined && { visibility })
-        }
-      });
-
-      return responseHelper.success(res, locket);
-    } catch (error: any) {
-      return responseHelper.error(res, 'Lỗi cập nhật locket', 500);
+      const id = parseRouteParam(req.params.id, 'Mã locket');
+      const input = parseUpdateLocket(req.body as Record<string, unknown>);
+      const record = await locketsService.update(id, req.user!.id, input);
+      logger.info('locket_updated', { requestId: req.requestId, locketId: record.id });
+      return res.json({ success: true, data: await serializeLocket(record, req.user!.id) });
+    } catch (error) {
+      return sendError(res, error, req.requestId);
     }
   },
 
-  remove: async (req: AuthRequest, res: Response) => {
+  delete: async (req: AuthRequest, res: Response) => {
     try {
-      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-
-      await prisma.locket.update({
-        where: { id },
-        data: {
-          status: 'REMOVED'
-        }
-      });
-
-      return responseHelper.success(res, { message: 'Đã xoá locket' });
-    } catch (error: any) {
-      return responseHelper.error(res, 'Lỗi xoá locket', 500);
+      const id = parseRouteParam(req.params.id, 'Mã locket');
+      await locketsService.delete(id, req.user!.id);
+      logger.info('locket_deleted', { requestId: req.requestId, locketId: id });
+      return res.status(204).send();
+    } catch (error) {
+      return sendError(res, error, req.requestId);
     }
-  }
+  },
+
+  getMedia: async (req: AuthRequest, res: Response) => {
+    const startedAt = Date.now();
+    try {
+      const namespace = parseRouteParam(req.params.namespace, 'Namespace ảnh');
+      const userId = parseRouteParam(req.params.userId, 'Mã người dùng');
+      const locketId = parseRouteParam(req.params.locketId, 'Mã locket');
+      const fileName = parseRouteParam(req.params.fileName, 'Tên ảnh');
+      const path = `${namespace}/${userId}/${locketId}/${fileName}`;
+      const hasValidSignature = verifyMediaSignature(
+        path,
+        req.query.expires,
+        req.query.signature,
+      );
+      const media = await locketsService.getMedia(path, req.user?.id, hasValidSignature);
+      res.setHeader('content-type', media.mimeType);
+      res.setHeader('content-length', media.buffer.length);
+      res.setHeader('cache-control', mediaCacheControl(media.visibility));
+      res.setHeader('vary', 'Authorization');
+      logger.info('locket_media_served', {
+        requestId: req.requestId,
+        visibility: media.visibility,
+        storageMode: locketStorage.mode,
+        bytes: media.buffer.length,
+        durationMs: Date.now() - startedAt,
+      });
+      return res.send(media.buffer);
+    } catch (error) {
+      return sendError(res, error, req.requestId);
+    }
+  },
 };

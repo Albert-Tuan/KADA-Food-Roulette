@@ -70,7 +70,7 @@ describe('Profile Service', () => {
         bio: 'New Bio',
         displayNamePublic: 'New Public Name'
       };
-      
+
       const updatedUser = { id: 'user-1', ...updateData };
       vi.mocked(prisma.user.update).mockResolvedValue(updatedUser as any);
 
@@ -87,7 +87,7 @@ describe('Profile Service', () => {
       const updateData = {
         bio: 'Only Bio'
       };
-      
+
       vi.mocked(prisma.user.update).mockResolvedValue({ id: 'user-1', ...updateData } as any);
 
       await profileService.updateProfile('user-1', updateData);

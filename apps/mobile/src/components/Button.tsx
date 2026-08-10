@@ -55,9 +55,9 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator 
-          color={variant === 'primary' ? 'white' : '#D97706'} 
-          size="small" 
+        <ActivityIndicator
+          color={variant === 'primary' ? 'white' : '#D97706'}
+          size="small"
         />
       ) : (
         <View style={styles.content}>

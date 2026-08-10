@@ -8,7 +8,7 @@ const GroupVoteVeto: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(9 * 60 + 42);
   const { members, votes, castVote, hostId } = useGroupSpinStore();
   const { currentResult, candidates } = useSpinStore();
-  
+
   // Use currentResult if exists, else pick first candidate, else hardcode
   const resultData = currentResult || candidates[0] || {
     name: 'Bún Bò Bà Luân',
@@ -61,7 +61,7 @@ const GroupVoteVeto: React.FC = () => {
             50% { border-color: rgba(186, 26, 26, 0.8); }
         }
       `}</style>
-      
+
       {/* TopAppBar */}
       <header className="w-full top-0 sticky bg-background dark:bg-background z-40">
         <div className="flex justify-between items-center px-margin-mobile py-base w-full max-w-7xl mx-auto">
@@ -139,7 +139,7 @@ const GroupVoteVeto: React.FC = () => {
           {members.map(member => {
             const hasVoted = votes[member.id] !== undefined;
             const decision = votes[member.id];
-            
+
             return (
               <div key={member.id} className={`flex items-center justify-between p-3 rounded-lg bg-surface-white border shadow-sm relative overflow-hidden ${decision === 'ACCEPT' ? 'border-status-open/20' : 'border-subtle-gray'}`}>
                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${decision === 'ACCEPT' ? 'bg-status-open' : decision === 'RESPIN' ? 'bg-error' : 'bg-surface-variant'}`}></div>

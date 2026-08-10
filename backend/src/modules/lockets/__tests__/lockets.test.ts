@@ -37,18 +37,18 @@ describe('Locket Middleware', () => {
   describe('checkLocketOwner', () => {
     it('should call next() when user is owner', async () => {
       vi.mocked(prisma.locket.findUnique).mockResolvedValue({ id: 'locket-123', userId: 'user-1' } as any);
-      
+
       await checkLocketOwner(mockReq, mockRes, mockNext);
-      
+
       expect(mockNext).toHaveBeenCalled();
       expect(mockRes.locals.locket).toBeDefined();
     });
 
     it('should return 403 when user is not owner', async () => {
       vi.mocked(prisma.locket.findUnique).mockResolvedValue({ id: 'locket-123', userId: 'user-2' } as any);
-      
+
       await checkLocketOwner(mockReq, mockRes, mockNext);
-      
+
       expect(mockRes.status).toHaveBeenCalledWith(403);
       expect(mockRes.json).toHaveBeenCalledWith({ success: false, error: 'Không có quyền truy cập' });
       expect(mockNext).not.toHaveBeenCalled();
@@ -56,9 +56,9 @@ describe('Locket Middleware', () => {
 
     it('should return 404 when locket not found', async () => {
       vi.mocked(prisma.locket.findUnique).mockResolvedValue(null);
-      
+
       await checkLocketOwner(mockReq, mockRes, mockNext);
-      
+
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.json).toHaveBeenCalledWith({ success: false, error: 'Locket không tồn tại' });
       expect(mockNext).not.toHaveBeenCalled();
@@ -69,18 +69,18 @@ describe('Locket Middleware', () => {
     it('should allow PUBLIC locket for anonymous', async () => {
       mockReq.user = undefined;
       vi.mocked(prisma.locket.findUnique).mockResolvedValue({ id: 'locket-123', userId: 'user-1', visibility: 'PUBLIC' } as any);
-      
+
       await checkLocketVisibility(mockReq, mockRes, mockNext);
-      
+
       expect(mockNext).toHaveBeenCalled();
     });
 
     it('should deny PRIVATE locket for non-owner', async () => {
       mockReq.user = { id: 'user-2' };
       vi.mocked(prisma.locket.findUnique).mockResolvedValue({ id: 'locket-123', userId: 'user-1', visibility: 'PRIVATE' } as any);
-      
+
       await checkLocketVisibility(mockReq, mockRes, mockNext);
-      
+
       expect(mockRes.status).toHaveBeenCalledWith(403);
       expect(mockRes.json).toHaveBeenCalledWith({ success: false, error: 'Không có quyền xem' });
     });
@@ -88,9 +88,9 @@ describe('Locket Middleware', () => {
     it('should allow PRIVATE locket for owner', async () => {
       mockReq.user = { id: 'user-1' };
       vi.mocked(prisma.locket.findUnique).mockResolvedValue({ id: 'locket-123', userId: 'user-1', visibility: 'PRIVATE' } as any);
-      
+
       await checkLocketVisibility(mockReq, mockRes, mockNext);
-      
+
       expect(mockNext).toHaveBeenCalled();
     });
 
@@ -98,9 +98,9 @@ describe('Locket Middleware', () => {
       mockReq.user = { id: 'user-2' };
       vi.mocked(prisma.locket.findUnique).mockResolvedValue({ id: 'locket-123', userId: 'user-1', visibility: 'FRIENDS' } as any);
       vi.mocked(prisma.friendship.findFirst).mockResolvedValue({ id: 'friendship-1', status: 'ACCEPTED' } as any);
-      
+
       await checkLocketVisibility(mockReq, mockRes, mockNext);
-      
+
       expect(mockNext).toHaveBeenCalled();
     });
 
@@ -108,9 +108,9 @@ describe('Locket Middleware', () => {
       mockReq.user = { id: 'user-3' };
       vi.mocked(prisma.locket.findUnique).mockResolvedValue({ id: 'locket-123', userId: 'user-1', visibility: 'FRIENDS' } as any);
       vi.mocked(prisma.friendship.findFirst).mockResolvedValue(null);
-      
+
       await checkLocketVisibility(mockReq, mockRes, mockNext);
-      
+
       expect(mockRes.status).toHaveBeenCalledWith(403);
       expect(mockRes.json).toHaveBeenCalledWith({ success: false, error: 'Không có quyền xem' });
     });

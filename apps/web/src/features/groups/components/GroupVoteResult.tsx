@@ -8,10 +8,10 @@ const GroupVoteResult: React.FC = () => {
   const navigate = useNavigate();
   const { members, votes } = useGroupSpinStore();
   const { currentResult, candidates } = useSpinStore();
-  
+
   const acceptedVotes = Object.values(votes).filter(v => v === 'ACCEPT').length;
   const isAccepted = acceptedVotes > members.length / 2;
-  
+
   const resultData = currentResult || candidates[0] || {
     name: 'Bún Bò Bà Luân',
     category: 'Vietnamese',
@@ -52,24 +52,24 @@ const GroupVoteResult: React.FC = () => {
   useEffect(() => {
     const container = document.getElementById('confetti-container');
     if (!container) return;
-    
+
     const colors = ['#ff5a5f', '#FFC107', '#16A34A', '#ffab69'];
     const confettiCount = 50;
 
     for (let i = 0; i < confettiCount; i++) {
         const confetti = document.createElement('div');
         confetti.classList.add('confetti-piece');
-        
+
         const color = colors[Math.floor(Math.random() * colors.length)];
         const left = Math.random() * 100 + 'vw';
         const animationDuration = (Math.random() * 2 + 2) + 's';
         const animationDelay = Math.random() * 3 + 's';
-        
+
         confetti.style.setProperty('--color', color);
         confetti.style.left = left;
         confetti.style.animationDuration = animationDuration;
         confetti.style.animationDelay = animationDelay;
-        
+
         if(Math.random() > 0.5) {
             confetti.style.borderRadius = '50%';
         }
@@ -105,10 +105,10 @@ const GroupVoteResult: React.FC = () => {
             100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
         }
       `}</style>
-      
+
       {/* Confetti Background Layer */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" id="confetti-container"></div>
-      
+
       {/* TopAppBar */}
       <header className="flex justify-between items-center w-full px-margin-mobile py-base sticky top-0 z-50 bg-surface dark:bg-surface-dim shadow-sm dark:shadow-none">
         <div className="text-headline-md font-headline-md font-extrabold text-primary dark:text-primary-container flex items-center gap-1">

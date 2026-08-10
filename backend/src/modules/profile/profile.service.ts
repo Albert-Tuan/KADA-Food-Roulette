@@ -1,4 +1,4 @@
-import { prisma } from '../../shared/utils/prisma';
+import { prisma } from '../../shared/utils/prisma.js';
 
 export interface UpdateProfileData {
   displayNamePrivate?: string;
@@ -40,7 +40,7 @@ export const profileService = {
             friendshipsRequested: true,
             friendshipsReceived: true,
             lockets: {
-              where: { visibility: 'PUBLIC', status: 'ACTIVE' }
+              where: { visibility: 'PUBLIC', deletedAt: null }
             }
           }
         }

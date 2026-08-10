@@ -26,10 +26,8 @@ export const responseHelper = {
     const payload: { success: boolean; message: string; [key: string]: unknown } = {
       success: true,
       message,
+      ...(data !== undefined ? { data } : {}),
     };
-    if (data && typeof data === 'object') {
-      Object.assign(payload, data);
-    }
     return res.status(200).json(payload);
   },
 
