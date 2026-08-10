@@ -1619,7 +1619,15 @@ X-Captured-At: <ISO8601_timestamp>
       "display_name_public": "Mini Foodie",
       "avatar_url": null
     },
-    "image_url": "/api/v1/lockets/media/uuid.jpg",
+    "image_url": "https://project.supabase.co/storage/v1/object/sign/lockets/...",
+    "thumbnail_url": "https://project.supabase.co/storage/v1/object/sign/lockets/...",
+    "image_metadata": {
+      "width": 1536,
+      "height": 2048,
+      "bytes": 284120,
+      "thumbnail_bytes": 18420,
+      "mime_type": "image/jpeg"
+    },
     "dish_name": "Bún bò Huế",
     "restaurant_id": null,
     "restaurant_name": "Bếp Huế Mộc",
@@ -1629,7 +1637,7 @@ X-Captured-At: <ISO8601_timestamp>
     "visibility": "FRIENDS",
     "location": { "latitude": 10.7769, "longitude": 106.7009 },
     "can_display_location": true,
-    "exif_stripped": false,
+    "exif_stripped": true,
     "permissions": { "can_edit": true, "can_delete": true },
     "captured_at": "2026-08-07T11:59:45Z",
     "created_at": "2026-08-07T12:00:00Z"
@@ -1644,7 +1652,37 @@ X-Captured-At: <ISO8601_timestamp>
 - `LOCKET_DEVICE_INVALID`: Device hash không đúng định dạng SHA-256
 - `LOCKET_CAPTURE_EXPIRED`: `captured_at` không hợp lệ hoặc lệch quá 60 giây
 - `LOCKET_VALIDATION`: Metadata/GPS/visibility không hợp lệ
-- `LOCKET_STORAGE_PENDING`: Production storage chưa được cấu hình
+- `LOCKET_STORAGE_UNCONFIGURED`: Production storage chưa được cấu hình đầy đủ
+- `LOCKET_STORAGE_BUCKET_INVALID`: Bucket `lockets` không tồn tại hoặc không ở chế độ private
+- `LOCKET_STORAGE_ERROR`: Supabase upload/download/delete/signing thất bại
+- `LOCKET_STORAGE_CLEANUP_FAILED`: Không thể dọn object sau khi Prisma persistence thất bại
+- `LOCKET_IMAGE_PROCESSING_FAILED`: Sharp không thể giải mã hoặc chuẩn hóa ảnh
+
+**Media pipeline:**
+
+```text
+Mobile camera → Express multipart → auth/metadata/file validation
+              → Sharp rotate + JPEG re-encode + thumbnail
+              → Supabase private bucket → Prisma metadata
+```
+
+- Bucket `lockets` luôn private; service role key chỉ tồn tại ở backend.
+- Object paths: `lockets/{userId}/{locketId}/original.jpg` và `thumbnail.jpg`.
+- Sharp re-encode ảnh JPEG/PNG thành JPEG, loại metadata/EXIF và giới hạn kích thước giải mã.
+- Nếu Prisma ghi thất bại, backend xóa cả hai object; khi xóa Locket, backend soft-delete rồi xóa object và hoàn tác soft-delete nếu Storage thất bại.
+- `PRIVATE`/`FRIENDS` nhận Supabase signed URL TTL 1 giờ.
+- `PUBLIC` nhận `/api/v1/lockets/media/lockets/{userId}/{locketId}/{fileName}`. Endpoint đọc lại visibility trong Prisma trước khi tải object từ bucket private; không dùng `getPublicUrl`.
+- Public media trả `Cache-Control: public, max-age=0, must-revalidate`; proxy/CDN có thể lưu nhưng phải revalidate với Express. `PRIVATE`/`FRIENDS` trả `private, no-store` nếu đi qua Express fallback. Việc cấu hình CDN nằm ngoài Express.
+
+### 5.1.1 Read Locket Media
+
+```text
+GET /lockets/media/lockets/:user_id/:locket_id/:file_name
+```
+
+**Auth Required:** Không với Locket đang `PUBLIC`; owner/friend cần JWT hoặc capability URL hợp lệ cho nội dung được phép.
+
+**Security:** Mỗi request Express kiểm tra object path, bản ghi chưa bị xóa, visibility hiện tại và quan hệ owner/friend trước khi trả bytes. Chỉ chấp nhận `original.jpg` hoặc `thumbnail.jpg` theo path server cấp.
 
 ---
 
@@ -1678,13 +1716,21 @@ GET /lockets
         "avatar_url": "..."
       },
       "image_url": "...",
+      "thumbnail_url": "...",
+      "image_metadata": {
+        "width": 1536,
+        "height": 2048,
+        "bytes": 284120,
+        "thumbnail_bytes": 18420,
+        "mime_type": "image/jpeg"
+      },
       "restaurant_id": null,
       "restaurant_name": "Bếp Huế Mộc",
       "note": "Bữa ăn ngon quá!",
       "rating": 5,
       "tags": ["món Việt", "cay nhẹ"],
       "visibility": "FRIENDS",
-      "exif_stripped": false,
+      "exif_stripped": true,
       "permissions": { "can_edit": true, "can_delete": true },
       "created_at": "2026-08-07T12:00:00Z"
     }
@@ -1696,9 +1742,7 @@ GET /lockets
 }
 ```
 
-**Storage/EXIF boundary:** dev/test dùng adapter in-memory để tích hợp API. Production trả `503 LOCKET_STORAGE_PENDING` cho tới khi Supabase Storage và EXIF pipeline được triển khai; `exif_stripped` không được báo `true` khi chưa xử lý server-side.
-
-Ảnh `PRIVATE`/`FRIENDS` của adapter dev được trả bằng capability URL ký HMAC, hết hạn sau 5 phút. API vẫn kiểm tra visibility trước khi cấp URL; client không lưu hoặc chia sẻ URL này. Supabase adapter sau này phải trả signed URL tương đương.
+**Storage/EXIF boundary:** dev/test dùng adapter in-memory khi toàn bộ biến Supabase vắng mặt. Production fail closed với `503 LOCKET_STORAGE_UNCONFIGURED`. Supabase adapter dùng bucket private; ảnh `PRIVATE`/`FRIENDS` dùng signed URL TTL 1 giờ, còn ảnh `PUBLIC` đi qua Express media endpoint để visibility luôn được kiểm tra từ Prisma. Adapter dev dùng capability URL HMAC cùng TTL cho nội dung không public.
 
 **Notes:**
 - Feed is chronological (newest first)

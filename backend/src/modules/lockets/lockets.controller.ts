@@ -2,7 +2,7 @@ import type { Response } from 'express';
 import type { AuthRequest } from '../../shared/middleware/auth.middleware.js';
 import { logger } from '../../shared/utils/logger.js';
 import { LocketApiError } from './lockets.errors.js';
-import { verifyMediaSignature } from './lockets.mediaAccess.js';
+import { mediaCacheControl, verifyMediaSignature } from './lockets.mediaAccess.js';
 import { locketsService, serializeLocket } from './lockets.service.js';
 import { locketStorage } from './lockets.storage.js';
 import {
@@ -53,13 +53,14 @@ export const locketsController = {
     try {
       const id = parseRouteParam(req.params.id, 'Mã locket');
       const record = await locketsService.getById(id, req.user?.id);
-      return res.json({ success: true, data: serializeLocket(record, req.user?.id) });
+      return res.json({ success: true, data: await serializeLocket(record, req.user?.id) });
     } catch (error) {
       return sendError(res, error, req.requestId);
     }
   },
 
   create: async (req: AuthRequest, res: Response) => {
+    const startedAt = Date.now();
     try {
       validateImageFile(req.file);
       const input = parseCreateLocket(req.body as Record<string, unknown>, {
@@ -73,8 +74,14 @@ export const locketsController = {
         visibility: record.visibility,
         storageMode: locketStorage.mode,
         exifStripped: record.exifStripped,
+        inputBytes: req.file.size,
+        outputBytes: record.imageBytes,
+        durationMs: Date.now() - startedAt,
       });
-      return res.status(201).json({ success: true, data: serializeLocket(record, req.user!.id) });
+      return res.status(201).json({
+        success: true,
+        data: await serializeLocket(record, req.user!.id),
+      });
     } catch (error) {
       return sendError(res, error, req.requestId);
     }
@@ -86,7 +93,7 @@ export const locketsController = {
       const input = parseUpdateLocket(req.body as Record<string, unknown>);
       const record = await locketsService.update(id, req.user!.id, input);
       logger.info('locket_updated', { requestId: req.requestId, locketId: record.id });
-      return res.json({ success: true, data: serializeLocket(record, req.user!.id) });
+      return res.json({ success: true, data: await serializeLocket(record, req.user!.id) });
     } catch (error) {
       return sendError(res, error, req.requestId);
     }
@@ -104,16 +111,30 @@ export const locketsController = {
   },
 
   getMedia: async (req: AuthRequest, res: Response) => {
+    const startedAt = Date.now();
     try {
-      const key = parseRouteParam(req.params.key, 'Mã ảnh');
+      const namespace = parseRouteParam(req.params.namespace, 'Namespace ảnh');
+      const userId = parseRouteParam(req.params.userId, 'Mã người dùng');
+      const locketId = parseRouteParam(req.params.locketId, 'Mã locket');
+      const fileName = parseRouteParam(req.params.fileName, 'Tên ảnh');
+      const path = `${namespace}/${userId}/${locketId}/${fileName}`;
       const hasValidSignature = verifyMediaSignature(
-        key,
+        path,
         req.query.expires,
         req.query.signature,
       );
-      const media = await locketsService.getMedia(key, req.user?.id, hasValidSignature);
+      const media = await locketsService.getMedia(path, req.user?.id, hasValidSignature);
       res.setHeader('content-type', media.mimeType);
-      res.setHeader('cache-control', 'private, max-age=300');
+      res.setHeader('content-length', media.buffer.length);
+      res.setHeader('cache-control', mediaCacheControl(media.visibility));
+      res.setHeader('vary', 'Authorization');
+      logger.info('locket_media_served', {
+        requestId: req.requestId,
+        visibility: media.visibility,
+        storageMode: locketStorage.mode,
+        bytes: media.buffer.length,
+        durationMs: Date.now() - startedAt,
+      });
       return res.send(media.buffer);
     } catch (error) {
       return sendError(res, error, req.requestId);

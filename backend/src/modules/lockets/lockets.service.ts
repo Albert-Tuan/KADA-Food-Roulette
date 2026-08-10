@@ -1,9 +1,15 @@
+import { randomUUID } from 'node:crypto';
 import { LocketVisibility, Prisma } from '@prisma/client';
 import prisma from '../../shared/utils/prisma.js';
 import { LocketApiError } from './lockets.errors.js';
-import { createSignedMediaUrl } from './lockets.mediaAccess.js';
+import { processLocketImage, type ProcessedLocketImages } from './lockets.imageProcessor.js';
 import type { CreateLocketData, UpdateLocketData } from './lockets.validation.js';
-import { locketStorage, type LocketStorageAdapter } from './lockets.storage.js';
+import {
+  isLocketMediaPath,
+  locketStorage,
+  type LocketMediaPaths,
+  type MediaStorage,
+} from './lockets.storage.js';
 
 export const locketInclude = {
   user: {
@@ -37,11 +43,22 @@ export function canViewLocket(
   return locket.visibility === LocketVisibility.FRIENDS && acceptedFriendIds.has(locket.userId);
 }
 
-export function serializeLocket(record: LocketRecord, viewerId?: string) {
+function mediaPaths(record: Pick<LocketRecord, 'imageUrl' | 'thumbnailUrl'>): LocketMediaPaths | null {
+  if (!record.thumbnailUrl) return null;
+  if (!isLocketMediaPath(record.imageUrl) || !isLocketMediaPath(record.thumbnailUrl)) return null;
+  return { originalPath: record.imageUrl, thumbnailPath: record.thumbnailUrl };
+}
+
+export async function serializeLocket(
+  record: LocketRecord,
+  viewerId?: string,
+  storage: MediaStorage = locketStorage,
+) {
   const isOwner = record.userId === viewerId;
-  const imageUrl = record.visibility === LocketVisibility.PUBLIC
-    ? record.imageUrl
-    : createSignedMediaUrl(record.imageUrl);
+  const paths = mediaPaths(record);
+  const urls = paths
+    ? await storage.getUrls(paths, record.visibility)
+    : { imageUrl: record.imageUrl, thumbnailUrl: record.thumbnailUrl ?? record.imageUrl };
   return {
     id: record.id,
     owner_id: record.userId,
@@ -51,7 +68,17 @@ export function serializeLocket(record: LocketRecord, viewerId?: string) {
       display_name_public: record.user.displayNamePublic,
       avatar_url: record.user.avatarUrl,
     },
-    image_url: imageUrl,
+    image_url: urls.imageUrl,
+    thumbnail_url: urls.thumbnailUrl,
+    image_metadata: record.imageWidth !== null && record.imageHeight !== null
+      ? {
+          width: record.imageWidth,
+          height: record.imageHeight,
+          bytes: record.imageBytes,
+          thumbnail_bytes: record.thumbnailBytes,
+          mime_type: 'image/jpeg',
+        }
+      : null,
     dish_name: record.dishName,
     restaurant_id: record.restaurantId,
     restaurant_name: record.restaurant?.name ?? record.restaurantName,
@@ -85,13 +112,11 @@ async function acceptedFriendIds(userId: string): Promise<Set<string>> {
   )));
 }
 
-function storageKeyFromUrl(imageUrl: string): string | null {
-  const prefix = '/api/v1/lockets/media/';
-  return imageUrl.startsWith(prefix) ? imageUrl.slice(prefix.length) : null;
-}
-
 class LocketsService {
-  constructor(private readonly storage: LocketStorageAdapter = locketStorage) {}
+  constructor(
+    private readonly storage: MediaStorage = locketStorage,
+    private readonly imageProcessor: (buffer: Buffer) => Promise<ProcessedLocketImages> = processLocketImage,
+  ) {}
 
   async getFeed(userId: string, type: 'ALL' | 'MINE' | 'FRIENDS' | 'DISCOVER') {
     const friendIds = await acceptedFriendIds(userId);
@@ -125,7 +150,7 @@ class LocketsService {
       orderBy: [{ capturedAt: 'desc' }, { id: 'desc' }],
       take: 50,
     });
-    return records.map((record) => serializeLocket(record, userId));
+    return Promise.all(records.map((record) => serializeLocket(record, userId, this.storage)));
   }
 
   async getById(id: string, viewerId?: string): Promise<LocketRecord> {
@@ -154,13 +179,21 @@ class LocketsService {
       if (!restaurant) throw new LocketApiError('RESTAURANT_NOT_FOUND', 'Không tìm thấy nhà hàng.', 404);
     }
 
-    const stored = await this.storage.upload({ buffer: file.buffer, mimeType: file.mimetype });
+    const locketId = randomUUID();
+    const images = await this.imageProcessor(file.buffer);
+    const stored = await this.storage.upload({ userId, locketId, images });
     try {
       return await prisma.locket.create({
         data: {
+          id: locketId,
           userId,
           restaurantId: input.restaurantId,
-          imageUrl: stored.imageUrl,
+          imageUrl: stored.originalPath,
+          thumbnailUrl: stored.thumbnailPath,
+          imageWidth: images.width,
+          imageHeight: images.height,
+          imageBytes: images.originalBytes,
+          thumbnailBytes: images.thumbnailBytes,
           dishName: input.dishName,
           restaurantName: input.restaurantName,
           note: input.note,
@@ -168,7 +201,7 @@ class LocketsService {
           tags: input.tags,
           deviceHash: input.deviceHash,
           capturedAt: input.capturedAt,
-          exifStripped: stored.exifStripped,
+          exifStripped: images.exifStripped,
           lat: input.latitude,
           lng: input.longitude,
           visibility: input.visibility,
@@ -176,7 +209,15 @@ class LocketsService {
         include: locketInclude,
       });
     } catch (error) {
-      await this.storage.remove(stored.key);
+      try {
+        await this.storage.remove(stored);
+      } catch {
+        throw new LocketApiError(
+          'LOCKET_STORAGE_CLEANUP_FAILED',
+          'Không thể dọn ảnh sau khi lưu Locket thất bại.',
+          500,
+        );
+      }
       throw error;
     }
   }
@@ -214,17 +255,27 @@ class LocketsService {
     if (!existing) throw new LocketApiError('LOCKET_NOT_FOUND', 'Không tìm thấy locket.', 404);
     if (existing.userId !== userId) throw new LocketApiError('LOCKET_FORBIDDEN', 'Bạn không thể xóa locket này.', 403);
 
+    const paths = mediaPaths(existing);
     await prisma.locket.update({ where: { id }, data: { deletedAt: new Date() } });
-    const key = storageKeyFromUrl(existing.imageUrl);
-    if (key) await this.storage.remove(key);
+    if (paths) {
+      try {
+        await this.storage.remove(paths);
+      } catch (error) {
+        await prisma.locket.update({ where: { id }, data: { deletedAt: null } });
+        throw error;
+      }
+    }
   }
 
-  async getMedia(key: string, viewerId?: string, hasValidSignature = false) {
-    if (!/^[a-f0-9-]{36}\.(jpg|png)$/.test(key)) {
+  async getMedia(path: string, viewerId?: string, hasValidSignature = false) {
+    if (!isLocketMediaPath(path)) {
       throw new LocketApiError('LOCKET_NOT_FOUND', 'Không tìm thấy ảnh.', 404);
     }
     const record = await prisma.locket.findFirst({
-      where: { imageUrl: `/api/v1/lockets/media/${key}`, deletedAt: null },
+      where: {
+        deletedAt: null,
+        OR: [{ imageUrl: path }, { thumbnailUrl: path }],
+      },
       select: { userId: true, visibility: true },
     });
     if (!record) throw new LocketApiError('LOCKET_NOT_FOUND', 'Không tìm thấy ảnh.', 404);
@@ -233,9 +284,9 @@ class LocketsService {
     if (!hasValidSignature && !canViewLocket(record, viewerId, friendIds)) {
       throw new LocketApiError('LOCKET_FORBIDDEN', 'Bạn không có quyền xem ảnh này.', 403);
     }
-    const media = await this.storage.read(key);
+    const media = await this.storage.read(path);
     if (!media) throw new LocketApiError('LOCKET_MEDIA_GONE', 'Ảnh dev đã hết hiệu lực. Bạn đăng lại locket nhé.', 410);
-    return media;
+    return { ...media, visibility: record.visibility };
   }
 
   async getPublicForUser(userId: string) {
@@ -245,7 +296,7 @@ class LocketsService {
       orderBy: [{ capturedAt: 'desc' }, { id: 'desc' }],
       take: 50,
     });
-    return records.map((record) => serializeLocket(record));
+    return Promise.all(records.map((record) => serializeLocket(record, undefined, this.storage)));
   }
 }
 

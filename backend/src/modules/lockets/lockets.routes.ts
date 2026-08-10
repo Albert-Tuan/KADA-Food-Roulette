@@ -23,7 +23,11 @@ function uploadLocketImage(req: Request, res: Response, next: NextFunction) {
   });
 }
 
-router.get('/media/:key', optionalJWT, locketsController.getMedia);
+router.get(
+  '/media/:namespace/:userId/:locketId/:fileName',
+  optionalJWT,
+  locketsController.getMedia,
+);
 router.get('/me', requireJWT, locketsController.getMine);
 router.get('/', requireJWT, locketsController.getFeed);
 router.post('/', requireJWT, uploadLocketImage, locketsController.create);

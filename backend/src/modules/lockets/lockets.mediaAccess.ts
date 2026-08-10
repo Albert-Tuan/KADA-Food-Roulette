@@ -1,6 +1,13 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import type { LocketVisibility } from '@prisma/client';
 
-const MEDIA_URL_TTL_SECONDS = 5 * 60;
+export const MEDIA_URL_TTL_SECONDS = 60 * 60;
+
+export function mediaCacheControl(visibility: LocketVisibility): string {
+  return visibility === 'PUBLIC'
+    ? 'public, max-age=0, must-revalidate'
+    : 'private, no-store';
+}
 
 function signingSecret(): string {
   const secret = process.env.LOCKET_MEDIA_SIGNING_SECRET ?? process.env.JWT_SECRET;
@@ -17,14 +24,10 @@ function signatureFor(key: string, expires: number): string {
     .digest('hex');
 }
 
-export function createSignedMediaUrl(imageUrl: string, now = Date.now()): string {
-  const prefix = '/api/v1/lockets/media/';
-  if (!imageUrl.startsWith(prefix)) return imageUrl;
-
-  const key = imageUrl.slice(prefix.length);
+export function createSignedMediaUrl(storagePath: string, now = Date.now()): string {
   const expires = Math.floor(now / 1000) + MEDIA_URL_TTL_SECONDS;
-  const signature = signatureFor(key, expires);
-  return `${imageUrl}?expires=${expires}&signature=${signature}`;
+  const signature = signatureFor(storagePath, expires);
+  return `/api/v1/lockets/media/${storagePath}?expires=${expires}&signature=${signature}`;
 }
 
 export function verifyMediaSignature(
