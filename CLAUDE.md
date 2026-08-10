@@ -133,7 +133,7 @@ brand/prompts.md  >  brand/brand.md  >  brand/FOOD-ROULETTE-SITEMAP.md  >  conte
 ### Backend
 | Layer | Lựa chọn |
 |-------|----------|
-| Runtime | Node.js 20 LTS |
+| Runtime | Node.js 22 LTS |
 | Framework | Express.js |
 | ORM | Prisma |
 | Database | MySQL 8.0 (Docker local) / PlanetScale (cloud) |

@@ -1,0 +1,77 @@
+{
+  "src/middleware/errorHandler.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/modules/auth/auth.controller.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 11
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 8
+    }
+  },
+  "src/modules/circle/circle.service.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    }
+  },
+  "src/modules/groups/groups.controller.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 5
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 7
+    }
+  },
+  "src/modules/menu/menu.controller.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 4
+    }
+  },
+  "src/modules/menu/menu.routes.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/modules/menu/menu.service.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "src/modules/restaurants/restaurants.controller.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 10
+    }
+  },
+  "src/modules/roulette/roulette.controller.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 10
+    }
+  },
+  "src/modules/steward/steward.controller.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 3
+    }
+  },
+  "src/shared/middleware/auth.middleware.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "src/shared/services/ocr.service.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  }
+}
