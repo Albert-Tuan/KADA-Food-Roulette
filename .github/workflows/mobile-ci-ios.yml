@@ -1,4 +1,4 @@
-﻿name: Mobile iOS CI
+name: Mobile iOS CI
 
 on:
   push:
@@ -54,7 +54,7 @@ jobs:
           node-version: '20'
 
       - name: Setup Expo
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@v9
         with:
           expo-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
@@ -63,7 +63,7 @@ jobs:
         run: npm ci
 
       - name: EAS Build (iOS preview)
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@v9
         with:
           eas-build: true
           platform: ios
