@@ -86,4 +86,4 @@ jobs:
 
       - name: Build backend image (no push)
         run: |
-          docker build -t food-roulette-backend:test -f docker/backend.Dockerfile backend/
+          docker build -t food-roulette-backend:test -f backend/Dockerfile backend/
