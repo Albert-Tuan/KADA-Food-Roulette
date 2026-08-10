@@ -26,13 +26,13 @@ describe('Backend smoke tests', () => {
 
   describe('jwt utils', () => {
     it('signs and verifies a token', () => {
-      const token = generateAccessToken({ userId: 'user-123' });
-      const payload = verifyToken(token) as { userId: string };
-      expect(payload.userId).toBe('user-123');
+      const token = generateAccessToken({ id: 'user-123', email: 'a@b.c', role: 'user' });
+      const payload = verifyToken(token) as { id: string; email: string; role: string };
+      expect(payload.id).toBe('user-123');
     });
 
     it('rejects tampered tokens', () => {
-      const token = generateAccessToken({ userId: 'user-123' });
+      const token = generateAccessToken({ id: 'user-123', email: 'a@b.c', role: 'user' });
       const tampered = token.slice(0, -2) + 'xx';
       expect(() => verifyToken(tampered)).toThrow();
     });
