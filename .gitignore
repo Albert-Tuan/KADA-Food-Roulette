@@ -27,3 +27,5 @@ node_modules/
 .vite/
 dist/
 main
+scripts/close-dependabot-prs.ps1
+scripts/close-dependabot-prs.sh

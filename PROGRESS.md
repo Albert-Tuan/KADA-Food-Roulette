@@ -1,7 +1,7 @@
 # PROGRESS.md
 
 > **Theo dõi tiến độ implementation Food Roulette**
-> **Version:** 2.0 · **Date:** 2026-08-09
+> **Version:** 2.2 · **Date:** 2026-08-10
 > **Based on:** `brand/FOOD-ROULETTE-SITEMAP.md` v2.4
 
 ---
@@ -38,7 +38,7 @@
 | **Thêm quán (user-submitted)** | ✅ | ❌ | ❌ | 🟡 Partial |
 | **Steward dashboard** | ✅ | ❌ | ❌ | 🟡 Partial |
 | **Google Places lookup** | ✅ | ❌ | ❌ | 🟡 Partial |
-| **Restaurant Partner (B2B)** | ✅ | ❌ | ❌ | 🟡 Partial |
+| **Restaurant Partner (B2B)** | ✅ | ✅ | ✅ | ✅ Done |
 | **Corporate Account (B2B)** | ✅ | ❌ | ❌ | 🟡 Partial |
 | **Landing page** | N/A | N/A | ❌ | ❌ Not Started |
 | **Chính sách bảo mật** | N/A | ❌ | ❌ | ❌ Not Started |
@@ -53,6 +53,7 @@
 | Module | Files | Owner |
 |--------|-------|-------|
 | **Auth** | `auth.controller.ts`, `auth.routes.ts` | Tuấn Anh |
+| **Partner (B2B)** | `partner.controller.ts`, `partner.service.ts`, `partner.routes.ts`, `partner.types.ts` | Tuấn Anh |
 | **Roulette** | `roulette.controller.ts`, `roulette.routes.ts` | Trường |
 | **Groups** | `groups.controller.ts`, `groups.routes.ts` | Trường |
 | **Restaurants** | `restaurants.controller.ts`, `restaurants.routes.ts` | Trường |
@@ -103,6 +104,7 @@
 - API client (`src/api/client.ts`)
 - API endpoints (`src/api/endpoints/*`)
 - Zustand stores (`src/stores/authStore.ts`)
+- TypeScript config (v2 - without path aliases for TS 7.0 compatibility)
 
 ### Đang làm 🟡
 - [ ] Spin wheel animation (Reanimated 3)
@@ -350,5 +352,5 @@ KADA-Food-Roulette/
 
 ---
 
-*Updated: 2026-08-09 · Last update by: Cursor AI*
+*Updated: 2026-08-10 · Last update by: Cursor AI*
 *Based on: `brand/FOOD-ROULETTE-SITEMAP.md` v2.4*
