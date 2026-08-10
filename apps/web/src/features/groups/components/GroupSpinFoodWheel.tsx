@@ -71,7 +71,7 @@ const GroupSpinFoodWheel: React.FC = () => {
         </div>
 
         {/* Custom Food Inputs */}
-        <div className="w-full bg-surface-white rounded-xl p-4 shadow-sm mb-stack-lg border border-subtle-gray">
+        <div className="w-full bg-surface-white rounded-xl p-4 shadow-sm mb-stack-md border border-subtle-gray">
           <h3 className="font-label-strong text-primary mb-1">Thêm đề xuất của nhóm</h3>
           <p className="text-xs text-on-surface-variant mb-4">Mỗi người có thể gợi ý 1 món. Nếu không ai gợi ý, vòng xoay sẽ tự chọn quán ngẫu nhiên.</p>
           <div className="flex flex-col gap-3">
@@ -89,6 +89,25 @@ const GroupSpinFoodWheel: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* AI Menu Scanner Button for Group */}
+        <div 
+          onClick={() => navigate('/spin/menu-capture')}
+          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl p-3.5 shadow-md mb-stack-lg flex items-center justify-between cursor-pointer hover:brightness-105 active:scale-[0.99] transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-white/20 backdrop-blur text-white">
+              <span className="material-symbols-outlined text-xl">document_scanner</span>
+            </div>
+            <div className="text-left">
+              <h4 className="font-bold text-sm leading-tight flex items-center gap-1">
+                📷 Quét Menu Bằng AI Quán Hiện Tại
+              </h4>
+              <p className="text-[11px] text-amber-100 mt-0.5">Tự động nhận diện menu & chia món ăn cho cả nhóm</p>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-amber-200 text-lg">chevron_right</span>
         </div>
 
         {/* Wheel Component */}
