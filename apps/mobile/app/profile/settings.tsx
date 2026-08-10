@@ -9,11 +9,11 @@ export default function ProfileSettingsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background p-5" edges={['bottom']}>
       <Text className="text-secondary-500 mb-5">Cài đặt trên thiết bị này.</Text>
-      <SettingRow label="Locket mới" value={newLocketNotifications} onChange={setNewLocketNotifications} />
+      <SettingRow label="Taste Board mới" value={newLocketNotifications} onChange={setNewLocketNotifications} />
       <SettingRow label="Hoạt động nhóm" value={groupNotifications} onChange={setGroupNotifications} />
       <View className="bg-primary-50 rounded-2xl p-4 mt-6">
         <Text className="font-semibold text-secondary-900">Quyền riêng tư</Text>
-        <Text className="text-secondary-600 leading-5 mt-2">Bạn chọn người xem riêng cho từng locket trước khi đăng.</Text>
+        <Text className="text-secondary-600 leading-5 mt-2">Bạn chọn người xem riêng cho từng Taste Board trước khi đăng.</Text>
       </View>
     </SafeAreaView>
   );

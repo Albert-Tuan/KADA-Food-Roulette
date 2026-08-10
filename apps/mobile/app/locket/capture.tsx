@@ -176,7 +176,7 @@ export default function CaptureLocketScreen() {
   const validateForm = (): boolean => {
     if (!draft?.uri) return setFormError('Bạn cần chụp ảnh trước khi đăng.'), false;
     if (!Number.isFinite(draft.latitude) || !Number.isFinite(draft.longitude)) {
-      return setFormError('Cần vị trí để đăng locket.'), false;
+      return setFormError('Cần vị trí để đăng Taste Board.'), false;
     }
     if (!dishName.trim()) return setFormError('Bạn nhập tên món nhé.'), false;
     if (dishName.trim().length > 80) return setFormError('Tên món tối đa 80 ký tự.'), false;
@@ -214,7 +214,7 @@ export default function CaptureLocketScreen() {
       });
       router.replace(`/locket/${created.id}`);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'Không thể đăng locket. Bạn thử lại nhé.');
+      setFormError(error instanceof Error ? error.message : 'Không thể đăng Taste Board. Bạn thử lại nhé.');
     }
   };
 
@@ -226,7 +226,7 @@ export default function CaptureLocketScreen() {
     return (
       <CenteredState
         title="Cần quyền camera"
-        message="Không thể tạo locket nếu không bật camera."
+        message="Không thể tạo Taste Board nếu không bật camera."
         actionLabel={cameraPermission.canAskAgain ? 'Cho phép camera' : 'Mở cài đặt'}
         onAction={cameraPermission.canAskAgain ? async () => { await requestCameraPermission(); } : Linking.openSettings}
       />
@@ -237,7 +237,7 @@ export default function CaptureLocketScreen() {
     return (
       <CenteredState
         title="Cần quyền vị trí"
-        message="Locket cần GPS để xác nhận nơi và thời điểm chụp."
+        message="Taste Board cần GPS để xác nhận nơi và thời điểm chụp."
         actionLabel="Mở cài đặt"
         onAction={Linking.openSettings}
         secondaryLabel="Thử lại"
@@ -255,7 +255,7 @@ export default function CaptureLocketScreen() {
               <TouchableOpacity onPress={() => setDraft(null)} className="px-3 py-2">
                 <Text className="text-secondary-700">Chụp lại</Text>
               </TouchableOpacity>
-              <Text className="text-xl font-bold text-secondary-900">Locket mới</Text>
+              <Text className="text-xl font-bold text-secondary-900">Taste Board mới</Text>
               <View className="w-20" />
             </View>
 
@@ -366,7 +366,7 @@ export default function CaptureLocketScreen() {
               {createLocket.isPending ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text className="text-white font-bold text-base">Đăng locket</Text>
+                <Text className="text-white font-bold text-base">Đăng Taste Board</Text>
               )}
             </TouchableOpacity>
           </ScrollView>

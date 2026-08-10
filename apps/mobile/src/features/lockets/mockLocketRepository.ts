@@ -99,7 +99,7 @@ function validateLocketInput(input: CreateLocketInput): string[] {
 
   if (!/^[a-f0-9]{64}$/.test(input.deviceHash)) throw new Error('Định danh thiết bị không hợp lệ.');
   if (!input.localImageUri || !['image/jpeg', 'image/png', 'image/webp'].includes(input.mimeType)) {
-    throw new Error('Ảnh locket không hợp lệ.');
+    throw new Error('Ảnh Taste Board không hợp lệ.');
   }
   if (!input.dishName.trim() || input.dishName.trim().length > 80) {
     throw new Error('Tên món phải có từ 1 đến 80 ký tự.');
@@ -160,7 +160,7 @@ class MockLocketRepository implements LocketRepository {
 
   async getById(id: string): Promise<Locket> {
     const locket = lockets.find((item) => item.id === id);
-    if (!locket) throw new Error('Không tìm thấy locket.');
+    if (!locket) throw new Error('Không tìm thấy Taste Board.');
     return { ...locket };
   }
 
@@ -195,8 +195,8 @@ class MockLocketRepository implements LocketRepository {
 
   async update(id: string, input: UpdateLocketInput): Promise<Locket> {
     const index = lockets.findIndex((item) => item.id === id);
-    if (index < 0) throw new Error('Không tìm thấy locket.');
-    if (lockets[index].ownerId !== CURRENT_USER_ID) throw new Error('Bạn không thể sửa locket này.');
+    if (index < 0) throw new Error('Không tìm thấy Taste Board.');
+    if (lockets[index].ownerId !== CURRENT_USER_ID) throw new Error('Bạn không thể sửa Taste Board này.');
     lockets[index] = {
       ...lockets[index],
       ...(input.dishName !== undefined ? { dishName: input.dishName } : {}),
@@ -212,8 +212,8 @@ class MockLocketRepository implements LocketRepository {
 
   async delete(id: string): Promise<void> {
     const locket = lockets.find((item) => item.id === id);
-    if (!locket) throw new Error('Không tìm thấy locket.');
-    if (locket.ownerId !== CURRENT_USER_ID) throw new Error('Bạn không thể xóa locket này.');
+    if (!locket) throw new Error('Không tìm thấy Taste Board.');
+    if (locket.ownerId !== CURRENT_USER_ID) throw new Error('Bạn không thể xóa Taste Board này.');
     lockets = lockets.filter((item) => item.id !== id);
   }
 }

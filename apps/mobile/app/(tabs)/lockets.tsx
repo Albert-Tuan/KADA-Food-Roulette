@@ -35,7 +35,7 @@ export default function LocketsScreen() {
         ListHeaderComponent={
           <View>
             <View className="px-4 pt-4 pb-3">
-              <Text className="text-2xl font-bold text-secondary-900">Lockets</Text>
+              <Text className="text-2xl font-bold text-secondary-900">Taste Board</Text>
               <Text className="text-secondary-500 mt-1">Những món ăn vừa được ghi lại.</Text>
             </View>
             <FlatList
@@ -63,7 +63,7 @@ export default function LocketsScreen() {
           feed.isLoading ? (
             <View className="flex-1 items-center justify-center py-20">
               <ActivityIndicator color="#C68E17" size="large" />
-              <Text className="text-secondary-500 mt-3">Đang tải locket...</Text>
+              <Text className="text-secondary-500 mt-3">Đang tải Taste Board...</Text>
             </View>
           ) : feed.isError ? (
             <View className="flex-1 items-center justify-center px-8 py-20">
@@ -75,7 +75,7 @@ export default function LocketsScreen() {
             </View>
           ) : (
             <View className="flex-1 items-center justify-center px-8 py-20">
-              <Text className="text-xl font-bold text-secondary-900">Chưa có locket</Text>
+              <Text className="text-xl font-bold text-secondary-900">Chưa có Taste Board</Text>
               <Text className="text-secondary-500 text-center mt-2">Chụp món đầu tiên để bắt đầu nhé.</Text>
             </View>
           )
@@ -84,7 +84,7 @@ export default function LocketsScreen() {
 
       <Link href="/locket/capture" asChild>
         <TouchableOpacity className="absolute bottom-7 right-5 bg-primary rounded-full px-5 py-4 shadow-lg">
-          <Text className="text-white font-bold">Tạo locket</Text>
+          <Text className="text-white font-bold">Tạo Taste Board</Text>
         </TouchableOpacity>
       </Link>
     </SafeAreaView>

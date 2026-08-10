@@ -17,7 +17,7 @@ export default function LocketDetailScreen() {
 
   const handleDelete = () => {
     if (!locketQuery.data?.permissions.canDelete) return;
-    Alert.alert('Xóa locket?', 'Locket sẽ không còn xuất hiện trong feed.', [
+    Alert.alert('Xóa Taste Board?', 'Taste Board sẽ không còn xuất hiện trong feed.', [
       { text: 'Giữ lại', style: 'cancel' },
       {
         text: 'Xóa',
@@ -40,7 +40,7 @@ export default function LocketDetailScreen() {
   if (locketQuery.isError || !locketQuery.data) {
     return (
       <CenteredDetail>
-        <Text className="text-xl font-bold text-secondary-900">Không tìm thấy locket</Text>
+        <Text className="text-xl font-bold text-secondary-900">Không tìm thấy Taste Board</Text>
         <TouchableOpacity onPress={() => locketQuery.refetch()} className="bg-primary rounded-xl px-5 py-3 mt-4">
           <Text className="text-white font-semibold">Thử lại</Text>
         </TouchableOpacity>
@@ -97,7 +97,7 @@ export default function LocketDetailScreen() {
               disabled={deleteLocket.isPending}
               className="border border-red-300 rounded-xl py-4 items-center mt-8 disabled:opacity-50"
             >
-              <Text className="text-red-700 font-semibold">Xóa locket</Text>
+              <Text className="text-red-700 font-semibold">Xóa Taste Board</Text>
             </TouchableOpacity>
           ) : null}
         </View>

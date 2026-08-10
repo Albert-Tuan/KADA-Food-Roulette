@@ -42,17 +42,17 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </Link>
 
-          {/* Recent Lockets */}
+          {/* Recent Taste Boards */}
           <View className="mt-6">
             <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-lg font-semibold text-secondary-800">📸 Lockets gần đây</Text>
+              <Text className="text-lg font-semibold text-secondary-800">📸 Taste Board gần đây</Text>
               <Link href="/lockets" className="text-primary text-sm">Xem tất cả</Link>
             </View>
             <View className="bg-white rounded-xl p-8 items-center border-2 border-dashed border-secondary-200">
-              <Text className="text-secondary-400">Chưa có locket nào</Text>
+              <Text className="text-secondary-400">Chưa có Taste Board nào</Text>
               <Link href="/locket/capture" asChild>
                 <TouchableOpacity className="mt-3 bg-primary/10 px-4 py-2 rounded-lg">
-                  <Text className="text-primary font-medium">Chụp locket đầu tiên</Text>
+                  <Text className="text-primary font-medium">Chụp Taste Board đầu tiên</Text>
                 </TouchableOpacity>
               </Link>
             </View>

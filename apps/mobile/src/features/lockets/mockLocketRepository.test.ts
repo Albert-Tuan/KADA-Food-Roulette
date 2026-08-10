@@ -31,5 +31,5 @@ test('supports the mobile create, feed, detail, and delete flow', async () => {
   assert.equal(updated.visibility, 'PUBLIC');
 
   await mockLocketRepository.delete(created.id);
-  await assert.rejects(() => mockLocketRepository.getById(created.id), /Không tìm thấy locket/);
+  await assert.rejects(() => mockLocketRepository.getById(created.id), /Không tìm thấy Taste Board/);
 });

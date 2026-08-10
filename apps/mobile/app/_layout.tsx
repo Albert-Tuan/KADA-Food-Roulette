@@ -34,7 +34,7 @@ export default function RootLayout() {
           <Stack.Screen name="auth/register" options={{ title: 'Đăng ký' }} />
           <Stack.Screen name="restaurant/[id]" options={{ title: 'Chi tiết nhà hàng' }} />
           <Stack.Screen name="locket/capture" options={{ headerShown: false }} />
-          <Stack.Screen name="locket/[id]" options={{ title: 'Locket' }} />
+          <Stack.Screen name="locket/[id]" options={{ title: 'Taste Board' }} />
           <Stack.Screen name="profile/edit" options={{ title: 'Chỉnh sửa hồ sơ' }} />
           <Stack.Screen name="profile/settings" options={{ title: 'Cài đặt' }} />
           <Stack.Screen name="u/[public_id]" options={{ title: 'Profile công khai' }} />

@@ -3,12 +3,16 @@ import { mapLocketDto } from './locketMapper';
 import type { LocketRepository } from './repository';
 import type { CreateLocketInput, Locket, LocketFeedFilter, UpdateLocketInput } from './types';
 
+function getTasteBoardErrorMessage(error: unknown, fallback: string): string {
+  return getApiErrorMessage(error, fallback).replace(/\bLockets?\b/gi, 'Taste Board');
+}
+
 class ApiLocketRepository implements LocketRepository {
   async getFeed(filter: LocketFeedFilter = 'ALL'): Promise<Locket[]> {
     try {
       return (await locketApi.list(filter)).map(mapLocketDto);
     } catch (error) {
-      throw new Error(getApiErrorMessage(error, 'Chưa tải được feed Locket.'));
+      throw new Error(getTasteBoardErrorMessage(error, 'Chưa tải được feed Taste Board.'));
     }
   }
 
@@ -16,7 +20,7 @@ class ApiLocketRepository implements LocketRepository {
     try {
       return mapLocketDto(await locketApi.get(id));
     } catch (error) {
-      throw new Error(getApiErrorMessage(error, 'Không tìm thấy Locket.'));
+      throw new Error(getTasteBoardErrorMessage(error, 'Không tìm thấy Taste Board.'));
     }
   }
 
@@ -41,7 +45,7 @@ class ApiLocketRepository implements LocketRepository {
         deviceHash: input.deviceHash,
       }));
     } catch (error) {
-      throw new Error(getApiErrorMessage(error, 'Không thể đăng Locket. Bạn thử lại nhé.'));
+      throw new Error(getTasteBoardErrorMessage(error, 'Không thể đăng Taste Board. Bạn thử lại nhé.'));
     }
   }
 
@@ -57,7 +61,7 @@ class ApiLocketRepository implements LocketRepository {
         visibility: input.visibility,
       }));
     } catch (error) {
-      throw new Error(getApiErrorMessage(error, 'Không thể cập nhật Locket.'));
+      throw new Error(getTasteBoardErrorMessage(error, 'Không thể cập nhật Taste Board.'));
     }
   }
 
@@ -65,7 +69,7 @@ class ApiLocketRepository implements LocketRepository {
     try {
       await locketApi.delete(id);
     } catch (error) {
-      throw new Error(getApiErrorMessage(error, 'Không thể xóa Locket.'));
+      throw new Error(getTasteBoardErrorMessage(error, 'Không thể xóa Taste Board.'));
     }
   }
 }

@@ -35,11 +35,11 @@ export default function PublicProfileScreen() {
             <Text className="text-secondary-500 mt-1">@{data.publicId}</Text>
             {data.bio ? <Text className="text-secondary-700 text-center leading-5 mt-4">{data.bio}</Text> : null}
             <View className="flex-row w-full justify-around bg-white border border-secondary-100 rounded-2xl py-4 mt-6">
-              <PublicStat value={data.stats.locketCount} label="Locket" />
+              <PublicStat value={data.stats.locketCount} label="Taste Board" />
               <PublicStat value={data.stats.checkInCount} label="Check-in" />
               <PublicStat value={data.stats.groupCount} label="Nhóm" />
             </View>
-            <Text className="self-start text-lg font-bold text-secondary-900 mt-7">Locket công khai</Text>
+            <Text className="self-start text-lg font-bold text-secondary-900 mt-7">Taste Board công khai</Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -49,7 +49,7 @@ export default function PublicProfileScreen() {
             </TouchableOpacity>
           </Link>
         )}
-        ListEmptyComponent={<Text className="text-secondary-500 text-center py-12">Chưa có locket công khai.</Text>}
+        ListEmptyComponent={<Text className="text-secondary-500 text-center py-12">Chưa có Taste Board công khai.</Text>}
       />
     </SafeAreaView>
   );

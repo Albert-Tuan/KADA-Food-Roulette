@@ -50,7 +50,7 @@ export default function ProfileScreen() {
           {data.bio ? <Text className="text-secondary-700 text-center leading-5 mt-4">{data.bio}</Text> : null}
 
           <View className="flex-row w-full justify-around bg-white border border-secondary-100 rounded-2xl py-4 mt-6">
-            <Stat value={data.stats.locketCount} label="Locket" />
+            <Stat value={data.stats.locketCount} label="Taste Board" />
             <Stat value={data.stats.checkInCount} label="Check-in" />
             <Stat value={data.stats.groupCount} label="Nhóm" />
           </View>
