@@ -44,10 +44,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version-file: backend/.nvmrc
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
@@ -85,10 +85,5 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image (no push)
-        working-directory: .
         run: |
-          docker buildx build \
-            --tag food-roulette-backend:test \
-            --file docker/backend.Dockerfile \
-            --load \
-            ./backend
+          docker build -t food-roulette-backend:test -f docker/backend.Dockerfile backend/

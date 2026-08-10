@@ -48,6 +48,7 @@ model User {
   checkIns               CheckIn[]
   photosUploaded         RestaurantPhoto[] @relation("PhotoUploader")
   menusCaptured          Menu[]           @relation("MenuCapturer")
+  reviews                Review[]
   preference             UserPreference?
   partnerVisits          RestaurantVisit[] // B2B: Restaurant visits
   corporateMemberships   CorporateMember[] // B2B: Corporate memberships
@@ -120,6 +121,7 @@ model Restaurant {
   spinResults       SpinSession[] @relation("SpinResult")
   spinCandidates    SpinSessionCandidate[]
   menus             Menu[]
+  reviews           Review[]
   partner           RestaurantPartner? // B2B: Restaurant Partner relation
 
   @@index([status])
@@ -692,11 +694,41 @@ enum CorporateMemStatus {
 }
 
 // ============================================================
+// P1.5 - REVIEWS (v1.1 - Implemented)
+// ============================================================
+
+model Review {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  restaurantId    String    @map("restaurant_id")
+  overallRating  Float     @map("overall_rating") // 1-5
+  tasteRating     Float?    @map("taste_rating")
+  serviceRating   Float?    @map("service_rating")
+  ambienceRating  Float?    @map("ambience_rating")
+  valueRating     Float?    @map("value_rating")
+  content         String?   @db.Text
+  photoUrls       Json      @default("[]") @map("photo_urls")
+  tags            Json      @default("[]")
+  helpfulCount    Int       @default(0) @map("helpful_count")
+  isVerifiedVisit Boolean   @default(false) @map("is_verified_visit")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, deletedAt])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("reviews")
+}
+
+// ============================================================
 // P2 - DEFERRED TABLES (not implemented yet)
 // ============================================================
 // The following will be added in future versions:
 // - TasteBoard / TasteBoardItem (replaces User.savedRestaurants)
-// - Review
 // - Commitment
 // - AdWatchLog (referenced in SpinLog)
 
