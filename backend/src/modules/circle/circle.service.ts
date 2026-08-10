@@ -106,7 +106,7 @@ class CircleService {
       }
     }
 
-    let spiceMatch = 0.5;
+    let spiceMatch: number;
     const itemIsSpicy = item.tags?.includes('cay');
     const userSpiceLevel = SPICE_LEVELS[pref.spiceTolerance || 'medium'] || 2;
     
