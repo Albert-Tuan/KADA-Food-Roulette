@@ -5,7 +5,7 @@
 -- ============================================================
 
 -- Set path to CSV files (adjust for your environment)
-SET @csv_path = 'D:/1_Project/AI-FullStack/KADA-Food-Roulette/backend/prisma/migrations/v5.0/csv_data/';
+SET @csv_path = 'D:/1_Project/AI-FullStack/KADA-Food-Roulette/backend/prisma/sql/v5.0/csv_data/';
 
 -- ============================================================
 -- 1. Import Users

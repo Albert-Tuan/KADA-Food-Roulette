@@ -3,13 +3,30 @@
 // Test Prisma client can read/write all entities
 // ============================================================
 
+import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
-import { describe, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 const prisma = new PrismaClient();
 
 async function validateApiIntegration() {
   console.log('Starting API Integration Validation...\n');
+
+  const resourceIds = {
+    user: randomUUID(),
+    user2: randomUUID(),
+    friendship: randomUUID(),
+    restaurant: randomUUID(),
+    hours: randomUUID(),
+    photo: randomUUID(),
+    group: randomUUID(),
+    spinSession: randomUUID(),
+    vote: randomUUID(),
+    locket: randomUUID(),
+    checkIn: randomUUID(),
+  };
+
+  try {
 
   // ============================================================
   // CHECK 7.1: User CRUD
@@ -19,11 +36,12 @@ async function validateApiIntegration() {
   // Create user
   const user = await prisma.user.create({
     data: {
-      email: 'api_test@example.com',
+      id: resourceIds.user,
+      email: `api_test_${resourceIds.user}@example.com`,
       passwordHash: 'hashed_password',
       displayNamePrivate: 'API Test Private',
       displayNamePublic: 'API Test Public',
-      publicId: 'APITEST01',
+      publicId: resourceIds.user.replaceAll('-', '').slice(0, 20),
     },
   });
   console.log('✓ Create user:', user.id);
@@ -49,17 +67,19 @@ async function validateApiIntegration() {
 
   const user2 = await prisma.user.create({
     data: {
-      email: 'api_test2@example.com',
+      id: resourceIds.user2,
+      email: `api_test_${resourceIds.user2}@example.com`,
       passwordHash: 'hash2',
       displayNamePrivate: 'User 2 Private',
       displayNamePublic: 'User 2 Public',
-      publicId: 'APITEST02',
+      publicId: resourceIds.user2.replaceAll('-', '').slice(0, 20),
     },
   });
 
   // Send friend request
   const friendship = await prisma.friendship.create({
     data: {
+      id: resourceIds.friendship,
       requesterId: user.id,
       addresseeId: user2.id,
       status: 'PENDING',
@@ -97,6 +117,7 @@ async function validateApiIntegration() {
 
   const restaurant = await prisma.restaurant.create({
     data: {
+      id: resourceIds.restaurant,
       name: 'API Test Restaurant',
       source: 'USER_SUBMITTED',
       status: 'PENDING',
@@ -107,6 +128,7 @@ async function validateApiIntegration() {
   // Add hours
   const hours = await prisma.restaurantHours.create({
     data: {
+      id: resourceIds.hours,
       restaurantId: restaurant.id,
       dayOfWeek: 1,
       openTime: '09:00',
@@ -118,6 +140,7 @@ async function validateApiIntegration() {
   // Add photo
   const photo = await prisma.restaurantPhoto.create({
     data: {
+      id: resourceIds.photo,
       restaurantId: restaurant.id,
       photoUrl: 'http://example.com/photo.jpg',
       displayOrder: 1,
@@ -141,6 +164,7 @@ async function validateApiIntegration() {
 
   const group = await prisma.group.create({
     data: {
+      id: resourceIds.group,
       name: 'API Test Group',
       maxMembers: 20,
     },
@@ -184,6 +208,7 @@ async function validateApiIntegration() {
 
   const spinSession = await prisma.spinSession.create({
     data: {
+      id: resourceIds.spinSession,
       groupId: group.id,
       initiatorId: user.id,
       status: 'ACTIVE',
@@ -202,6 +227,7 @@ async function validateApiIntegration() {
   // Add vote
   const vote = await prisma.vote.create({
     data: {
+      id: resourceIds.vote,
       spinSessionId: spinSession.id,
       userId: user.id,
       value: 'ACCEPT',
@@ -224,9 +250,15 @@ async function validateApiIntegration() {
 
   const locket = await prisma.locket.create({
     data: {
+      id: resourceIds.locket,
       userId: user.id,
       restaurantId: restaurant.id,
-      imageUrl: 'http://example.com/locket.jpg',
+      imageUrl: `lockets/${user.id}/${resourceIds.locket}/original.jpg`,
+      thumbnailUrl: `lockets/${user.id}/${resourceIds.locket}/thumbnail.jpg`,
+      imageWidth: 1200,
+      imageHeight: 1600,
+      imageBytes: 345678,
+      thumbnailBytes: 45678,
       dishName: 'API Test Dish',
       deviceHash: 'test_hash_123',
       capturedAt: new Date(),
@@ -234,6 +266,24 @@ async function validateApiIntegration() {
     },
   });
   console.log('✓ Create locket:', locket.id);
+
+  const persistedMedia = await prisma.locket.findUnique({
+    where: { id: locket.id },
+    select: {
+      thumbnailUrl: true,
+      imageWidth: true,
+      imageHeight: true,
+      imageBytes: true,
+      thumbnailBytes: true,
+    },
+  });
+  expect(persistedMedia).toEqual({
+    thumbnailUrl: `lockets/${user.id}/${resourceIds.locket}/thumbnail.jpg`,
+    imageWidth: 1200,
+    imageHeight: 1600,
+    imageBytes: 345678,
+    thumbnailBytes: 45678,
+  });
 
   // Query by visibility
   const publicLockets = await prisma.locket.findMany({
@@ -249,6 +299,7 @@ async function validateApiIntegration() {
 
   const checkIn = await prisma.checkIn.create({
     data: {
+      id: resourceIds.checkIn,
       userId: user.id,
       restaurantId: restaurant.id,
       locketId: locket.id,
@@ -272,16 +323,16 @@ async function validateApiIntegration() {
   // ============================================================
   console.log('\nCHECK 7.8: Spin Wallet operations');
 
-  // Check wallet was auto-created (via relation)
-  const wallet = await prisma.spinWallet.findUnique({
-    where: { userId: user.id },
+  // Direct Prisma user creation bypasses the registration service, so create its wallet explicitly.
+  const wallet = await prisma.spinWallet.create({
+    data: { userId: user.id },
   });
-  console.log('✓ Find wallet:', wallet?.id);
+  console.log('✓ Create wallet:', wallet.id);
 
   // Add spin log
   const spinLog = await prisma.spinLog.create({
     data: {
-      walletId: wallet!.id,
+      walletId: wallet.id,
       amount: BigInt(10),
       source: 'REWARD',
     },
@@ -312,37 +363,37 @@ async function validateApiIntegration() {
   });
   console.log('✓ Get full user profile:', fullUser?.email);
 
-  // ============================================================
-  // CLEANUP
-  // ============================================================
-  console.log('\nCleaning up test data...');
-  
-  await prisma.vote.deleteMany({ where: { spinSessionId: spinSession.id } });
-  await prisma.spinSessionCandidate.deleteMany({ where: { spinSessionId: spinSession.id } });
-  await prisma.spinSession.delete({ where: { id: spinSession.id } });
-  await prisma.groupMember.deleteMany({ where: { groupId: group.id } });
-  await prisma.group.delete({ where: { id: group.id } });
-  await prisma.checkIn.delete({ where: { id: checkIn.id } });
-  await prisma.locket.delete({ where: { id: locket.id } });
-  await prisma.restaurantPhoto.delete({ where: { id: photo.id } });
-  await prisma.restaurantHours.delete({ where: { id: hours.id } });
-  await prisma.restaurant.delete({ where: { id: restaurant.id } });
-  await prisma.friendship.delete({ where: { id: friendship.id } });
-  await prisma.spinLog.deleteMany({ where: { walletId: wallet!.id } });
-  await prisma.spinWallet.delete({ where: { id: wallet!.id } });
-  await prisma.user.delete({ where: { id: user.id } });
-  await prisma.user.delete({ where: { id: user2.id } });
-
-  console.log('\n✓ Cleanup complete');
-
   console.log('\n========================================');
   console.log('API INTEGRATION VALIDATION: ALL PASSED');
   console.log('========================================');
+  } finally {
+    console.log('\nCleaning up test data...');
+
+    await prisma.vote.deleteMany({ where: { spinSessionId: resourceIds.spinSession } });
+    await prisma.spinSessionCandidate.deleteMany({ where: { spinSessionId: resourceIds.spinSession } });
+    await prisma.checkIn.deleteMany({ where: { id: resourceIds.checkIn } });
+    await prisma.locket.deleteMany({ where: { id: resourceIds.locket } });
+    await prisma.spinSession.deleteMany({ where: { id: resourceIds.spinSession } });
+    await prisma.groupMember.deleteMany({ where: { groupId: resourceIds.group } });
+    await prisma.group.deleteMany({ where: { id: resourceIds.group } });
+    await prisma.restaurantPhoto.deleteMany({ where: { id: resourceIds.photo } });
+    await prisma.restaurantHours.deleteMany({ where: { id: resourceIds.hours } });
+    await prisma.friendship.deleteMany({ where: { id: resourceIds.friendship } });
+    await prisma.spinLog.deleteMany({ where: { wallet: { userId: resourceIds.user } } });
+    await prisma.spinWallet.deleteMany({ where: { userId: resourceIds.user } });
+    await prisma.restaurant.deleteMany({ where: { id: resourceIds.restaurant } });
+    await prisma.user.deleteMany({ where: { id: { in: [resourceIds.user, resourceIds.user2] } } });
+
+    console.log('✓ Cleanup complete');
+  }
 }
 
 describe.skipIf(process.env.RUN_DB_INTEGRATION !== 'true')('database API integration', () => {
   it('validates Prisma CRUD against a configured MySQL database', async () => {
-    await validateApiIntegration();
-    await prisma.$disconnect();
+    try {
+      await validateApiIntegration();
+    } finally {
+      await prisma.$disconnect();
+    }
   });
 });

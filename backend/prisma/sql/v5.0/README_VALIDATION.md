@@ -31,7 +31,7 @@ Các validation queries để đảm bảo database sẵn sàng cho dự án Foo
 
 ### MySQL Checks (2-6)
 ```bash
-mysql -u root -p food_roulette < prisma/migrations/v5.0/[check_file].sql
+mysql -u root -p food_roulette < prisma/sql/v5.0/[check_file].sql
 ```
 
 ### API Check (7)

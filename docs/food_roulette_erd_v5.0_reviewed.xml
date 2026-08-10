@@ -358,7 +358,7 @@
         
         <!-- ========== LOCKET TABLE ========== -->
         <mxCell id="locket_entity" value="Locket&#xa;(P1 - Photo Verification)" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;fillColor=#0277BD;fontColor=#FFFFFF;strokeColor=#01579B;" parent="1" vertex="1">
-          <mxGeometry x="60" y="1200" width="300" height="510" as="geometry" />
+          <mxGeometry x="60" y="1200" width="300" height="560" as="geometry" />
         </mxCell>
         <mxCell id="lkt_id" value="id: UUID (PK)" style="shape=text;align=left;spacingLeft=10;fontColor=#333;strokeColor=none;fillColor=none;" parent="locket_entity" vertex="1">
           <mxGeometry y="30" width="300" height="25" as="geometry" />
@@ -369,32 +369,35 @@
         <mxCell id="lkt_rest" value="restaurantId: UUID (FK → Restaurant)&#xa;NULL (capture without restaurant)" style="shape=text;align=left;spacingLeft=10;fontColor=#333;strokeColor=none;fillColor=none;" parent="locket_entity" vertex="1">
           <mxGeometry y="80" width="300" height="35" as="geometry" />
         </mxCell>
-        <mxCell id="lkt_image" value="imageUrl: VARCHAR(500) NOT NULL&#xa;(camera-only; storage adapter)" style="shape=text;align=left;spacingLeft=10;fontColor=#C62828;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
+        <mxCell id="lkt_image" value="imageUrl / thumbnailUrl: VARCHAR(500)&#xa;(Supabase object paths)" style="shape=text;align=left;spacingLeft=10;fontColor=#C62828;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
           <mxGeometry y="115" width="300" height="35" as="geometry" />
         </mxCell>
-        <mxCell id="lkt_device" value="deviceHash: VARCHAR(64) NOT NULL&#xa;capturedAt: DATETIME NOT NULL&#xa;🔴 DB TRIGGER: ≤ 60s validation" style="shape=text;align=left;spacingLeft=10;fontColor=#C62828;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
+        <mxCell id="lkt_image_meta" value="imageWidth / imageHeight: INT NULL&#xa;imageBytes / thumbnailBytes: INT NULL" style="shape=text;align=left;spacingLeft=10;fontColor=#E65100;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
           <mxGeometry y="150" width="300" height="50" as="geometry" />
         </mxCell>
+        <mxCell id="lkt_device" value="deviceHash: VARCHAR(64) NOT NULL&#xa;capturedAt: DATETIME NOT NULL&#xa;🔴 DB TRIGGER: ≤ 60s validation" style="shape=text;align=left;spacingLeft=10;fontColor=#C62828;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
+          <mxGeometry y="200" width="300" height="50" as="geometry" />
+        </mxCell>
         <mxCell id="lkt_exif" value="exifStripped: BOOLEAN DEFAULT FALSE&#xa;(v5.0: audit trail)" style="shape=text;align=left;spacingLeft=10;fontColor=#E65100;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
-          <mxGeometry y="200" width="300" height="35" as="geometry" />
+          <mxGeometry y="250" width="300" height="35" as="geometry" />
         </mxCell>
         <mxCell id="lkt_location" value="lat: DECIMAL(10,8)&#xa;lng: DECIMAL(11,8)&#xa;(v5.0: Float → Decimal)" style="shape=text;align=left;spacingLeft=10;fontColor=#E65100;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
-          <mxGeometry y="235" width="300" height="50" as="geometry" />
+          <mxGeometry y="285" width="300" height="50" as="geometry" />
         </mxCell>
         <mxCell id="lkt_dish" value="dishName: VARCHAR(80) NOT NULL&#xa;restaurantName: VARCHAR(120) NULL" style="shape=text;align=left;spacingLeft=10;fontColor=#0277BD;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
-          <mxGeometry y="285" width="300" height="40" as="geometry" />
+          <mxGeometry y="335" width="300" height="40" as="geometry" />
         </mxCell>
         <mxCell id="lkt_review" value="note: VARCHAR(280) NULL&#xa;rating: INT NULL CHECK 1..5" style="shape=text;align=left;spacingLeft=10;fontColor=#0277BD;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
-          <mxGeometry y="325" width="300" height="40" as="geometry" />
+          <mxGeometry y="375" width="300" height="40" as="geometry" />
         </mxCell>
         <mxCell id="lkt_tags_visibility" value="tags: JSON DEFAULT []&#xa;visibility: ENUM(PRIVATE, FRIENDS, PUBLIC)" style="shape=text;align=left;spacingLeft=10;fontColor=#0277BD;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
-          <mxGeometry y="365" width="300" height="40" as="geometry" />
+          <mxGeometry y="415" width="300" height="40" as="geometry" />
         </mxCell>
         <mxCell id="lkt_timestamps" value="createdAt / updatedAt: DATETIME&#xa;deletedAt: DATETIME NULL (soft delete)" style="shape=text;align=left;spacingLeft=10;fontColor=#666;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
-          <mxGeometry y="405" width="300" height="40" as="geometry" />
+          <mxGeometry y="455" width="300" height="40" as="geometry" />
         </mxCell>
         <mxCell id="lkt_indexes" value="📇 INDEX: [userId, capturedAt]&#xa;📇 INDEX: [visibility, capturedAt]&#xa;📇 INDEX: [restaurantId], [deletedAt]" style="shape=text;align=left;spacingLeft=10;fontColor=#1976D2;fontSize=9;strokeColor=none;fillColor=#E3F2FD;fontStyle=2;" parent="locket_entity" vertex="1">
-          <mxGeometry y="445" width="300" height="55" as="geometry" />
+          <mxGeometry y="495" width="300" height="55" as="geometry" />
         </mxCell>
         
         <!-- ========== CHECK IN TABLE ========== -->
