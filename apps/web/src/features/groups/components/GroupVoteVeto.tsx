@@ -23,8 +23,10 @@ const GroupVoteVeto: React.FC = () => {
     castVote(hostId || members[0].id, decision); // host votes
     if (decision === 'ACCEPT') {
         navigate('/group-spin/result');
-    } else {
-        navigate('/group-spin/who-spins');
+    } else if (decision === 'RESPIN') {
+        navigate('/group-spin/spin');
+    } else if (decision === 'VETO') {
+        navigate('/');
     }
   };
 

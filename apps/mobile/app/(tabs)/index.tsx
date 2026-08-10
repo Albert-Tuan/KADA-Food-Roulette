@@ -66,7 +66,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Group Spin CTA */}
-        <Link href="/group/create" asChild>
+        <Link href="/group-spin/lobby" asChild>
           <TouchableOpacity style={styles.groupCard}>
             <View style={styles.groupIcon}>
               <Text style={styles.groupIconText}>👥</Text>

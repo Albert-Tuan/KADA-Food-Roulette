@@ -11,7 +11,6 @@ const GroupSpinFoodWheel: React.FC = () => {
   const [rotation, setRotation] = useState(0);
   const [customFoods, setCustomFoods] = useState<Record<string, string>>({});
 
-  const spinner = members.find(m => m.id === spinnerId) || members[0];
 
   const customCandidates = Object.entries(customFoods)
     .filter(([_, food]) => food.trim() !== '')
@@ -62,9 +61,13 @@ const GroupSpinFoodWheel: React.FC = () => {
 
       <main className="flex-grow flex flex-col items-center justify-center px-margin-mobile py-stack-lg max-w-md mx-auto w-full relative">
         <div className="text-center mb-stack-md w-full flex flex-col items-center">
-           <img src={spinner.avatarUrl} alt={spinner.name} className="w-16 h-16 rounded-full border-2 border-primary mb-2 shadow-md object-cover" />
-           <h2 className="font-headline-lg-mobile text-primary">{spinner.name} đang quay...</h2>
-           <p className="text-on-surface-variant text-sm mt-1">Hồi hộp xem món nào sẽ được chọn nhé!</p>
+           <div className="flex -space-x-3 mb-3">
+             {members.slice(0, 5).map(m => (
+               <img key={m.id} className="w-12 h-12 border-2 border-surface-white rounded-full object-cover shadow-sm" src={m.avatarUrl} alt={m.name} />
+             ))}
+           </div>
+           <h2 className="font-headline-lg-mobile text-primary">Phòng Chờ (Lobby)</h2>
+           <p className="text-on-surface-variant text-sm mt-1">Góp món cùng nhau, chốt nhanh kèo nhậu!</p>
         </div>
 
         {/* Custom Food Inputs */}

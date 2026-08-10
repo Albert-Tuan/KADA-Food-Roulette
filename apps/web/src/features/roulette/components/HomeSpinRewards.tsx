@@ -140,7 +140,7 @@ const HomeSpinRewards: React.FC = () => {
 
       {/* Action Buttons */}
       <div className="w-full max-w-md grid grid-cols-2 gap-stack-md mb-stack-lg">
-        <Link to="/group-spin/who-spins" className="w-full bg-surface-white border-2 border-subtle-gray text-on-surface font-label-strong py-3 rounded-xl hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+        <Link to="/group-spin/spin" className="w-full bg-surface-white border-2 border-subtle-gray text-on-surface font-label-strong py-3 rounded-xl hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
           <span className="material-symbols-outlined">group</span>
           Group Spin
         </Link>
