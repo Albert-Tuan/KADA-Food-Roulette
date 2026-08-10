@@ -1,6 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { TouchableOpacity } from 'react-native';
 
 export default function NotFoundScreen() {
   const router = useRouter();
@@ -9,14 +8,14 @@ export default function NotFoundScreen() {
     <>
       <Stack.Screen options={{ title: 'Oops!' }} />
       <View style={styles.container}>
-        <Text className="text-6xl mb-4">😕</Text>
-        <Text className="text-xl font-bold text-secondary-800 mb-2">Trang không tìm thấy</Text>
-        <Text className="text-secondary-500 mb-6">Trang bạn đang tìm kiếm không tồn tại.</Text>
+        <Text style={styles.emoji}>😕</Text>
+        <Text style={styles.title}>Trang không tìm thấy</Text>
+        <Text style={styles.subtitle}>Trang bạn đang tìm kiếm không tồn tại.</Text>
         <TouchableOpacity 
-          className="bg-primary px-6 py-3 rounded-full"
+          style={styles.button}
           onPress={() => router.replace('/')}
         >
-          <Text className="text-white font-semibold">Quay về trang chủ</Text>
+          <Text style={styles.buttonText}>Quay về trang chủ</Text>
         </TouchableOpacity>
       </View>
     </>
@@ -30,5 +29,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     backgroundColor: '#FFF8E7',
+  },
+  emoji: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#292524',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#78716C',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  button: {
+    backgroundColor: '#D97706',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 999,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: '600',
   },
 });

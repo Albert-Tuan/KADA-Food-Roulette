@@ -13,6 +13,18 @@ export interface RegisterRequest {
   displayNamePublic: string;
 }
 
+export interface AuthResponse {
+  success: boolean;
+  data?: {
+    user: UserProfile;
+    access_token: string;
+    refresh_token?: string;
+    expires_in?: number;
+    is_new_user?: boolean;
+  };
+  error?: string;
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -27,20 +39,13 @@ export interface UserProfile {
   createdAt?: string;
 }
 
-export interface AuthResponse {
-  success: boolean;
-  data?: {
-    user: UserProfile;
-    access_token: string;
-    refresh_token?: string;
-    expires_in?: number;
-    is_new_user?: boolean;
-  };
-  error?: string;
+export interface AuthResult {
+  token: string;
+  user: UserProfile;
 }
 
 export const authApi = {
-  login: async (data: LoginRequest): Promise<{ token: string; user: UserProfile }> => {
+  login: async (data: LoginRequest): Promise<AuthResult> => {
     const response = await apiClient.post<AuthResponse>('/auth/login', data);
     const { data: responseData } = response;
     if (!responseData?.success || !responseData.data) {
@@ -52,7 +57,7 @@ export const authApi = {
     };
   },
 
-  register: async (data: RegisterRequest): Promise<{ token: string; user: UserProfile }> => {
+  register: async (data: RegisterRequest): Promise<AuthResult> => {
     const response = await apiClient.post<AuthResponse>('/auth/register', data);
     const { data: responseData } = response;
     if (!responseData?.success || !responseData.data) {
@@ -69,7 +74,7 @@ export const authApi = {
     return response.data;
   },
 
-  google: async (idToken: string): Promise<{ token: string; user: UserProfile }> => {
+  google: async (idToken: string): Promise<AuthResult> => {
     const response = await apiClient.post<AuthResponse>('/auth/google', { idToken });
     const { data: responseData } = response;
     if (!responseData?.success || !responseData.data) {

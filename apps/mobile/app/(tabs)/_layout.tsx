@@ -10,8 +10,8 @@ function TabIcon({ name, focused }: { name: string; focused: boolean }) {
   };
 
   return (
-    <View className="items-center">
-      <Text className={`text-xl ${focused ? 'scale-110' : ''}`}>
+    <View style={{ alignItems: 'center' }}>
+      <Text style={{ fontSize: 20, transform: [{ scale: focused ? 1.1 : 1 }] }}>
         {icons[name] || '•'}
       </Text>
     </View>
@@ -37,7 +37,7 @@ export default function TabLayout() {
         },
         headerStyle: { backgroundColor: '#FFF8E7' },
         headerTintColor: '#D97706',
-        headerTitleStyle: { fontWeight: '600' },
+        headerTitleStyle: { fontWeight: '600' as const },
       }}
     >
       <Tabs.Screen

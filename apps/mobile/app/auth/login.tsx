@@ -3,7 +3,6 @@ import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvo
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/authStore';
-import { authApi } from '@/api';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -22,8 +21,7 @@ export default function LoginScreen() {
     try {
       setIsSubmitting(true);
       setError('');
-      const response = await authApi.login({ email: email.trim(), password });
-      await login(response.token, response.user);
+      await login(email.trim(), password);
       router.replace('/(tabs)');
     } catch (err: any) {
       setError(err.message || 'Đăng nhập thất bại');

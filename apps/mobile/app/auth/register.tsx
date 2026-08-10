@@ -40,13 +40,13 @@ export default function RegisterScreen() {
     try {
       setIsSubmitting(true);
       setError('');
-      const response = await authApi.register({
+      await authApi.register({
         email: formData.email.trim(),
         password: formData.password,
         displayNamePrivate: formData.displayName.trim(),
         displayNamePublic: formData.displayName.trim(),
       });
-      await login(response.token, response.user);
+      await login(formData.email.trim(), formData.password);
       router.replace('/(tabs)');
     } catch (err: any) {
       setError(err.message || 'Đăng ký thất bại');

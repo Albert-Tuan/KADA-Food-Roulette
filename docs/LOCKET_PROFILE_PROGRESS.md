@@ -594,3 +594,18 @@ Không force-push và không merge vào `main`.
 - [x] Backend Locket/Profile tests pass: 36 pass, 0 skip khi bật DB integration.
 - [ ] Không sửa README.
 - [ ] Không commit/push.
+
+## 8. Đồng bộ `origin/main` cho bản demo (2026-08-10)
+
+- Đã merge `origin/main` vào working tree bằng `--no-commit` và giải quyết toàn bộ conflict theo contract Taste Board hiện tại.
+- Giữ luồng Taste Board camera-only, API multipart/Sharp/Supabase và technical identifiers `Locket`/`lockets`.
+- Nhận các module mới từ `main`: Spin, Friends, Notifications, Profile và B2B Partner.
+- Đồng bộ backend về Node 22 trong CI/Docker; CI dùng Prisma migrations và `test:run`, không dùng `db push --accept-data-loss`.
+- Di chuyển ba SQL thủ công từ `main` sang `backend/prisma/sql/main-merge/` để tham chiếu; tạo migration Prisma chuẩn `20260810131814_add_main_modules` cho Notifications/B2B.
+- Migration đã apply thành công trên MySQL 8 disposable: 4/4 migrations.
+- Backend DB integration: 13 test files, 62 tests pass, 0 fail.
+- Backend lint/build/Prisma validate pass; npm audit: 0 vulnerability.
+- Mobile typecheck và lint pass; lint còn 15 warning từ các màn Spin/Restaurant mới, không có error.
+- Mobile dependency audit hiện báo 25 advisory trong graph Expo; chưa chạy `npm audit fix --force` vì có thể gây breaking change trước demo.
+- Supabase bucket thật chưa smoke test vì chưa có credential/bucket local.
+- Chưa push. Merge commit chỉ được tạo sau review staged diff; push vẫn cần xác nhận riêng của người dùng.

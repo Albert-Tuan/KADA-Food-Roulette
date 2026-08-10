@@ -22,12 +22,13 @@ export const responseHelper = {
     });
   },
 
-  successWithMessage(res: Response, message: string, data?: unknown) {
-    return res.status(200).json({
+  successWithMessage(res: Response, message: string, data?: object) {
+    const payload: { success: boolean; message: string; [key: string]: unknown } = {
       success: true,
       message,
       ...(data !== undefined ? { data } : {}),
-    });
+    };
+    return res.status(200).json(payload);
   },
 
   error(res: Response, message: string, statusCode = 400) {
