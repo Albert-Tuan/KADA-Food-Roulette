@@ -85,5 +85,10 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image (no push)
+        working-directory: .
         run: |
-          DOCKER_BUILDKIT=0 docker build -t food-roulette-backend:test -f docker/backend.Dockerfile backend/
+          docker buildx build \
+            --tag food-roulette-backend:test \
+            --file docker/backend.Dockerfile \
+            --load \
+            ./backend
