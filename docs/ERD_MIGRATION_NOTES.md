@@ -11,7 +11,7 @@
 
 ```bash
 # 1. Create database (if not exists)
-mysql -u root -p < backend/prisma/migrations/v5.2/000_create_database.sql
+mysql -u root -p < backend/prisma/sql/v5.0/000_create_database.sql
 
 # 2. Run schema migration (Prisma auto-generates)
 cd backend
@@ -910,4 +910,84 @@ DROP TABLE IF EXISTS "RestaurantHours";
 
 ---
 
+## v5.1 Locket/Profile Field Additions (2026-08-10)
+
+### Summary
+Added missing fields to `Locket` model for content storage and user profile `bio` field.
+
+### Changes
+
+#### Locket table
+| Field | Type | Description |
+|-------|------|-------------|
+| `thumbnail_url` | VARCHAR(500) NULL | Thumbnail image URL |
+| `dish_name` | VARCHAR(200) NULL | Dish/food name |
+| `note` | TEXT NULL | User note/caption |
+| `rating` | SMALLINT NULL | Rating 1-5 (CHECK constraint) |
+| `tags` | JSON NULL | Array of tag strings |
+| `group_id` | VARCHAR(36) NULL | Group association |
+| `status` | ENUM('ACTIVE','REMOVED','REPORTED') | Soft delete support |
+| `updated_at` | TIMESTAMP | Auto-updated timestamp |
+
+#### Users table
+| Field | Type | Description |
+|-------|------|-------------|
+| `bio` | VARCHAR(500) NULL | User biography |
+
+### New API Endpoints
+
+#### Profile
+- `GET /api/v1/profile/me` - Get own profile (auth required)
+- `PATCH /api/v1/profile` - Update profile (auth required)
+- `GET /api/v1/profiles/:publicId` - Get public profile
+
+#### Locket (updated)
+- `POST /api/v1/lockets` - Create locket (real Prisma, was mock)
+- `GET /api/v1/lockets/feed` - Feed with visibility filtering
+- `GET /api/v1/lockets/me` - My lockets
+- `GET /api/v1/lockets/:id` - Get by ID with visibility check
+- `PATCH /api/v1/lockets/:id` - Update (owner only)
+- `DELETE /api/v1/lockets/:id` - Soft delete (owner only)
+
+### Authorization
+- Visibility-based access control (PRIVATE/FRIENDS/PUBLIC)
+- Owner-only enforcement for update/delete
+- Public profile excludes `displayNamePrivate` and `email`
+
+### Migration File
+- Legacy reference: `backend/prisma/sql/main-merge/v5.1_locket_profile/001_add_locket_fields.sql`
+
+---
+
 *Document Version: 1.1 | ERD: v3.0 (4NF Normalized) | Date: 2026-08-06*
+
+---
+
+## v5.2 Friendship & Notification APIs (2026-08-10)
+
+### Summary
+Added dedicated Friendship Management API (`/api/v1/friends`) and Notification System (`/api/v1/notifications`).
+
+### Database Changes
+- Added `notifications` table (`id`, `user_id`, `type`, `title`, `message`, `data`, `is_read`, `created_at`)
+- Added `NotificationType` ENUM (`FRIEND_REQUEST`, `FRIEND_ACCEPTED`, `GROUP_INVITE`, `LOCKET_NEW`, `SYSTEM`)
+
+### New API Endpoints
+
+#### Friendship APIs (`/api/v1/friends`)
+- `POST /api/v1/friends/request` - Send friend request (by `targetPublicId` or `addresseeId`)
+- `POST /api/v1/friends/:friendshipId/accept` - Accept friend request
+- `POST /api/v1/friends/:friendshipId/reject` - Reject friend request
+- `DELETE /api/v1/friends/:friendshipId` - Unfriend / Remove request
+- `GET /api/v1/friends` - Get list of accepted friends
+- `GET /api/v1/friends/pending` - Get list of pending incoming & outgoing requests
+
+#### Notification APIs (`/api/v1/notifications`)
+- `GET /api/v1/notifications` - Get user notifications (paginated)
+- `GET /api/v1/notifications/unread-count` - Get count of unread notifications
+- `PATCH /api/v1/notifications/:id/read` - Mark single notification as read
+- `PATCH /api/v1/notifications/read-all` - Mark all notifications as read
+
+### Migration File
+- Legacy reference: `backend/prisma/sql/main-merge/v5.2_friends_notifications/001_add_notifications.sql`
+- Canonical Prisma migration: `backend/prisma/migrations/20260810131814_add_main_modules/migration.sql`

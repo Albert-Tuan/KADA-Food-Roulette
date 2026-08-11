@@ -56,16 +56,6 @@ export const MainLayout: React.FC = () => {
           </Link>
 
           <Link
-            to="/spin"
-            className={`flex flex-col items-center gap-0.5 text-xs font-medium transition-colors ${
-              location.pathname.startsWith('/spin') ? 'text-orange-500' : 'text-stone-400 hover:text-stone-600'
-            }`}
-          >
-            <Sparkles className="w-5 h-5" />
-            <span>Quay món</span>
-          </Link>
-
-          <Link
             to="/group-spin/result"
             className={`flex flex-col items-center gap-0.5 text-xs font-medium transition-colors ${
               location.pathname.startsWith('/group-spin') ? 'text-orange-500' : 'text-stone-400 hover:text-stone-600'

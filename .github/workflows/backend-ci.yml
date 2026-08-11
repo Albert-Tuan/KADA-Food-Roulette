@@ -44,10 +44,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
@@ -57,8 +57,8 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Push schema to test DB
-        run: npx prisma db push --skip-generate --accept-data-loss
+      - name: Apply migrations to test DB
+        run: npm run db:migrate
 
       - name: Lint
         run: npm run lint
@@ -70,7 +70,9 @@ jobs:
         run: npm run build
 
       - name: Test
-        run: npm test -- --coverage
+        run: npm run test:run
+        env:
+          RUN_DB_INTEGRATION: 'true'
         continue-on-error: false
 
   docker-build:
@@ -85,5 +87,10 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image (no push)
+        working-directory: .
         run: |
-          DOCKER_BUILDKIT=0 docker build -t food-roulette-backend:test -f docker/backend.Dockerfile backend/
+          docker buildx build \
+            --tag food-roulette-backend:test \
+            --file docker/backend.Dockerfile \
+            --load \
+            ./backend

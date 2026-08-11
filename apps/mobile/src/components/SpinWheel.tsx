@@ -50,7 +50,7 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
 
   const spin = useCallback(() => {
     if (spinning || disabled) return;
-    
+
     setSpinning(true);
     setLastPrize(null);
 
@@ -58,9 +58,9 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
     const extraSpins = (Math.floor(Math.random() * 3) + 3) * 360;
     const randomSegment = Math.floor(Math.random() * SEGMENTS.length);
     const targetAngle = extraSpins + (randomSegment * segmentAngle) + (segmentAngle / 2);
-    
+
     const newRotation = rotation.value + targetAngle;
-    
+
     rotation.value = withTiming(
       newRotation,
       {
@@ -74,7 +74,7 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
           const pointerAngle = (360 - normalizedRotation + segmentAngle / 2) % 360;
           const segmentIndex = Math.floor(pointerAngle / segmentAngle);
           const prize = SEGMENTS[segmentIndex % SEGMENTS.length];
-          
+
           runOnJS(handleSpinEnd)(prize);
         }
       }
@@ -90,20 +90,20 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
     return SEGMENTS.map((segment, index) => {
       const startAngle = index * segmentAngle;
       const endAngle = startAngle + segmentAngle;
-      
+
       const startRad = (startAngle - 90) * (Math.PI / 180);
       const endRad = (endAngle - 90) * (Math.PI / 180);
-      
+
       const center = WHEEL_SIZE / 2;
       const radius = center - 10;
-      
+
       const x1 = center + radius * Math.cos(startRad);
       const y1 = center + radius * Math.sin(startRad);
       const x2 = center + radius * Math.cos(endRad);
       const y2 = center + radius * Math.sin(endRad);
-      
+
       const largeArcFlag = segmentAngle > 180 ? 1 : 0;
-      
+
       const pathData = [
         `M ${center} ${center}`,
         `L ${x1} ${y1}`,
@@ -162,7 +162,7 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
             {renderSegments()}
           </G>
         </Svg>
-        
+
         {/* Center circle */}
         <View style={styles.centerCircle}>
           <Text style={styles.centerText}>🍜</Text>

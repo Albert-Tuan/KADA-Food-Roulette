@@ -75,7 +75,7 @@ export function RestaurantCard({ data, variant = 'list', onPress }: RestaurantCa
               </View>
             )}
           </View>
-          
+
           <View style={styles.ratingRow}>
             <Text style={styles.ratingIcon}>⭐</Text>
             <Text style={styles.ratingText}>{data.rating.toFixed(1)}</Text>
@@ -84,9 +84,9 @@ export function RestaurantCard({ data, variant = 'list', onPress }: RestaurantCa
               <Text style={styles.distance}>· {data.distance}</Text>
             )}
           </View>
-          
+
           <Text style={styles.address} numberOfLines={1}>{data.address}</Text>
-          
+
           <View style={styles.tagRow}>
             <View style={styles.tag}>
               <Text style={styles.tagText}>{data.category}</Text>
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
   },
-  
+
   // Grid variant
   gridCard: {
     width: '48%',

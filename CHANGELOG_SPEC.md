@@ -47,6 +47,245 @@
 
 **Migration:** Run `npx prisma migrate dev --name v5_3_city_tables`
 
+### 2026-08-09
+
+### Added
+
+- **B2B Restaurant Partner Module**
+  - By: PM - AI Assistant
+  - Via: Cursor
+  - Spec: `brand/prompts.md` §4.2, `Content/explore/restaurant-partner-strategy.md`
+  - Files affected:
+    - `backend/prisma/schema.prisma` (added: RestaurantPartner, RestaurantVisit, PromoCode, CorporateAccount, CorporateMember)
+    - `backend/src/modules/partner/partner.types.ts` (new - TypeScript types)
+    - `backend/src/modules/partner/partner.service.ts` (new - Business logic)
+    - `backend/src/modules/partner/partner.controller.ts` (new - API handlers)
+    - `backend/src/modules/partner/partner.routes.ts` (new - API routes)
+    - `backend/src/index.ts` (updated - registered partner routes)
+
+  **API Endpoints Implemented:**
+  - `POST /api/v1/partners` - Register partner
+  - `GET /api/v1/partners/:id` - Get partner by ID
+  - `PUT /api/v1/partners/:id` - Update partner
+  - `PUT /api/v1/partners/:id/upgrade` - Upgrade tier
+  - `GET /api/v1/partners/restaurant/:id` - Get by restaurant
+  - `GET /api/v1/partners/:id/dashboard` - Partner dashboard
+  - `GET /api/v1/partners/:id/analytics` - Analytics
+  - `GET /api/v1/partners/:id/score` - Score breakdown
+  - `POST /api/v1/partners/visits` - Record visit (GPS verification)
+  - `GET /api/v1/partners/:id/billing/:month` - Monthly billing
+  - `POST /api/v1/partners/:id/billing/:month/confirm` - Confirm billing
+  - `GET /api/v1/partners/featured/:id` - Featured placement score
+  - `POST /api/v1/partners/:id/promo-codes` - Create promo code
+  - `GET /api/v1/partners/:id/promo-codes` - List promo codes
+  - `POST /api/v1/corporate/accounts` - Create corporate account
+  - `POST /api/v1/corporate/accounts/:id/members` - Add member
+
+  **Database Tables Added (5 tables):**
+  - `restaurant_partners` - B2B partner information
+  - `restaurant_visits` - Pay-per-visit tracking
+  - `promo_codes` - Partner promo codes
+  - `corporate_accounts` - Corporate B2B accounts
+  - `corporate_members` - Corporate seat management
+
+- **CI/CD workflows cho mobile + web**
+
+### Added
+- **CI/CD workflows cho mobile + web**
+  - By: Nguyễn Thành Nam (AI-assisted via Cursor)
+  - Spec: `AGENTS.md` §10.4 (DevOps coverage)
+  - Files affected:
+    - `.github/workflows/mobile-ci-ios.yml` (new - iOS EAS build trigger)
+    - `.github/workflows/web-ci.yml` (new - Lint + Typecheck + Build)
+- **Dependabot config**
+  - By: Nguyễn Thành Nam
+  - Files affected:
+    - `.github/dependabot.yml` (new - 3 ecosystems: npm backend, npm mobile, npm web)
+- **CODEOWNERS (placeholder usernames)**
+  - By: Nguyễn Thành Nam
+  - Files affected:
+    - `.github/CODEOWNERS` (new - 5 roles mapped to folders, **cần replace placeholder** trước khi bật branch protection)
+- **Module-specific .gitignore**
+  - By: Nguyễn Thành Nam
+  - Files affected:
+    - `apps/mobile/.gitignore` (new - Expo, EAS, native)
+    - `backend/.gitignore` (new - Prisma, Node, uploads, secrets)
+
+### Notes
+- Workflow `mobile-ci-ios.yml` (mới) chạy song song với `mobile-ci.yml` (cũ của team) — cần review gộp hoặc bỏ 1 trong 2.
+- CODEOWNERS dùng placeholder GitHub handles (`@hoang-hieu-spin`, ...) — phải thay bằng username thật.
+
+### 2026-08-08
+
+### Added
+
+- **Mobile App (Expo + React Native) Setup**
+  - By: AI Assistant
+  - Via: Cursor
+  - Spec: `CLAUDE.md` §3 (Mobile structure)
+  - Files affected:
+    - `apps/mobile/package.json` (new - Expo SDK 52 + dependencies)
+    - `apps/mobile/app.json` (new - Expo config)
+    - `apps/mobile/tsconfig.json` (new - TypeScript config)
+    - `apps/mobile/babel.config.js` (new - Babel with nativewind)
+    - `apps/mobile/metro.config.js` (new - Metro bundler config)
+    - `apps/mobile/tailwind.config.js` (new - NativeWind config)
+    - `apps/mobile/app/_layout.tsx` (new - Root layout)
+    - `apps/mobile/app/+not-found.tsx` (new - 404 page)
+    - `apps/mobile/app/(tabs)/_layout.tsx` (new - Tab navigation)
+    - `apps/mobile/app/(tabs)/index.tsx` (new - Home screen)
+    - `apps/mobile/app/(tabs)/spin.tsx` (new - Spin/Roulette screen)
+    - `apps/mobile/app/(tabs)/lockets.tsx` (new - Locket feed screen)
+    - `apps/mobile/app/(tabs)/profile.tsx` (new - Profile screen)
+    - `apps/mobile/app/auth/login.tsx` (new - Login screen)
+    - `apps/mobile/app/auth/register.tsx` (new - Register screen)
+    - `apps/mobile/app/locket/capture.tsx` (new - Camera capture screen)
+    - `apps/mobile/app/restaurant/[id].tsx` (new - Restaurant detail screen)
+    - `apps/mobile/src/api/client.ts` (new - Axios client)
+    - `apps/mobile/src/api/endpoints/auth.ts` (new)
+    - `apps/mobile/src/api/endpoints/roulette.ts` (new)
+    - `apps/mobile/src/api/endpoints/restaurants.ts` (new)
+    - `apps/mobile/src/api/endpoints/groups.ts` (new)
+    - `apps/mobile/src/api/endpoints/lockets.ts` (new)
+    - `apps/mobile/src/api/endpoints/preferences.ts` (new)
+    - `apps/mobile/src/lib/constants.ts` (new - App constants)
+    - `apps/mobile/src/lib/utils.ts` (new - Utility functions)
+    - `apps/mobile/src/stores/authStore.ts` (new - Zustand auth store)
+
+  **Mobile Stack Implemented:**
+  - Expo SDK 52 + Expo Router (file-based routing)
+  - NativeWind v4 (Tailwind for RN)
+  - expo-camera + expo-image-picker
+  - expo-location
+  - expo-secure-store
+  - Zustand (state management)
+  - TanStack Query (data fetching)
+  - Axios (HTTP client)
+
+  **⚠️ Remaining tasks:**
+  - Create `assets/icon.png`, `assets/splash.png`
+  - Run `npx expo prebuild` for native projects
+  - Test with `npx expo start`
+
+### Changed
+
+- **CLAUDE.md - Updated mobile structure**
+  - By: AI Assistant
+  - Via: Cursor
+  - Change: Added detailed `apps/mobile/` structure with Expo Router pages
+  - Files affected: `CLAUDE.md` §3
+
+### 2026-08-08
+
+### Resolved
+
+- **Steward Role Design Decision**
+  - By: AI Assistant (via Cursor)
+  - Via: User decision
+  - Decision: Dùng `role ENUM('USER', 'STEWARD', 'ADMIN')` trên bảng User (thay vì `is_steward boolean` hoặc bảng riêng)
+  - Files affected:
+    - `brand/prompts.md` §9 (resolved open question)
+    - `brand/prompts.md` §7 (User interface)
+    - `brand/FOOD-ROULETTE-SITEMAP.md` §19.10 (resolved open question)
+    - `brand/FOOD-ROULETTE-SITEMAP.md` §19 (User interface)
+  - Rationale: Đơn giản, đã implement trong code, đủ dùng cho MVP
+
+- **Group, Locket, Notification & Device Hash Decisions**
+  - By: AI Assistant (via Cursor)
+  - Via: User decision
+  - Decisions:
+    - **Group membership:** Có chủ phòng tạo, nhưng **tất cả thành viên** (kể cả chủ phòng) đều có thể thêm người mới sau khi vào phòng
+    - **Group lifecycle:** Group bị **xóa khi tất cả thành viên out**
+    - **Locket lifecycle:** **Vĩnh viễn** (không tự hủy 24h)
+    - **Push notification:** **Per-type toggle** - bật/tắt theo loại (locket mới, spin, group...)
+    - **device_hash reset:** **User-initiated reset** - user chủ động confirm đổi máy trong app
+  - Files affected:
+    - `brand/prompts.md` §9 (resolved 5 open questions)
+    - `brand/FOOD-ROULETTE-SITEMAP.md` §19.10 (resolved 5 open questions)
+
+### 2026-08-08
+
+### Added
+
+- **Express.js + Prisma Backend Setup**
+  - By: AI Assistant
+  - Via: Cursor
+  - Spec: `AGENTS.md` §10.2 (Backend Lead - Trường)
+  - Files affected:
+    - `backend/package.json` (added: express, cors, helmet, morgan, bcryptjs, jsonwebtoken, etc.)
+    - `backend/tsconfig.json` (new - TypeScript configuration)
+    - `backend/.env.example` (new - environment variables template)
+    - `backend/.env` (updated - added JWT and server config)
+    - `backend/src/index.ts` (new - Express entry point)
+    - `backend/src/lib/prisma.ts` (new - Prisma client singleton)
+    - `backend/src/types/index.ts` (new - shared types)
+    - `backend/src/middleware/cors.ts` (new)
+    - `backend/src/middleware/errorHandler.ts` (new)
+    - `backend/src/middleware/validate.ts` (new)
+    - `backend/src/middleware/auth.ts` (new - JWT authentication)
+    - `backend/src/routes/auth.ts` (new - auth endpoints)
+    - `backend/src/routes/index.ts` (new)
+    - `backend/src/utils/jwt.ts` (new)
+    - `backend/src/utils/hash.ts` (new)
+    - `backend/src/utils/response.ts` (new)
+
+  **Auth Endpoints Implemented:**
+  - `POST /api/v1/auth/register` - Email + password registration
+  - `POST /api/v1/auth/login` - Login with JWT
+  - `POST /api/v1/auth/refresh` - Refresh token
+  - `POST /api/v1/auth/logout` - Logout
+  - `GET /api/v1/auth/me` - Get current user
+  - `POST /api/v1/auth/google` - Google OAuth
+  - `POST /api/v1/auth/forgot-password` - Password reset request
+
+  **Infrastructure:**
+  - Health check: `GET /health`
+  - CORS middleware configured
+  - Helmet security headers
+  - Morgan request logging
+  - Global error handler
+  - Express-validator integration
+
+  **✅ Verified (2026-08-08):**
+  - Build: PASS
+  - Dev server: RUNNING on http://localhost:3000
+  - MySQL via Docker: CONNECTED
+  - `POST /api/v1/auth/register`: OK
+  - `POST /api/v1/auth/login`: OK
+  - `GET /api/v1/auth/me`: OK
+
+### 2026-08-06
+
+#### Added
+
+- **Backend Prisma Setup v5.22.0**
+  - By: AI Assistant
+  - Via: Cursor
+  - Files affected:
+    - `backend/package.json` (new - Node.js project setup)
+    - `backend/.env` (new - DATABASE_URL config)
+    - `backend/prisma/schema.prisma` (updated - restored DATABASE_URL)
+    - `backend/prisma/sql/v5.0/index_performance.sql` (new)
+    - `backend/prisma/sql/v5.0/constraints_validation.sql` (new)
+    - `backend/prisma/sql/v5.0/enum_validation.sql` (new)
+    - `backend/prisma/sql/v5.0/cascade_delete_validation.sql` (new)
+    - `backend/prisma/sql/v5.0/edge_cases_validation.sql` (new)
+    - `backend/src/test/api-integration.test.ts` (new)
+    - `backend/prisma/sql/v5.0/README_VALIDATION.md` (new)
+
+  **Prisma Version Decision:**
+  - Attempted: Prisma 7.x (breaking changes, `@prisma/adapter-mysql` not available)
+  - Solution: Downgraded to Prisma 5.22.0 (stable, production-ready)
+  - `datasource url` kept in schema.prisma (required for v5.x)
+
+  **Validation Files Created (6 checks):**
+  1. `index_performance.sql` - EXPLAIN queries, verify index usage
+  2. `constraints_validation.sql` - NOT NULL, UNIQUE, FK constraints
+  3. `enum_validation.sql` - All enum values validation
+  4. `cascade_delete_validation.sql` - Cascade behavior testing
+  5. `edge_cases_validation.sql` - Boundary conditions, NULL handling
+  6. `api-integration.test.ts` - Prisma client CRUD operations
+
 ---
 
 ### 2026-08-11 - Implementation Phase Completion

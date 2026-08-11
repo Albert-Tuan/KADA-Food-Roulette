@@ -1,6 +1,12 @@
 {
   "compilerOptions": {
     "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
     "moduleResolution": "bundler",
     "jsx": "react-native",
     "esModuleInterop": true,
@@ -8,7 +14,10 @@
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "nativewind-env.d.ts",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
   ],
   "exclude": [
     "node_modules"

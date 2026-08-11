@@ -1,5 +1,6 @@
 import React from 'react';
-import { Sparkles, CheckCircle2, ThumbsUp, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Sparkles, CheckCircle2, ThumbsUp, Camera } from 'lucide-react';
 import { MemberScore } from '../../../api/endpoints/circle';
 
 interface CircleAiSuggestionCardProps {
@@ -7,6 +8,7 @@ interface CircleAiSuggestionCardProps {
 }
 
 export const CircleAiSuggestionCard: React.FC<CircleAiSuggestionCardProps> = ({ memberScores }) => {
+  const navigate = useNavigate();
   if (!memberScores || memberScores.length === 0) return null;
 
   return (
@@ -87,6 +89,15 @@ export const CircleAiSuggestionCard: React.FC<CircleAiSuggestionCardProps> = ({ 
           );
         })}
       </div>
+
+      {/* Button to scan new menu for the group */}
+      <button
+        onClick={() => navigate('/spin/menu-capture')}
+        className="w-full mt-4 py-2.5 px-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-all"
+      >
+        <Camera className="w-4 h-4" />
+        📷 Quét Menu AI Quán Mới Cho Nhóm
+      </button>
     </div>
   );
 };

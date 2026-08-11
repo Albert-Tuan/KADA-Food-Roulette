@@ -58,7 +58,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="lockets"
         options={{
-          title: 'Lockets',
+          title: 'Taste Board',
           tabBarIcon: ({ focused }) => <TabIcon name="lockets" focused={focused} />,
         }}
       />

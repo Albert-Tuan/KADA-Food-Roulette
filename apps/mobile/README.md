@@ -15,7 +15,7 @@ Mobile app (React Native + Expo) giúp người Việt chọn quán ăn ngẫu n
 | Styling | NativeWind (Tailwind cho React Native) |
 | Animation | Reanimated 3 |
 | State | Zustand + TanStack Query |
-| Camera | expo-camera + expo-image-picker |
+| Camera | expo-camera + expo-image-manipulator |
 | GPS | expo-location |
 | HTTP | Axios |
 | Design | Earthy/warm-light-first |
@@ -33,7 +33,10 @@ apps/mobile/
 │   │   ├── login.tsx
 │   │   └── register.tsx
 │   ├── locket/                 # Locket screens
-│   │   └── capture.tsx
+│   │   ├── capture.tsx
+│   │   └── [id].tsx
+│   ├── profile/                # Chỉnh sửa và cài đặt profile
+│   ├── u/[public_id].tsx       # Profile công khai
 │   ├── restaurant/              # Restaurant screens
 │   │   └── [id].tsx
 │   └── (tabs)/                 # Tab navigation
@@ -58,17 +61,14 @@ apps/mobile/
 │   │   ├── constants.ts
 │   │   ├── utils.ts
 │   │   └── index.ts
+│   ├── features/               # Locket/Profile modules và mock repositories
 │   └── stores/                 # Zustand stores
 │       ├── authStore.ts
 │       └── index.ts
 │
-├── assets/                     # Static assets (REQUIRED)
-│   ├── icon.png               # App icon (1024x1024)
-│   └── splash.png             # Splash screen (1284x2778)
-│
 ├── app.json                   # Expo config
-├── app.config.json            # Expo config (alternative)
 ├── babel.config.js            # Babel config
+├── global.css                 # NativeWind entry stylesheet
 ├── metro.config.js            # Metro bundler config
 ├── tailwind.config.js         # NativeWind config
 ├── tsconfig.json              # TypeScript config
@@ -83,7 +83,6 @@ apps/mobile/
 
 - Node.js 18+
 - npm hoặc yarn
-- Expo CLI: `npm install -g expo-cli`
 - Xcode (cho iOS) / Android Studio (cho Android) - tùy platform
 
 ### Setup
@@ -92,13 +91,7 @@ apps/mobile/
 # 1. Install dependencies
 npm install
 
-# 2. Create required assets (1024x1024 PNG)
-# Tạo assets/icon.png và assets/splash.png
-
-# 3. Prebuild native projects
-npx expo prebuild
-
-# 4. Run on device/simulator
+# 2. Run on device/simulator
 # iOS:
 npx expo run:ios
 # Android:
@@ -137,6 +130,10 @@ EXPO_PUBLIC_API_URL=http://localhost:3001/api
 | Screen | Route | Mô tả |
 |--------|-------|--------|
 | Capture | `locket/capture.tsx` | Chụp ảnh locket |
+| Locket detail | `locket/[id].tsx` | Chi tiết locket |
+| Edit profile | `profile/edit.tsx` | Chỉnh sửa hồ sơ |
+| Settings | `profile/settings.tsx` | Cài đặt profile |
+| Public profile | `u/[public_id].tsx` | Profile công khai |
 | Restaurant | `restaurant/[id].tsx` | Chi tiết quán ăn |
 
 ---
@@ -227,9 +224,9 @@ textSecondary: '#6B6560'
 - [x] Tab Navigation
 - [ ] Home Screen
 - [ ] Spin/Roulette Screen
-- [ ] Locket Feed
-- [ ] Locket Capture
-- [ ] Profile Screen
+- [x] Locket Feed (mock repository)
+- [x] Locket Capture (mock repository)
+- [x] Profile Screen (mock repository)
 - [ ] Restaurant Detail
 
 ---

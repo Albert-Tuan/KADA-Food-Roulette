@@ -7,7 +7,10 @@ export type { Restaurant, CreateRestaurantRequest, RestaurantFilters } from './e
 export { groupsApi } from './endpoints/groups';
 export type { Group, GroupMember, SpinSession, Vote } from './endpoints/groups';
 export { locketApi } from './endpoints/lockets';
-export type { Locket, CreateLocketRequest } from './endpoints/lockets';
+export type { LocketDto, UploadLocketRequest, UpdateLocketRequest } from './endpoints/lockets';
+export { usersApi } from './endpoints/users';
+export type { PrivateProfileDto, PublicProfileDto, ProfileStatsDto } from './endpoints/users';
 export { preferencesApi } from './endpoints/preferences';
 export type { UserPreference, UpdatePreferenceInput } from './endpoints/preferences';
 export { apiClient } from './client';
+export { getApiErrorMessage } from './client';

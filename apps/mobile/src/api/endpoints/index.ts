@@ -5,3 +5,4 @@ export * from './restaurants';
 export * from './groups';
 export * from './lockets';
 export * from './preferences';
+export * from './users';

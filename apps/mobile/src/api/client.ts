@@ -1,11 +1,10 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+import { API_TIMEOUT, API_URL } from '@/lib/constants';
 
 export const apiClient = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -22,6 +21,16 @@ apiClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (!axios.isAxiosError(error)) return error instanceof Error ? error.message : fallback;
+  const responseError = error.response?.data as {
+    error?: string | { message?: string };
+    message?: string;
+  } | undefined;
+  if (typeof responseError?.error === 'string') return responseError.error;
+  return responseError?.error?.message ?? responseError?.message ?? fallback;
+}
 
 // Response interceptor - handle errors
 apiClient.interceptors.response.use(
