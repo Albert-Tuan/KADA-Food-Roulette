@@ -67,9 +67,9 @@ export const useSpinStore = create<SpinState>((set, get) => ({
   currentResult: null,
   setFilters: (newFilters) => set((state) => {
     const updatedFilters = { ...state.filters, ...newFilters };
-    return { 
-      filters: updatedFilters, 
-      candidates: applyFilters(updatedFilters, state.customCandidates) 
+    return {
+      filters: updatedFilters,
+      candidates: applyFilters(updatedFilters, state.customCandidates)
     };
   }),
   addCustomCandidate: (name) => set((state) => {

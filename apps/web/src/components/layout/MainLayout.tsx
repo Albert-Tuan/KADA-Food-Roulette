@@ -55,8 +55,6 @@ export const MainLayout: React.FC = () => {
             <span>Trang chủ</span>
           </Link>
 
-
-
           <Link
             to="/group-spin/result"
             className={`flex flex-col items-center gap-0.5 text-xs font-medium transition-colors ${

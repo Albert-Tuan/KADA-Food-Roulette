@@ -4,7 +4,7 @@ export const APP_NAME = 'Food Roulette';
 export const APP_TAGLINE = 'Không biết ăn gì? Để vòng quyết định.';
 
 // API
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 export const API_TIMEOUT = 10000;
 
 // Pagination

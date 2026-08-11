@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `restaurant_partners` (
   `analytics` JSON DEFAULT ('{}'),
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  
+
   CONSTRAINT `fk_partner_restaurant` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants`(`id`) ON DELETE CASCADE,
   UNIQUE INDEX `idx_partner_restaurant` (`restaurant_id`),
   INDEX `idx_partner_tier` (`tier`),
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS `restaurant_visits` (
   `billing_month` VARCHAR(7) NOT NULL,
   `billed` BOOLEAN NOT NULL DEFAULT FALSE,
   `billed_at` DATETIME,
-  
+
   CONSTRAINT `fk_visit_partner` FOREIGN KEY (`partner_id`) REFERENCES `restaurant_partners`(`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_visit_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
   INDEX `idx_visit_partner_month` (`partner_id`, `billing_month`),
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS `promo_codes` (
   `valid_until` DATETIME NOT NULL,
   `status` ENUM('ACTIVE', 'EXPIRED', 'DEPLETED') NOT NULL DEFAULT 'ACTIVE',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  
+
   CONSTRAINT `fk_promo_partner` FOREIGN KEY (`partner_id`) REFERENCES `restaurant_partners`(`id`) ON DELETE CASCADE,
   INDEX `idx_promo_partner` (`partner_id`),
   INDEX `idx_promo_status` (`status`)
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS `corporate_accounts` (
   `billing_monthly` INT NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  
+
   INDEX `idx_corporate_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS `corporate_members` (
   `status` ENUM('ACTIVE', 'EXPIRED', 'REMOVED') NOT NULL DEFAULT 'ACTIVE',
   `joined_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `expires_at` DATETIME,
-  
+
   CONSTRAINT `fk_member_account` FOREIGN KEY (`account_id`) REFERENCES `corporate_accounts`(`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_member_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
   INDEX `idx_member_account_status` (`account_id`, `status`)

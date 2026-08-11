@@ -1,1 +1,1 @@
-module.exports = require('nativewind/preset');
+/// <reference types="nativewind/types" />

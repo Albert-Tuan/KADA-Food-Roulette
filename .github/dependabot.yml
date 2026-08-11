@@ -3,6 +3,13 @@
 
 version: 2
 
+# Policy (2026-08-10):
+#   - Patch + minor updates ONLY for production deps
+#   - Major bumps require manual PR (don't auto-bump)
+#   - devDependencies: minor + patch only
+#   - Reason: previous auto-bumps broke CI (TS7 vs eslint peer <6.1,
+#     prisma7 vs @prisma/client5 generator-build missing).
+
 updates:
   # Backend (Node + Express + Prisma)
   - package-ecosystem: "npm"
@@ -19,8 +26,26 @@ updates:
     groups:
       production:
         dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
       development:
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+    # Block majors for known-incompatible packages (must be bumped together manually)
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "prisma"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@prisma/client"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@typescript-eslint/*"
+        update-types: ["version-update:semver-major"]
 
   # Mobile (Expo + React Native)
   - package-ecosystem: "npm"
@@ -34,17 +59,23 @@ updates:
     labels:
       - "dependencies"
       - "mobile"
-    # Expo SDK packages must bump together ΓÇö group to avoid breaking builds
+    # Expo SDK packages must bump together — group to avoid breaking builds
     groups:
       expo-sdk:
         patterns:
           - "expo*"
           - "@expo/*"
+        update-types:
+          - "minor"
+          - "patch"
       react-native:
         patterns:
           - "react-native"
           - "react-native-*"
           - "@react-native/*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Web (React + Vite)
   - package-ecosystem: "npm"
@@ -58,6 +89,17 @@ updates:
     labels:
       - "dependencies"
       - "web"
+    groups:
+      production:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      development:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
 
   # GitHub Actions (keep workflows healthy)
   - package-ecosystem: "github-actions"

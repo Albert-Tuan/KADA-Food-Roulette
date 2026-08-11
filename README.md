@@ -48,7 +48,7 @@
 ### Backend
 | Layer | Cong nghe |
 |-------|-----------|
-| Runtime | Node.js 20 LTS |
+| Runtime | Node.js 22 LTS |
 | Framework | Express.js |
 | ORM | Prisma |
 | Database | MySQL 8.0 (Docker local) |
@@ -61,7 +61,7 @@
 
 ### Yeu cau
 
-- Node.js 20+
+- Node.js 22+
 - npm hoac yarn
 - Docker (cho MySQL)
 

@@ -1,327 +1,130 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Link } from 'expo-router';
-import { LocketCard, LocketCardData } from '../../src/components/LocketCard';
-import { RestaurantCard, RestaurantCardData } from '../../src/components/RestaurantCard';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocketFeed, type Locket, type LocketFeedFilter } from '@/features/lockets';
+import { formatRelativeTime } from '@/lib';
 
-const MOCK_LOCKETS: LocketCardData[] = [
-  {
-    id: '1',
-    imageUrl: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=400',
-    restaurantName: 'Phở Thìn Lò Đúc',
-    restaurantId: '1',
-    userName: 'Linh Nguyễn',
-    rating: 4.8,
-    caption: 'Món này ngon tuyệt, rất đáng thử! Nước dùng béo ngậy đúng điệu.',
-    likes: 24,
-    comments: 5,
-    timeAgo: '2 giờ trước',
-    isVerifiedGps: true,
-  },
-  {
-    id: '2',
-    imageUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400',
-    restaurantName: 'Mì Cay Sasin',
-    restaurantId: '2',
-    userName: 'Minh Tuấn',
-    rating: 4.5,
-    caption: 'Cấp độ 7 cay xé lưỡi nhưng vị rất đậm đà. Thích hợp cho ngày mưa.',
-    likes: 128,
-    comments: 12,
-    timeAgo: '5 giờ trước',
-    isVerifiedGps: true,
-  },
-  {
-    id: '3',
-    imageUrl: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400',
-    restaurantName: 'Bánh Mì Huỳnh Hoa',
-    restaurantId: '3',
-    userName: 'Tuấn Đạt',
-    rating: 5.0,
-    caption: 'Nhiều thịt dã man, ăn một ổ no tới chiều!',
-    likes: 89,
-    comments: 23,
-    timeAgo: '10 giờ trước',
-    isVerifiedGps: true,
-  },
-];
-
-const CATEGORIES = [
-  { id: '1', name: 'Món Cay', icon: '🔥' },
-  { id: '2', name: 'Cà phê', icon: '☕' },
-  { id: '3', name: 'Vỉa hè', icon: '🍜' },
-  { id: '4', name: 'Hẹn hò', icon: '❤️' },
-  { id: '5', name: 'Bánh ngọt', icon: '🥐' },
+const FILTERS: { value: LocketFeedFilter; label: string }[] = [
+  { value: 'ALL', label: 'Tất cả' },
+  { value: 'MINE', label: 'Của tôi' },
+  { value: 'FRIENDS', label: 'Bạn bè' },
+  { value: 'DISCOVER', label: 'Khám phá' },
 ];
 
 export default function LocketsScreen() {
-  const [activeTab, setActiveTab] = useState<'friends' | 'discover'>('discover');
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const renderLocketItem = ({ item }: { item: LocketCardData }) => (
-    <LocketCard 
-      data={item} 
-      onLike={() => console.log('Like:', item.id)}
-      onComment={() => console.log('Comment:', item.id)}
-    />
-  );
+  const [filter, setFilter] = useState<LocketFeedFilter>('ALL');
+  const feed = useLocketFeed(filter);
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>📸 Lockets</Text>
-        <Text style={styles.headerSubtitle}>Chia sẻ món ăn của bạn</Text>
-      </View>
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <FlatList
+        data={feed.data ?? []}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <LocketCard locket={item} />}
+        contentContainerStyle={{ paddingBottom: 110, flexGrow: 1 }}
+        refreshing={feed.isRefetching}
+        onRefresh={feed.refetch}
+        ListHeaderComponent={
+          <View>
+            <View className="px-4 pt-4 pb-3">
+              <Text className="text-2xl font-bold text-secondary-900">Taste Board</Text>
+              <Text className="text-secondary-500 mt-1">Những món ăn vừa được ghi lại.</Text>
+            </View>
+            <FlatList
+              horizontal
+              data={FILTERS}
+              keyExtractor={(item) => item.value}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => setFilter(item.value)}
+                  className={`rounded-full border px-4 py-2 ${
+                    filter === item.value ? 'bg-primary border-primary' : 'bg-white border-secondary-200'
+                  }`}
+                >
+                  <Text className={filter === item.value ? 'text-white font-semibold' : 'text-secondary-700'}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        }
+        ListEmptyComponent={
+          feed.isLoading ? (
+            <View className="flex-1 items-center justify-center py-20">
+              <ActivityIndicator color="#C68E17" size="large" />
+              <Text className="text-secondary-500 mt-3">Đang tải Taste Board...</Text>
+            </View>
+          ) : feed.isError ? (
+            <View className="flex-1 items-center justify-center px-8 py-20">
+              <Text className="text-xl font-bold text-secondary-900">Chưa tải được feed</Text>
+              <Text className="text-secondary-500 text-center mt-2">Kiểm tra kết nối rồi thử lại nhé.</Text>
+              <TouchableOpacity onPress={() => feed.refetch()} className="bg-primary rounded-xl px-6 py-3 mt-5">
+                <Text className="text-white font-semibold">Thử lại</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View className="flex-1 items-center justify-center px-8 py-20">
+              <Text className="text-xl font-bold text-secondary-900">Chưa có Taste Board</Text>
+              <Text className="text-secondary-500 text-center mt-2">Chụp món đầu tiên để bắt đầu nhé.</Text>
+            </View>
+          )
+        }
+      />
 
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'friends' && styles.tabActive]}
-          onPress={() => setActiveTab('friends')}
-        >
-          <Text style={[styles.tabText, activeTab === 'friends' && styles.tabTextActive]}>
-            Bạn bè
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'discover' && styles.tabActive]}
-          onPress={() => setActiveTab('discover')}
-        >
-          <Text style={[styles.tabText, activeTab === 'discover' && styles.tabTextActive]}>
-            Khám phá
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {activeTab === 'discover' ? (
-        <FlatList
-          data={MOCK_LOCKETS}
-          keyExtractor={(item) => item.id}
-          renderItem={renderLocketItem}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <>
-              {/* Search Bar */}
-              <View style={styles.searchContainer}>
-                <Text style={styles.searchIcon}>🔍</Text>
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Tìm kiếm nhà hàng hoặc món ăn..."
-                  placeholderTextColor="#A8A29E"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-              </View>
-
-              {/* Categories */}
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={styles.categoriesContainer}
-                contentContainerStyle={styles.categoriesContent}
-              >
-                {CATEGORIES.map(cat => (
-                  <TouchableOpacity key={cat.id} style={styles.categoryItem}>
-                    <View style={styles.categoryIcon}>
-                      <Text style={styles.categoryIconText}>{cat.icon}</Text>
-                    </View>
-                    <Text style={styles.categoryName}>{cat.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {/* Section Title */}
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Gợi ý cho bạn</Text>
-              </View>
-            </>
-          }
-          ListFooterComponent={<View style={{ height: 100 }} />}
-        />
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>👥</Text>
-          <Text style={styles.emptyTitle}>Chưa có bài viết nào</Text>
-          <Text style={styles.emptySubtitle}>
-            Thêm bạn bè để xem bài viết của họ
-          </Text>
-          <TouchableOpacity style={styles.addFriendButton}>
-            <Text style={styles.addFriendText}>Tìm bạn bè</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* FAB - Capture Button */}
       <Link href="/locket/capture" asChild>
-        <TouchableOpacity style={styles.fab}>
-          <Text style={styles.fabIcon}>+</Text>
+        <TouchableOpacity className="absolute bottom-7 right-5 bg-primary rounded-full px-5 py-4 shadow-lg">
+          <Text className="text-white font-bold">Tạo Taste Board</Text>
         </TouchableOpacity>
       </Link>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF8E7',
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E7E5E4',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#292524',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#78716C',
-    marginTop: 4,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E7E5E4',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabActive: {
-    borderBottomColor: '#D97706',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#78716C',
-  },
-  tabTextActive: {
-    color: '#D97706',
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
-  },
-  searchIcon: {
-    fontSize: 16,
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: '#292524',
-  },
-  categoriesContainer: {
-    marginBottom: 16,
-  },
-  categoriesContent: {
-    paddingRight: 16,
-  },
-  categoryItem: {
-    alignItems: 'center',
-    marginRight: 20,
-  },
-  categoryIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FEF3C7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-  },
-  categoryIconText: {
-    fontSize: 24,
-  },
-  categoryName: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#57534E',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#292524',
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#292524',
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: '#78716C',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  addFriendButton: {
-    backgroundColor: '#D97706',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 24,
-  },
-  addFriendText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#D97706',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  fabIcon: {
-    fontSize: 28,
-    color: 'white',
-    fontWeight: '300',
-  },
-});
+function LocketCard({ locket }: { locket: Locket }) {
+  return (
+    <Link href={`/locket/${locket.id}`} asChild>
+      <TouchableOpacity className="mx-4 mb-4 overflow-hidden rounded-3xl border border-secondary-100 bg-white">
+        <View className="flex-row items-center p-4">
+          {locket.author.avatarUrl ? (
+            <Image source={{ uri: locket.author.avatarUrl }} className="w-11 h-11 rounded-full bg-secondary-100" />
+          ) : (
+            <View className="w-11 h-11 rounded-full bg-primary-50 items-center justify-center">
+              <Text className="font-bold text-primary">{locket.author.displayNamePublic.slice(0, 1)}</Text>
+            </View>
+          )}
+          <View className="flex-1 ml-3">
+            <Text className="font-bold text-secondary-900">{locket.author.displayNamePublic}</Text>
+            <Text className="text-secondary-500 text-xs mt-1">{formatRelativeTime(locket.capturedAt)}</Text>
+          </View>
+          <Text className="text-primary font-semibold">{'★'.repeat(locket.rating)}</Text>
+        </View>
+
+        <Image source={{ uri: locket.imageUrl }} className="w-full aspect-square bg-secondary-100" resizeMode="cover" />
+
+        <View className="p-4">
+          <Text className="text-xl font-bold text-secondary-900">{locket.dishName}</Text>
+          {locket.restaurantName ? <Text className="text-primary-800 mt-1">{locket.restaurantName}</Text> : null}
+          {locket.note ? <Text className="text-secondary-700 leading-5 mt-3">{locket.note}</Text> : null}
+          <View className="flex-row flex-wrap gap-2 mt-3">
+            {locket.tags.map((tag) => (
+              <View key={tag} className="rounded-full bg-primary-50 px-3 py-1.5">
+                <Text className="text-primary-800 text-xs">#{tag}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Link>
+  );
+}

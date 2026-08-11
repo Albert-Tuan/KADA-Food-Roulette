@@ -16,7 +16,7 @@ const MOCK_NEARBY_RESTAURANTS = [
 export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
@@ -26,7 +26,7 @@ export default function HomeScreen() {
             <Text style={styles.greeting}>Xin chào! 👋</Text>
             <Text style={styles.subGreeting}>Hôm nay ăn gì nhỉ?</Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.notificationButton}
             onPress={() => router.push('/notifications' as any)}
           >
@@ -79,18 +79,18 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </Link>
 
-        {/* Recent Lockets */}
+        {/* Recent Taste Boards */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>📸 Lockets gần đây</Text>
+            <Text style={styles.sectionTitle}>📸 Taste Board gần đây</Text>
             <Link href="/(tabs)/lockets">
               <Text style={styles.sectionLink}>Xem tất cả</Text>
             </Link>
           </View>
-          
+
           {MOCK_RECENT_LOCKETS.length > 0 ? (
-            <ScrollView 
-              horizontal 
+            <ScrollView
+              horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.locketList}
             >
@@ -106,10 +106,10 @@ export default function HomeScreen() {
           ) : (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📷</Text>
-              <Text style={styles.emptyText}>Chưa có locket nào</Text>
+              <Text style={styles.emptyText}>Chưa có Taste Board nào</Text>
               <Link href="/locket/capture" asChild>
                 <TouchableOpacity style={styles.emptyButton}>
-                  <Text style={styles.emptyButtonText}>Chụp ngay</Text>
+                  <Text style={styles.emptyButtonText}>Chụp Taste Board</Text>
                 </TouchableOpacity>
               </Link>
             </View>
@@ -124,10 +124,10 @@ export default function HomeScreen() {
               <Text style={styles.sectionLink}>Xem tất cả</Text>
             </Link>
           </View>
-          
+
           <View style={styles.restaurantList}>
             {MOCK_NEARBY_RESTAURANTS.map((restaurant) => (
-              <TouchableOpacity 
+              <TouchableOpacity
                 key={restaurant.id}
                 style={styles.restaurantCard}
                 onPress={() => router.push(`/restaurant/${restaurant.id}`)}

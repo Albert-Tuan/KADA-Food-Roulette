@@ -25,17 +25,17 @@ const HomeSpinRewards: React.FC = () => {
   const handleSpin = () => {
     if (isSpinning) return;
     setIsSpinning(true);
-    
+
     const extraSpins = (Math.floor(Math.random() * 4) + 3) * 360;
     const randomSegment = Math.floor(Math.random() * 360);
     const newRotation = rotation + extraSpins + randomSegment;
     setRotation(newRotation);
-    
+
     // Calculate which candidate the pointer lands on
     const pointerAngle = (360 - (newRotation % 360)) % 360;
     const sliceAngle = 360 / candidates.length;
     const winnerIndex = Math.floor(pointerAngle / sliceAngle);
-    
+
     setTimeout(() => {
       setIsSpinning(false);
       spin(winnerIndex); // Pass the exact calculated winner
@@ -47,7 +47,7 @@ const HomeSpinRewards: React.FC = () => {
     <main className="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg flex flex-col items-center">
       {/* Page Title Context & Filter */}
       <div className="text-center mb-stack-lg relative w-full max-w-md">
-        <button 
+        <button
           onClick={() => setIsFilterOpen(true)}
           className="absolute right-0 top-0 bg-surface-variant text-on-surface-variant p-2 rounded-full hover:bg-surface-container-high transition-colors"
         >
@@ -62,12 +62,12 @@ const HomeSpinRewards: React.FC = () => {
         <div className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px] mx-auto">
           {/* Wheel Pointer */}
           <div className="absolute -top-[15px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[30px] border-t-primary z-10 drop-shadow-[0_4px_4px_rgba(0,0,0,0.2)]"></div>
-          
+
           {/* Wheel */}
-          <div 
+          <div
             className="w-full h-full rounded-full border-8 border-surface-white shadow-[0_12px_24px_rgba(0,0,0,0.1)] relative overflow-hidden bg-surface-container-low"
             style={{
-              background: candidates.length > 0 
+              background: candidates.length > 0
                 ? `conic-gradient(${candidates.map((_, i) => {
                     const colors = ['#ff5a5f', '#ffab69', '#55a37a', '#FFC107', '#b52330', '#88d7aa'];
                     const start = (i * 360) / candidates.length;
@@ -84,9 +84,9 @@ const HomeSpinRewards: React.FC = () => {
               const sliceAngle = 360 / candidates.length;
               const rotationAngle = (i * sliceAngle) + (sliceAngle / 2) - 90;
               return (
-                <div 
+                <div
                   key={candidate.id}
-                  className="absolute top-1/2 left-1/2 origin-top-left text-white font-bold text-[12px] md:text-[14px] drop-shadow-md pointer-events-none w-[120px] md:w-[170px] text-right pr-[20px] line-clamp-2" 
+                  className="absolute top-1/2 left-1/2 origin-top-left text-white font-bold text-[12px] md:text-[14px] drop-shadow-md pointer-events-none w-[120px] md:w-[170px] text-right pr-[20px] line-clamp-2"
                   style={{ transform: `rotate(${rotationAngle}deg) translateY(-50%)` }}
                 >
                   {candidate.name}
@@ -94,14 +94,14 @@ const HomeSpinRewards: React.FC = () => {
               );
             })}
           </div>
-          
+
           {/* Wheel Center */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] bg-surface-white rounded-full border-4 border-surface-container-low shadow-inner z-10"></div>
         </div>
       </div>
 
       {/* Spin Action */}
-      <button 
+      <button
         className={`bg-primary text-on-primary font-headline-md text-headline-md-mobile px-8 py-4 rounded-full shadow-md btn-squish mb-stack-lg hover:brightness-110 active:brightness-95 transition-all flex items-center justify-center gap-2 ${isSpinning ? 'opacity-50 cursor-not-allowed' : ''}`}
         onClick={handleSpin}
       >
@@ -128,7 +128,7 @@ const HomeSpinRewards: React.FC = () => {
               </span>
             </div>
           ))}
-          
+
           {candidates.length === 0 && (
             <div className="col-span-full bg-surface-variant rounded-xl p-stack-md flex flex-col items-center text-center justify-center border border-dashed border-outline-variant opacity-70">
               <span className="material-symbols-outlined text-on-surface-variant mb-stack-sm">hourglass_empty</span>
@@ -139,13 +139,17 @@ const HomeSpinRewards: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="w-full max-w-md grid grid-cols-2 gap-stack-md mb-stack-lg">
-        <Link to="/group-spin/spin" className="w-full bg-surface-white border-2 border-subtle-gray text-on-surface font-label-strong py-3 rounded-xl hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
-          <span className="material-symbols-outlined">group</span>
+      <div className="w-full max-w-md grid grid-cols-3 gap-2 mb-stack-lg">
+        <Link to="/spin/menu-capture" className="w-full bg-amber-500 text-white font-label-strong py-3 px-2 rounded-xl hover:bg-amber-600 transition-colors flex flex-col items-center justify-center text-xs gap-1 shadow-sm">
+          <span className="material-symbols-outlined text-lg">document_scanner</span>
+          Quét Menu AI
+        </Link>
+        <Link to="/group-spin/spin" className="w-full bg-surface-white border-2 border-subtle-gray text-on-surface font-label-strong py-3 px-2 rounded-xl hover:bg-surface-container-low transition-colors flex flex-col items-center justify-center text-xs gap-1">
+          <span className="material-symbols-outlined text-lg">group</span>
           Group Spin
         </Link>
-        <Link to="/locket" className="w-full bg-surface-white border-2 border-subtle-gray text-on-surface font-label-strong py-3 rounded-xl hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
-          <span className="material-symbols-outlined">photo_library</span>
+        <Link to="/locket" className="w-full bg-surface-white border-2 border-subtle-gray text-on-surface font-label-strong py-3 px-2 rounded-xl hover:bg-surface-container-low transition-colors flex flex-col items-center justify-center text-xs gap-1">
+          <span className="material-symbols-outlined text-lg">photo_library</span>
           Locket Feed
         </Link>
       </div>
@@ -156,10 +160,10 @@ const HomeSpinRewards: React.FC = () => {
         <div className="bg-surface-white rounded-xl overflow-hidden squishy-card flex flex-col sm:flex-row">
           {/* Image Side */}
           <div className="relative w-full sm:w-2/5 aspect-[4/3] sm:aspect-auto sm:min-h-[200px]">
-            <img 
-              className="w-full h-full object-cover" 
+            <img
+              className="w-full h-full object-cover"
               alt="Ramen"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcawci1qIGgoudRL8ZWJaPNu6jXXckUuYagsjQMXrqBfGBR8mg8n7_tw9HaS5XF8wS1Iy_4JqTxCH0OgG-rVad79IgBJ5CXwHeqqBP3d8rBRpQDISYhZJrSQWrBV5OGsnCJJPhOQp_5k9gDv-hkzJII2MQR19GuJJqnNgnwsYeexbJqOBnB9a77o4DeM_lBV4Ni_Nv0fAUGvCFVcYi7zAc999dYvdN2mGSGHey3h_8IaqP6u50Id19KQ" 
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcawci1qIGgoudRL8ZWJaPNu6jXXckUuYagsjQMXrqBfGBR8mg8n7_tw9HaS5XF8wS1Iy_4JqTxCH0OgG-rVad79IgBJ5CXwHeqqBP3d8rBRpQDISYhZJrSQWrBV5OGsnCJJPhOQp_5k9gDv-hkzJII2MQR19GuJJqnNgnwsYeexbJqOBnB9a77o4DeM_lBV4Ni_Nv0fAUGvCFVcYi7zAc999dYvdN2mGSGHey3h_8IaqP6u50Id19KQ"
             />
             {/* Status Indicator overlay */}
             <div className="absolute bottom-3 left-3 flex gap-2">

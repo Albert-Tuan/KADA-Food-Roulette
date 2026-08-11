@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../src/stores/authStore';
+import { useAuthStore } from '@/stores/authStore';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, isLoading } = useAuthStore();
+  const login = useAuthStore((state) => state.login);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,38 +19,37 @@ export default function LoginScreen() {
     }
 
     try {
+      setIsSubmitting(true);
       setError('');
-      await login(email, password);
+      await login(email.trim(), password);
       router.replace('/(tabs)');
     } catch (err: any) {
       setError(err.message || 'Đăng nhập thất bại');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView className="flex-1 bg-background">
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+        className="flex-1"
       >
-        <View style={styles.content}>
+        <View className="flex-1 px-6 pt-12">
           {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.logo}>🍜</Text>
-            <Text style={styles.title}>Chào mừng!</Text>
-            <Text style={styles.subtitle}>Đăng nhập để tiếp tục</Text>
+          <View className="items-center mb-10">
+            <Text className="text-5xl mb-4">🍜</Text>
+            <Text className="text-2xl font-bold text-secondary-800">Chào mừng!</Text>
+            <Text className="text-secondary-500 mt-2">Đăng nhập để tiếp tục</Text>
           </View>
 
           {/* Form */}
-          <View style={styles.form}>
-            {error ? (
-              <Text style={styles.error}>{error}</Text>
-            ) : null}
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+          <View className="space-y-4">
+            <View>
+              <Text className="text-secondary-700 mb-2 font-medium">Email</Text>
               <TextInput
-                style={styles.input}
+                className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-800"
                 placeholder="email@example.com"
                 placeholderTextColor="#A8A29E"
                 value={email}
@@ -60,10 +60,10 @@ export default function LoginScreen() {
               />
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Mật khẩu</Text>
+            <View>
+              <Text className="text-secondary-700 mb-2 font-medium">Mật khẩu</Text>
               <TextInput
-                style={styles.input}
+                className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-800"
                 placeholder="••••••••"
                 placeholderTextColor="#A8A29E"
                 value={password}
@@ -72,37 +72,40 @@ export default function LoginScreen() {
               />
             </View>
 
+            {error ? (
+              <Text className="text-red-500 text-sm text-center">{error}</Text>
+            ) : null}
+
             <TouchableOpacity
-              style={styles.loginButton}
+              className="bg-primary rounded-xl py-4 mt-4 shadow-lg disabled:opacity-50"
               onPress={handleLogin}
-              disabled={isLoading}
+              disabled={isSubmitting}
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text style={styles.loginButtonText}>Đăng nhập</Text>
+                <Text className="text-white text-center font-bold text-lg">Đăng nhập</Text>
               )}
             </TouchableOpacity>
 
-            {/* Divider */}
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>hoặc</Text>
-              <View style={styles.dividerLine} />
+            {/* Social Login */}
+            <View className="flex-row items-center my-6">
+              <View className="flex-1 h-px bg-secondary-200" />
+              <Text className="mx-4 text-secondary-400">hoặc</Text>
+              <View className="flex-1 h-px bg-secondary-200" />
             </View>
 
-            {/* Google Login */}
-            <TouchableOpacity style={styles.googleButton}>
-              <Text style={styles.googleIcon}>🍎</Text>
-              <Text style={styles.googleText}>Đăng nhập với Google</Text>
+            <TouchableOpacity className="bg-white border border-secondary-200 rounded-xl py-4 flex-row items-center justify-center">
+              <Text className="text-xl mr-3">🍎</Text>
+              <Text className="text-secondary-800 font-medium">Đăng nhập với Google</Text>
             </TouchableOpacity>
           </View>
 
           {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Chưa có tài khoản? </Text>
+          <View className="flex-row justify-center mt-8">
+            <Text className="text-secondary-500">Chưa có tài khoản? </Text>
             <Link href="/auth/register">
-              <Text style={styles.linkText}>Đăng ký ngay</Text>
+              <Text className="text-primary font-semibold">Đăng ký ngay</Text>
             </Link>
           </View>
         </View>
@@ -110,128 +113,3 @@ export default function LoginScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF8E7',
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 48,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  logo: {
-    fontSize: 56,
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#292524',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#78716C',
-  },
-  form: {
-    gap: 16,
-  },
-  error: {
-    color: '#DC2626',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#44403C',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#292524',
-  },
-  loginButton: {
-    backgroundColor: '#D97706',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-    shadowColor: '#D97706',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  loginButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E7E5E4',
-  },
-  dividerText: {
-    paddingHorizontal: 16,
-    fontSize: 14,
-    color: '#A8A29E',
-  },
-  googleButton: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
-    borderRadius: 12,
-    paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleIcon: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  googleText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#292524',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 32,
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#78716C',
-  },
-  linkText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#D97706',
-  },
-});

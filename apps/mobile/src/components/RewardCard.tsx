@@ -31,14 +31,14 @@ export function RewardCard({ data, onPress }: RewardCardProps) {
       <View style={[styles.iconContainer, { backgroundColor: colors.bg, borderColor: colors.border }]}>
         <Text style={styles.icon}>{data.icon}</Text>
       </View>
-      
+
       <View style={styles.content}>
         <Text style={styles.title}>{data.title}</Text>
         {data.description && (
           <Text style={styles.description} numberOfLines={1}>{data.description}</Text>
         )}
       </View>
-      
+
       {data.expiresIn && (
         <View style={styles.expiryContainer}>
           <Text style={styles.expiryLabel}>HSD</Text>
