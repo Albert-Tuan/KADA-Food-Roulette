@@ -28,7 +28,7 @@ export default function HomeScreen() {
           </View>
           <TouchableOpacity 
             style={styles.notificationButton}
-            onPress={() => router.push('/notifications')}
+            onPress={() => router.push('/notifications' as any)}
           >
             <Text style={styles.notificationIcon}>🔔</Text>
           </TouchableOpacity>
@@ -120,7 +120,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>📍 Quán gần bạn</Text>
-            <Link href="/restaurants">
+            <Link href={'/restaurants' as any}>
               <Text style={styles.sectionLink}>Xem tất cả</Text>
             </Link>
           </View>

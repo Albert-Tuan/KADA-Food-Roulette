@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import { useSpinStore } from '../../../stores/spinStore';
 import { FoodRoulette } from './FoodRoulette';
 import { SpinFilterSheet } from './SpinFilterSheet';
+import { InviteMembersSheet } from './InviteMembersSheet';
 import type { Restaurant } from '../types';
 
 interface GroupLobbyProps {
@@ -24,6 +24,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
   } = useSpinStore();
   const [customFoods, setCustomFoods] = useState<Record<string, string>>({});
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
 
   const customCandidates: Restaurant[] = Object.entries(customFoods)
     .filter(([_, food]) => food.trim() !== '')
@@ -61,6 +62,15 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
                 style={[styles.avatar, { marginLeft: i > 0 ? -12 : 0, zIndex: 5 - i }]}
               />
             ))}
+            <TouchableOpacity
+              style={[
+                styles.addMemberAvatarBtn,
+                { marginLeft: members.length > 0 ? -12 : 0, zIndex: 0 },
+              ]}
+              onPress={() => setIsInviteOpen(true)}
+            >
+              <Text style={styles.addMemberAvatarText}>+</Text>
+            </TouchableOpacity>
           </View>
           <Text style={styles.title}>Phòng Chờ (Lobby)</Text>
           <Text style={styles.subtitle}>Góp món cùng nhau, chốt nhanh kèo nhậu!</Text>
@@ -104,6 +114,12 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
         onAddCustom={addCustomCandidate}
         onRemoveCustom={removeCustomCandidate}
       />
+
+      {/* Invite Members Sheet */}
+      <InviteMembersSheet
+        visible={isInviteOpen}
+        onClose={() => setIsInviteOpen(false)}
+      />
     </>
   );
 }
@@ -140,6 +156,7 @@ const styles = StyleSheet.create({
   },
   avatarStack: {
     flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
   avatar: {
@@ -148,6 +165,22 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 2,
     borderColor: '#FFF',
+  },
+  addMemberAvatarBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#FFF',
+    backgroundColor: '#B52330',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addMemberAvatarText: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#FFF',
+    marginTop: -2,
   },
   title: {
     fontSize: 22,

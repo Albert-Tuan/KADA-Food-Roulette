@@ -55,7 +55,8 @@
         {
           "cameraPermission": "Cho phép Food Roulette sử dụng camera để chụp ảnh"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

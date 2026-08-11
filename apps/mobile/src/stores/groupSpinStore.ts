@@ -3,6 +3,7 @@ import type { Restaurant, GroupMember, VoteDecision, GroupPhase } from '../featu
 
 interface GroupSpinState {
   groupId: string | null;
+  roomCode: string;
   members: GroupMember[];
   hostId: string | null;
   candidates: Restaurant[];
@@ -12,6 +13,7 @@ interface GroupSpinState {
   spinnerId: string | null;
 
   joinGroup: (groupId: string, user: GroupMember) => void;
+  inviteMember: (user: GroupMember) => void;
   setPhase: (phase: GroupPhase) => void;
   setSpinner: (memberId: string) => void;
   setResult: (restaurant: Restaurant) => void;
@@ -28,6 +30,7 @@ const MOCK_MEMBERS: GroupMember[] = [
 
 export const useGroupSpinStore = create<GroupSpinState>((set) => ({
   groupId: 'mock-group-123',
+  roomCode: 'FR-8892',
   members: MOCK_MEMBERS,
   hostId: '1',
   candidates: [],
@@ -38,7 +41,11 @@ export const useGroupSpinStore = create<GroupSpinState>((set) => ({
 
   joinGroup: (groupId, user) => set((state) => ({
     groupId,
-    members: [...state.members, user],
+    members: state.members.some(m => m.id === user.id) ? state.members : [...state.members, user],
+  })),
+
+  inviteMember: (user) => set((state) => ({
+    members: state.members.some(m => m.id === user.id) ? state.members : [...state.members, user],
   })),
 
   setPhase: (phase) => set({ phase }),
