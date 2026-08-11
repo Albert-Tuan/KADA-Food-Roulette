@@ -43,6 +43,56 @@
 | **Landing page** | N/A | N/A | ❌ | ❌ Not Started |
 | **Chính sách bảo mật** | N/A | ❌ | ❌ | ❌ Not Started |
 | **Điều khoản sử dụng** | N/A | ❌ | ❌ | ❌ Not Started |
+| **Spin Filter UI** | ✅ | 🟡 | 🟡 | 🟡 Partial |
+
+---
+
+## v1.1: Onboarding + Discover + Steward
+
+> **Mục tiêu:** Hoàn thiện onboarding flow, thêm bản đồ khám phá, Steward dashboard
+
+| Feature | Backend | Mobile | Web | Status | Plan File |
+|---------|---------|--------|-----|--------|-----------|
+| **Onboarding Flow** | 🟡 | ❌ | ❌ | 🟡 Partial | `plans/feature-v1.1-onboarding.md` |
+| **Discover Map** | 🟡 | ❌ | ❌ | ❌ Not Started | `plans/feature-v1.1-discover-map.md` |
+| **Steward Dashboard** | ✅ | ❌ | ❌ | 🟡 Partial | `plans/feature-v1.1-steward.md` |
+| **Review UI** | ✅ | 🟡 | ❌ | 🟡 Partial | `plans/feature-v1.1-review-ui.md` |
+
+---
+
+## v1.2: Menu Scan + Voice + AI
+
+> **Mục tiêu:** Tính năng khác biệt - quét menu + voice input
+
+| Feature | Backend | Mobile | Web | Status | Plan File |
+|---------|---------|--------|-----|--------|-----------|
+| **Menu Scan + Taste Filter** | 🟡 | ❌ | ❌ | 🟡 Partial | `plans/feature-v1.2-menu-scan.md` |
+| **Voice Group Spin** | 🟡 | ❌ | ❌ | ❌ Not Started | `plans/feature-v1.2-voice-spin.md` |
+| **AI Suggestion Engine** | ✅ | ❌ | ❌ | 🟡 Partial | `plans/feature-v1.2-ai-suggestion.md` |
+| **AI Moderation** | ❌ | ❌ | ❌ | ❌ Not Started | `plans/feature-v1.2-ai-moderation.md` |
+
+---
+
+## v2.0: Gamification + Social + Expansion
+
+> **Mục tiêu:** Tăng engagement với gamification, chat trong nhóm, mở rộng thành phố
+
+| Feature | Backend | Mobile | Web | Status | Plan File |
+|---------|---------|--------|-----|--------|-----------|
+| **Gamification (Streaks + Badges)** | ❌ | ❌ | ❌ | ❌ Not Started | `plans/feature-v2.0-gamification.md` |
+| **In-app Chat** | ❌ | ❌ | ❌ | ❌ Not Started | `plans/feature-v2.0-chat.md` |
+| **Multi-city Support** | ❌ | ❌ | ❌ | ❌ Not Started | `plans/feature-v2.0-multicity.md` |
+| **AI Food Advisor** | ❌ | ❌ | ❌ | ❌ Not Started | `plans/feature-v2.0-ai-advisor.md` |
+
+---
+
+## Landing Page + Legal
+
+| Feature | Status | Plan File |
+|---------|--------|-----------|
+| **Landing Page** | ❌ Not Started | `plans/feature-landing-page.md` |
+| **Privacy Policy** | ❌ Not Started | `plans/feature-legal-pages.md` |
+| **Terms of Service** | ❌ Not Started | `plans/feature-legal-pages.md` |
 
 ---
 
