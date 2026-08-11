@@ -1,19 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { SpinWheel } from '../../src/components/SpinWheel';
 import { RewardCard, RewardCardEmpty } from '../../src/components/RewardCard';
 import { FoodRoulette } from '../../src/features/spin/components/FoodRoulette';
 import { SpinFilterSheet } from '../../src/features/spin/components/SpinFilterSheet';
 import { useSpinStore } from '../../src/stores/spinStore';
 import type { Restaurant } from '../../src/features/spin/types';
-
-interface PrizeSegment {
-  label: string;
-  color: string;
-  icon: string;
-}
 
 interface Reward {
   id: string;
@@ -33,36 +26,13 @@ const MOCK_REWARDS: Reward[] = [
 export default function SpinScreen() {
   const router = useRouter();
   const { candidates, filters, customCandidates, setFilters, addCustomCandidate, removeCustomCandidate, setCurrentResult } = useSpinStore();
-  const [rewards, setRewards] = useState<Reward[]>(MOCK_REWARDS);
+  const [rewards] = useState<Reward[]>(MOCK_REWARDS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const handleFoodSpinEnd = useCallback((winner: Restaurant, index: number) => {
     setCurrentResult(winner);
     router.push('/spin/result');
   }, [setCurrentResult, router]);
-
-  const handleRewardSpinEnd = useCallback((prize: PrizeSegment) => {
-    const newReward: Reward = {
-      id: Date.now().toString(),
-      type: prize.label.includes('Voucher') ? 'voucher'
-           : prize.label.includes('Credit') ? 'credit'
-           : prize.label.includes('Lượt') ? 'spin'
-           : 'item',
-      title: prize.label,
-      description: 'Từ vòng quay',
-      expiresIn: '3 ngày',
-      icon: prize.icon,
-      variant: 'gold',
-    };
-
-    setRewards(prev => [newReward, ...prev]);
-
-    Alert.alert(
-      '🎉 Chúc mừng!',
-      `Bạn nhận được: ${prize.icon} ${prize.label}`,
-      [{ text: 'OK', style: 'default' }]
-    );
-  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -122,22 +92,6 @@ export default function SpinScreen() {
         </View>
 
         {/* Divider */}
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>Vòng quay may mắn</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        {/* Reward Spin Section */}
-        <View style={styles.section}>
-          <View style={styles.header}>
-            <Text style={styles.rewardTitle}>Vòng Quay May Mắn!</Text>
-            <Text style={styles.rewardSubtitle}>Thử vận may sau khi check-in thành công!</Text>
-          </View>
-          <SpinWheel onSpinEnd={handleRewardSpinEnd} />
-        </View>
-
-        {/* Voucher Divider */}
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
           <Text style={styles.dividerText}>Voucher của bạn</Text>
