@@ -1,7 +1,7 @@
 # Stage 1: Build
 # NOTE: Build context must be the MONOREPO ROOT (e.g. `docker build -f docker/backend.Dockerfile .`)
 # For building from inside `backend/`, use `backend/Dockerfile` instead.
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Stage 2: Production
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 WORKDIR /app
 

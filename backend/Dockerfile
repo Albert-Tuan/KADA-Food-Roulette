@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.6
 
 # Stage 1: Builder
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Install build deps (Prisma needs openssl at build time too, just in case)
@@ -17,7 +17,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Stage 2: Runner (production)
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 RUN apk add --no-cache openssl wget \
