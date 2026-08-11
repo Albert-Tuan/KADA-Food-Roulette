@@ -22,10 +22,10 @@ interface GroupSpinState {
 }
 
 const MOCK_MEMBERS: GroupMember[] = [
-  { id: '1', name: '@minh', role: 'HOST', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Minh' },
-  { id: '2', name: '@tuan', role: 'MEMBER', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tuan' },
-  { id: '3', name: '@lan', role: 'MEMBER', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lan' },
-  { id: '4', name: '@hoa', role: 'MEMBER', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Hoa' },
+  { id: '1', name: '@minh', role: 'HOST', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=Minh' },
+  { id: '2', name: '@tuan', role: 'MEMBER', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=Tuan' },
+  { id: '3', name: '@lan', role: 'MEMBER', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=Lan' },
+  { id: '4', name: '@hoa', role: 'MEMBER', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=Hoa' },
 ];
 
 export const useGroupSpinStore = create<GroupSpinState>((set) => ({

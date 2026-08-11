@@ -65,8 +65,10 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
             <TouchableOpacity
               style={[
                 styles.addMemberAvatarBtn,
-                { marginLeft: members.length > 0 ? -12 : 0, zIndex: 0 },
+                { marginLeft: members.length > 0 ? -12 : 0, zIndex: 10, elevation: 10 },
               ]}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               onPress={() => setIsInviteOpen(true)}
             >
               <Text style={styles.addMemberAvatarText}>+</Text>
