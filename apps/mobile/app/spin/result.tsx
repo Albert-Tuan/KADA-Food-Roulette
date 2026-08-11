@@ -20,7 +20,7 @@ export default function SpinResultScreen() {
         <SpinResultCard
           restaurant={currentResult}
           onSpinAgain={() => router.replace('/(tabs)/spin')}
-          onAccept={() => router.replace('/(tabs)')}
+          onAccept={() => router.push('/spin/check-in')}
         />
       </ScrollView>
     </SafeAreaView>
