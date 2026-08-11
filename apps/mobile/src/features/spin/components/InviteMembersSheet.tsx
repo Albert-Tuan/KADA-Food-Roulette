@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
+  Pressable,
   Share,
   ScrollView,
   Image,
@@ -26,11 +27,11 @@ interface FriendItem {
 }
 
 const MOCK_FRIENDS: FriendItem[] = [
-  { id: '10', name: '@bao_nguyen', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bao', isOnline: true },
-  { id: '11', name: '@trang_pink', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Trang', isOnline: true },
-  { id: '12', name: '@dung_foodie', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dung', isOnline: false },
-  { id: '13', name: '@nam_pham', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nam', isOnline: true },
-  { id: '14', name: '@vy_vy', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Vy', isOnline: false },
+  { id: '10', name: '@bao_nguyen', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=Bao', isOnline: true },
+  { id: '11', name: '@trang_pink', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=Trang', isOnline: true },
+  { id: '12', name: '@dung_foodie', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=Dung', isOnline: false },
+  { id: '13', name: '@nam_pham', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=Nam', isOnline: true },
+  { id: '14', name: '@vy_vy', avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=Vy', isOnline: false },
 ];
 
 export function InviteMembersSheet({ visible, onClose }: InviteMembersSheetProps) {
@@ -72,10 +73,12 @@ export function InviteMembersSheet({ visible, onClose }: InviteMembersSheetProps
       visible={visible}
       animationType="slide"
       transparent
+      statusBarTranslucent
       onRequestClose={onClose}
     >
-      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity style={styles.sheet} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={styles.sheet}>
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.handleBar} />
@@ -184,8 +187,8 @@ export function InviteMembersSheet({ visible, onClose }: InviteMembersSheetProps
               })}
             </View>
           </ScrollView>
-        </TouchableOpacity>
-      </TouchableOpacity>
+        </View>
+      </View>
     </Modal>
   );
 }
