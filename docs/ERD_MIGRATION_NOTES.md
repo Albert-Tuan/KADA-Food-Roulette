@@ -1,22 +1,247 @@
 # ERD Migration Notes
 
 > SQL migration scripts and database trigger definitions
-> **Current Version:** v5.0
-> **Date:** 2026-08-06
+> **Current Version:** v5.2
+> **Date:** 2026-08-11
+> **Changes:** Added ModerationQueue, Gamification tables, Chat tables
 
 ---
 
-## Quick Start (v5.0)
+## Quick Start (v5.2)
 
 ```bash
-# 1. Create database
-mysql -u root -p < backend/prisma/migrations/v5.0/000_create_database.sql
+# 1. Create database (if not exists)
+mysql -u root -p < backend/prisma/migrations/v5.2/000_create_database.sql
 
-# 2. Create tables
-mysql -u root -p food_roulette < backend/prisma/migrations/v5.0/complete_schema.sql
+# 2. Run schema migration (Prisma auto-generates)
+cd backend
+npx prisma migrate deploy
 
-# 3. Seed test data
-mysql -u root -p food_roulette < backend/prisma/migrations/v5.0/seed_data.sql
+# 3. Seed test data (includes default achievements)
+npx prisma db seed
+```
+
+---
+
+## v5.1 → v5.2 Migration
+
+> **Date:** 2026-08-11
+> **Author:** Tuấn Anh
+> **Reference:** `docs/decisions/001-ai-moderation.md`, gamification planning, chat planning
+
+### Added Tables
+
+#### Gamification Tables (v2.0)
+
+```sql
+-- User streaks (consecutive days)
+CREATE TABLE `user_streaks` (
+  `user_id` VARCHAR(36) NOT NULL,
+  `current_streak` INT NOT NULL DEFAULT 0,
+  `longest_streak` INT NOT NULL DEFAULT 0,
+  `last_activity_at` DATETIME(3) NULL,
+  PRIMARY KEY (`user_id`),
+  CONSTRAINT `fk_user_streak_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+
+-- Available achievements (10 default seeded)
+CREATE TABLE `achievements` (
+  `id` VARCHAR(36) NOT NULL,
+  `code` VARCHAR(50) NOT NULL,
+  `name` VARCHAR(100) NOT NULL,
+  `description` TEXT NOT NULL,
+  `icon_url` VARCHAR(500) NULL,
+  `category` VARCHAR(50) NOT NULL,
+  `condition` TEXT NOT NULL,
+  `xp_reward` INT NOT NULL DEFAULT 0,
+  `is_secret` BOOLEAN NOT NULL DEFAULT FALSE,
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated_at` DATETIME(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_achievement_code` (`code`),
+  KEY `idx_achievement_category` (`category`),
+  KEY `idx_achievement_secret` (`is_secret`)
+);
+
+-- Junction: User unlocked which achievements
+CREATE TABLE `user_achievements` (
+  `user_id` VARCHAR(36) NOT NULL,
+  `achievement_id` VARCHAR(36) NOT NULL,
+  `earned_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `progress` DOUBLE NOT NULL DEFAULT 1.0,
+  PRIMARY KEY (`user_id`, `achievement_id`),
+  KEY `idx_user_achievement_earned` (`user_id`, `earned_at`),
+  KEY `idx_user_achievement_ach` (`achievement_id`),
+  CONSTRAINT `fk_user_ach_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_ach_achievement` FOREIGN KEY (`achievement_id`) REFERENCES `achievements`(`id`) ON DELETE CASCADE
+);
+
+-- XP & level tracking
+CREATE TABLE `user_xp` (
+  `user_id` VARCHAR(36) NOT NULL,
+  `total_xp` INT NOT NULL DEFAULT 0,
+  `level` INT NOT NULL DEFAULT 1,
+  `updated_at` DATETIME(3) NOT NULL,
+  PRIMARY KEY (`user_id`),
+  CONSTRAINT `fk_user_xp_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+```
+
+#### Chat Tables (v2.0)
+
+```sql
+-- Chat rooms (1 per Group)
+CREATE TABLE `chat_rooms` (
+  `id` VARCHAR(36) NOT NULL,
+  `type` VARCHAR(20) NOT NULL DEFAULT 'group',
+  `group_id` VARCHAR(36) NULL,
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated_at` DATETIME(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_chat_room_group` (`group_id`),
+  KEY `idx_chat_room_type` (`type`),
+  CONSTRAINT `fk_chat_room_group` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE
+);
+
+-- Chat room participants
+CREATE TABLE `chat_room_participants` (
+  `room_id` VARCHAR(36) NOT NULL,
+  `user_id` VARCHAR(36) NOT NULL,
+  `joined_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `last_read_at` DATETIME(3) NULL,
+  `muted` BOOLEAN NOT NULL DEFAULT FALSE,
+  PRIMARY KEY (`room_id`, `user_id`),
+  KEY `idx_chat_participant_user` (`user_id`),
+  CONSTRAINT `fk_chat_participant_room` FOREIGN KEY (`room_id`) REFERENCES `chat_rooms`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_chat_participant_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+
+-- Chat messages (retention: 90 days via cleanup job)
+CREATE TABLE `chat_messages` (
+  `id` VARCHAR(36) NOT NULL,
+  `room_id` VARCHAR(36) NOT NULL,
+  `sender_id` VARCHAR(36) NOT NULL,
+  `content` TEXT NOT NULL,
+  `type` VARCHAR(20) NOT NULL DEFAULT 'text',
+  `metadata` TEXT NULL,
+  `edited` BOOLEAN NOT NULL DEFAULT FALSE,
+  `deleted_at` DATETIME(3) NULL,
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated_at` DATETIME(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_chat_msg_room_created` (`room_id`, `created_at`),
+  KEY `idx_chat_msg_sender` (`sender_id`),
+  CONSTRAINT `fk_chat_msg_room` FOREIGN KEY (`room_id`) REFERENCES `chat_rooms`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_chat_msg_sender` FOREIGN KEY (`sender_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+```
+
+### Cleanup Job: Chat Message Retention
+
+```sql
+-- Run daily: Delete messages older than 90 days
+DELETE FROM chat_messages
+WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY);
+```
+
+Recommended setup via cron or scheduled event:
+```sql
+CREATE EVENT IF NOT EXISTS cleanup_old_chat_messages
+ON SCHEDULE EVERY 1 DAY
+DO
+  DELETE FROM chat_messages
+  WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY);
+```
+
+### Prisma Migration
+
+```bash
+cd backend
+npx prisma migrate dev --name v5_2_gamification_and_chat
+npx prisma generate
+```
+
+### Rollback Plan
+
+```bash
+mysql -u root -p food_roulette <<EOF
+DROP TABLE IF EXISTS `chat_messages`;
+DROP TABLE IF EXISTS `chat_room_participants`;
+DROP TABLE IF EXISTS `chat_rooms`;
+DROP TABLE IF EXISTS `user_xp`;
+DROP TABLE IF EXISTS `user_achievements`;
+DROP TABLE IF EXISTS `achievements`;
+DROP TABLE IF EXISTS `user_streaks`;
+DROP EVENT IF EXISTS cleanup_old_chat_messages;
+EOF
+```
+
+---
+
+## v5.0 → v5.1 Migration
+
+> **Date:** 2026-08-11
+> **Author:** Tuấn Anh
+> **Reference:** `docs/decisions/001-ai-moderation.md`, `docs/decisions/002-discover-map.md`
+
+### Added Tables
+
+#### `moderation_queue`
+
+Auto-flagged content từ AI services, chờ steward review.
+
+```sql
+CREATE TABLE `moderation_queue` (
+  `id` VARCHAR(36) NOT NULL,
+  `content_type` VARCHAR(50) NOT NULL,
+  `content_id` VARCHAR(36) NOT NULL,
+  `flagged_by` VARCHAR(100) NOT NULL,
+  `category` VARCHAR(50) NOT NULL,
+  `confidence` DOUBLE NOT NULL,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'pending',
+  `reviewed_by` VARCHAR(36) NULL,
+  `reviewed_at` DATETIME(3) NULL,
+  `reviewer_note` TEXT NULL,
+  `payload` TEXT NULL,
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated_at` DATETIME(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_modqueue_status_created` (`status`, `created_at`),
+  KEY `idx_modqueue_content` (`content_type`, `content_id`),
+  KEY `idx_modqueue_flaggedby` (`flagged_by`, `status`),
+  KEY `idx_modqueue_reviewer` (`reviewed_by`)
+);
+```
+
+### Added Indexes
+
+```sql
+-- Geospatial indexes for Discover Map (ADR-002)
+ALTER TABLE `restaurants`
+  ADD INDEX `idx_restaurants_geo` (`lat`, `lng`),
+  ADD INDEX `idx_restaurants_category` (`category`),
+  ADD INDEX `idx_restaurants_status_source` (`status`, `source`);
+```
+
+### Prisma Migration
+
+```bash
+cd backend
+npx prisma migrate dev --name v5_1_moderation_and_geo_indexes
+npx prisma generate
+```
+
+### Rollback Plan
+
+```bash
+# Manual rollback nếu cần
+mysql -u root -p food_roulette <<EOF
+DROP TABLE IF EXISTS `moderation_queue`;
+ALTER TABLE `restaurants`
+  DROP INDEX `idx_restaurants_geo`,
+  DROP INDEX `idx_restaurants_category`,
+  DROP INDEX `idx_restaurants_status_source`;
+EOF
 ```
 
 ---

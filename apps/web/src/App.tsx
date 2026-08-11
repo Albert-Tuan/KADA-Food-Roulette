@@ -44,6 +44,12 @@ import MenuCaptureScreen from './features/menu/components/MenuCaptureScreen';
 import MenuReviewScreen from './features/menu/components/MenuReviewScreen';
 import PreferencesScreen from './features/profile/components/PreferencesScreen';
 
+// Steward - Moderation
+import ModerationLayout from './pages/steward/moderation/_layout';
+import ModerationQueuePage from './pages/steward/moderation/queue';
+import ModerationItemPage from './pages/steward/moderation/item/[id]';
+import ModerationStatsPage from './pages/steward/moderation/stats';
+
 function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -80,6 +86,14 @@ function App() {
           <Route path="/leaderboard/map" element={<NearbyRestaurantsMapView />} />
           <Route path="/commitment" element={<KhCCommitment />} />
           <Route path="/share/harvest" element={<ShareYourHarvestSuccess />} />
+        </Route>
+
+        {/* Steward - Moderation (separate layout, no MainLayout wrapper) */}
+        <Route path="/steward/moderation" element={<ModerationLayout />}>
+          <Route index element={<ModerationQueuePage />} />
+          <Route path="queue" element={<ModerationQueuePage />} />
+          <Route path="queue/:id" element={<ModerationItemPage />} />
+          <Route path="stats" element={<ModerationStatsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
