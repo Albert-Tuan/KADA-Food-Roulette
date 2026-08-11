@@ -354,7 +354,21 @@ Xem chi tiết trong: `plans/team-assignment.md`
 | **Hoàng Hiếu** | Frontend Lead | ~122h | All UI screens, Landing page |
 | **Gia Bình** | Content + Frontend | ~43h | UI polish, Copy, Mobile |
 | **Thành Nam** | DevOps | ~40h | CI/CD, EAS, Testing |
-| **Tuấn Anh** | PM + Architect | ~20h | Review, Architecture |
+| **Tuấn Anh** | PM + Architect | ~66h | Review, Architecture, AI Moderation, Schemas |
+
+### Tuấn Anh Sprint Plans
+
+| Sprint | Plan | Focus |
+|--------|------|-------|
+| Sprint 1 | `plans/sprint-1-v1-completion.md` | v1.0 + EAS Submit |
+| Sprint 2 | `plans/sprint-2-discover-map.md` | Discover Map + CHANGELOG |
+| Sprint 3 | `plans/sprint-3-ai-moderation.md` | AI Moderation (Lead) |
+| Sprint 4 | `plans/sprint-4-ai-suggestion.md` | AI Suggestion + WebSocket |
+| Sprint 5 | `plans/sprint-5-v2-gamification.md` | Gamification + Chat schemas |
+| Sprint 6 | `plans/sprint-6-launch.md` | Multi-city + Launch prep |
+
+**Overview:** `plans/plan-tuan-anh-overview.md`
+**Step by step:** `plans/tuan-anh-action-plan.md`
 
 ---
 
