@@ -45,7 +45,8 @@
           "photosPermission": "Cho phép Food Roulette truy cập ảnh để đổi avatar",
           "cameraPermission": "Cho phép Food Roulette sử dụng camera để chụp ảnh"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
