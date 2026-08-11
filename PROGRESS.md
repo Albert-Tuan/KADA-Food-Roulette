@@ -342,6 +342,22 @@
 
 ---
 
+## Team Work Assignment
+
+Xem chi tiết trong: `plans/team-assignment.md`
+
+### Summary
+
+| Person | Role | Total Hours | Main Features |
+|--------|------|-------------|---------------|
+| **Trường** | Backend Lead | ~98h | Voice Spin, AI services, APIs |
+| **Hoàng Hiếu** | Frontend Lead | ~122h | All UI screens, Landing page |
+| **Gia Bình** | Content + Frontend | ~43h | UI polish, Copy, Mobile |
+| **Thành Nam** | DevOps | ~40h | CI/CD, EAS, Testing |
+| **Tuấn Anh** | PM + Architect | ~20h | Review, Architecture |
+
+---
+
 ## Open Questions
 
 | # | Question | Owner | Status |
