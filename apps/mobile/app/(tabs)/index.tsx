@@ -79,6 +79,20 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </Link>
 
+        {/* Menu Scanner CTA */}
+        <Link href="/spin/menu-capture" asChild>
+          <TouchableOpacity style={styles.scannerCard}>
+            <View style={styles.scannerIcon}>
+              <Text style={styles.groupIconText}>📷</Text>
+            </View>
+            <View style={styles.groupContent}>
+              <Text style={styles.groupTitle}>Quét Menu bằng AI</Text>
+              <Text style={styles.groupSubtitle}>Chụp ảnh menu, AI sẽ tự động tạo vòng quay</Text>
+            </View>
+            <Text style={styles.groupArrow}>→</Text>
+          </TouchableOpacity>
+        </Link>
+
         {/* Recent Taste Boards */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -307,6 +321,31 @@ const styles = StyleSheet.create({
   },
   groupIconText: {
     fontSize: 24,
+  },
+  scannerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginTop: 12,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#FDE68A',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  scannerIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FDE68A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
   },
   groupContent: {
     flex: 1,
