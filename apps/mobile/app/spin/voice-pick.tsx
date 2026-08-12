@@ -14,12 +14,14 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { menuApi, MenuItem, VoicePickResponse } from '../../src/api/endpoints/menu';
 import { VoicePickResultModal } from '../../src/components/VoicePickResultModal';
+import { useSpinStore } from '../../src/stores/spinStore';
 
-const MAX_RECORDING_SECONDS = 45;
+const MAX_RECORDING_SECONDS = 120;
 
 export default function VoicePickScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { addCustomCandidate } = useSpinStore();
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -151,6 +153,24 @@ export default function VoicePickScreen() {
   const handleConfirmAndSpin = (selectedItemNames: string[]) => {
     setIsModalVisible(false);
 
+    if (params.target === 'group') {
+      // Option A: Add AI-extracted items directly to group spin store candidates
+      selectedItemNames.forEach((name) => {
+        addCustomCandidate({
+          id: `voice-${Date.now()}-${Math.random()}`,
+          name,
+          category: 'Gợi ý Voice AI',
+          rating: 5.0,
+          totalReviews: 1,
+          distance: 0,
+          priceLevel: 2 as const,
+          imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400',
+        });
+      });
+      router.back();
+      return;
+    }
+
     // Map names back to full MenuItem objects
     const finalItems = menuItems.filter((i) =>
       selectedItemNames.some((name) => name.toLowerCase() === i.name.toLowerCase())
@@ -167,6 +187,10 @@ export default function VoicePickScreen() {
     });
   };
 
+  const minutes = Math.floor(secondsLeft / 60);
+  const secs = secondsLeft % 60;
+  const formattedTimer = `${minutes < 10 ? '0' + minutes : minutes}:${secs < 10 ? '0' + secs : secs}`;
+
   return (
     <SafeAreaView className="flex-1 bg-amber-50 justify-between p-6">
       {/* Top Navigation */}
@@ -174,14 +198,16 @@ export default function VoicePickScreen() {
         <TouchableOpacity onPress={() => router.back()} className="p-2 bg-white rounded-full border border-stone-200">
           <Feather name="arrow-left" size={24} color="#44403C" />
         </TouchableOpacity>
-        <Text className="text-lg font-bold text-stone-800">Voice Pick Nhóm</Text>
+        <Text className="text-lg font-bold text-stone-800">
+          {params.target === 'group' ? 'Voice Pick Cá Nhân' : 'Voice Pick Nhóm'}
+        </Text>
         <View className="w-10" />
       </View>
 
       {/* Main Recording Body */}
       <View className="items-center justify-center my-auto">
         <Text className="text-center text-stone-600 text-sm px-6 mb-8">
-          Đặt điện thoại ở giữa bàn. Cả nhóm hãy nói suy nghĩ & món thèm/ghét của mình nhé! (Tối đa 45 giây)
+          Hãy nói các món bạn thèm ăn hoặc dị ứng/ghét ăn nhé! AI sẽ trích xuất và thêm thẳng vào vòng quay nhóm. (Tối đa 2 phút)
         </Text>
 
         {/* Pulsating Record Button */}
@@ -209,10 +235,10 @@ export default function VoicePickScreen() {
         {isRecording && (
           <View className="items-center">
             <Text className="text-2xl font-black text-rose-600 mb-1">
-              00:{secondsLeft < 10 ? `0${secondsLeft}` : secondsLeft}
+              {formattedTimer}
             </Text>
             <Text className="text-xs font-semibold text-rose-500">
-              🔴 Đang thu âm nhóm... Nhấn để Dừng & Phân tích
+              🔴 Đang thu âm... Nhấn để Dừng & Phân tích
             </Text>
           </View>
         )}

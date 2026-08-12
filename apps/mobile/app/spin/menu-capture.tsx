@@ -50,14 +50,19 @@ export default function MenuCaptureScreen() {
 
       const res: MenuCaptureResponse = await menuApi.captureMenu(restaurantId, imageUris);
 
+      const paramsToPass: Record<string, string> = {
+        menuId: res.menuId,
+        initialItems: JSON.stringify(res.items),
+        confidence: res.confidence.toString(),
+        previewUrl: imageUris[0],
+      };
+      if (params.target && typeof params.target === 'string') {
+        paramsToPass.target = params.target;
+      }
+
       router.push({
         pathname: '/spin/menu-review' as any,
-        params: {
-          menuId: res.menuId,
-          initialItems: JSON.stringify(res.items),
-          confidence: res.confidence.toString(),
-          previewUrl: imageUris[0],
-        },
+        params: paramsToPass,
       });
     } catch (err: any) {
       console.error('Menu capture API error:', err);
