@@ -56,4 +56,11 @@ apiClient.interceptors.response.use(
   }
 );
 
+export const getApiErrorMessage = (error: unknown, defaultMessage: string = 'Đã có lỗi xảy ra'): string => {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.message || error.message || defaultMessage;
+  }
+  return error instanceof Error ? error.message : defaultMessage;
+};
+
 export default apiClient;

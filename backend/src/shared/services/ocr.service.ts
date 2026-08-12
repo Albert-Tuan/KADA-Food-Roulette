@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-export const extractMenuItems = async (imagePaths: string[]): Promise<any[]> => {
+export const extractMenuItems = async (imagePaths: string[]): Promise<Record<string, unknown>[]> => {
   try {
     if (!imagePaths || imagePaths.length === 0) {
       console.warn('[OCR] No images provided to extractMenuItems');
@@ -13,7 +13,7 @@ export const extractMenuItems = async (imagePaths: string[]): Promise<any[]> => 
       throw new Error('GEMINI_API_KEY is not defined in environment variables');
     }
 
-    const parts: any[] = [];
+    const parts: Record<string, unknown>[] = [];
     parts.push({
       text: `You are an expert OCR parser for restaurant menus. Extract all food and drink items from the provided menu images. 
 Return ONLY a valid JSON array of objects with the following schema:
@@ -98,7 +98,7 @@ Extract items exactly as they appear. Do not hallucinate items. If no items foun
       }
       
       // Fix any string prices
-      items = items.map((item: any) => {
+      items = items.map((item: Record<string, unknown>) => {
         if (typeof item.priceVND === 'string') {
           const num = parseInt(item.priceVND.replace(/\D/g, ''), 10);
           item.priceVND = isNaN(num) ? null : (num < 1000 ? num * 1000 : num);
@@ -108,12 +108,12 @@ Extract items exactly as they appear. Do not hallucinate items. If no items foun
 
       console.log(`[OCR] Gemini OCR successfully extracted ${items.length} items.`);
       return items;
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('[OCR] Failed to parse Gemini response as JSON:', text);
-      throw new Error('AI returned invalid data format.');
+      throw new Error('AI returned invalid data format.', { cause: e });
     }
-  } catch (error: any) {
-    console.error(`[OCR Error] Gemini OCR failed:`, error?.message || error);
+  } catch (error: unknown) {
+    console.error(`[OCR Error] Gemini OCR failed:`, error instanceof Error ? error.message : error);
     throw error;
   }
 };
