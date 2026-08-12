@@ -1,7 +1,7 @@
 # PROGRESS.md
 
-> **Theo dõi tiến độ implementation Food Roulette**
-> **Version:** 2.2 · **Date:** 2026-08-10
+> **Theo doi tiến độ implementation Food Roulette**
+> **Version:** 2.3 · **Date:** 2026-08-11
 > **Based on:** `brand/FOOD-ROULETTE-SITEMAP.md` v2.4
 
 ---
@@ -30,19 +30,69 @@
 | **Onboarding** | ✅ | ❌ | ❌ | 🟡 Partial |
 | **Spin cá nhân** | ✅ | ✅ | ✅ | ✅ Done |
 | **Spin Wallet** | ✅ | ❌ | ❌ | 🟡 Partial |
-| **Group spin (max 20, vote)** | ✅ | 🟡 | ✅ | 🟡 Partial |
+| **Group spin (max 20, vote)** | ✅ | ✅ | ✅ | ✅ Done |
 | **Locket capture (camera-only)** | ✅ | ✅ | N/A | ✅ Done |
 | **Locket feed** | ✅ | ✅ | ✅ | ✅ Done |
-| **Taste Board** | ✅ | ❌ | ✅ | 🟡 Partial |
+| **Taste Board** | ✅ | ✅ | ✅ | ✅ Done |
 | **Profile công khai** | ✅ | ✅ | ✅ | ✅ Done |
 | **Thêm quán (user-submitted)** | ✅ | ❌ | ❌ | 🟡 Partial |
-| **Steward dashboard** | ✅ | ❌ | ❌ | 🟡 Partial |
+| **Steward dashboard** | ✅ | ❌ | ✅ | 🟡 Partial |
 | **Google Places lookup** | ✅ | ❌ | ❌ | 🟡 Partial |
 | **Restaurant Partner (B2B)** | ✅ | ✅ | ✅ | ✅ Done |
 | **Corporate Account (B2B)** | ✅ | ❌ | ❌ | 🟡 Partial |
 | **Landing page** | N/A | N/A | ❌ | ❌ Not Started |
 | **Chính sách bảo mật** | N/A | ❌ | ❌ | ❌ Not Started |
 | **Điều khoản sử dụng** | N/A | ❌ | ❌ | ❌ Not Started |
+| **Spin Filter UI** | ✅ | 🟡 | 🟡 | 🟡 Partial |
+
+---
+
+## v1.1: Onboarding + Discover + Steward
+
+> **Mục tiêu:** Hoàn thiện onboarding flow, thêm bản đồ khám phá, Steward dashboard
+
+| Feature | Backend | Mobile | Web | Status | Plan File |
+|---------|---------|--------|-----|--------|-----------|
+| **Onboarding Flow** | 🟡 | ❌ | ❌ | 🟡 Partial | `plans/feature-v1.1-onboarding.md` |
+| **Discover Map** | 🟡 | ❌ | ❌ | ❌ Not Started | `plans/feature-v1.1-discover-map.md` |
+| **Steward Dashboard** | ✅ | ❌ | ✅ | 🟡 Partial | `plans/feature-v1.1-steward.md` |
+| **Review UI** | ✅ | 🟡 | ✅ | 🟡 Partial | `plans/feature-v1.1-review-ui.md` |
+
+---
+
+## v1.2: Menu Scan + Voice + AI
+
+> **Mục tiêu:** Tính năng khác biệt - quét menu + voice input
+
+| Feature | Backend | Mobile | Web | Status | Plan File |
+|---------|---------|--------|-----|--------|-----------|
+| **Menu Scan + Taste Filter** | 🟡 | ❌ | ❌ | 🟡 Partial | `plans/feature-v1.2-menu-scan.md` |
+| **Voice Group Spin** | 🟡 | ❌ | ❌ | ❌ Not Started | `plans/feature-v1.2-voice-spin.md` |
+| **AI Suggestion Engine** | ✅ | ❌ | ❌ | 🟡 Partial | `plans/feature-v1.2-ai-suggestion.md` |
+| **AI Moderation** | ❌ | ❌ | ❌ | ❌ Not Started | `plans/feature-v1.2-ai-moderation.md` |
+
+---
+
+## v2.0: Gamification + Social + Expansion
+
+> **Mục tiêu:** Tăng engagement với gamification, chat trong nhóm, mở rộng thành phố
+
+| Feature | Backend | Mobile | Web | Status | Plan File |
+|---------|---------|--------|-----|--------|-----------|
+| **Gamification (Streaks + Badges)** | ❌ | ❌ | ❌ | ❌ Not Started | `plans/feature-v2.0-gamification.md` |
+| **In-app Chat** | ❌ | ❌ | ❌ | ❌ Not Started | `plans/feature-v2.0-chat.md` |
+| **Multi-city Support** | ❌ | ❌ | ❌ | ❌ Not Started | `plans/feature-v2.0-multicity.md` |
+| **AI Food Advisor** | ❌ | ❌ | ❌ | ❌ Not Started | `plans/feature-v2.0-ai-advisor.md` |
+
+---
+
+## Landing Page + Legal
+
+| Feature | Status | Plan File |
+|---------|--------|-----------|
+| **Landing Page** | ❌ Not Started | `plans/feature-landing-page.md` |
+| **Privacy Policy** | ❌ Not Started | `plans/feature-legal-pages.md` |
+| **Terms of Service** | ❌ Not Started | `plans/feature-legal-pages.md` |
 
 ---
 
@@ -57,16 +107,33 @@
 | **Roulette** | `roulette.controller.ts`, `roulette.routes.ts` | Trường |
 | **Groups** | `groups.controller.ts`, `groups.routes.ts` | Trường |
 | **Restaurants** | `restaurants.controller.ts`, `restaurants.routes.ts` | Trường |
-| **Lockets** | `lockets.controller.ts`, `lockets.routes.ts` | Trường |
+| **Lockets** | `lockets.controller.ts`, `lockets.routes.ts`, `lockets.service.ts` | Trường |
 | **Preferences** | `preferences.controller.ts`, `preferences.service.ts` | Trường |
 | **Menu** | `menu.controller.ts`, `menu.service.ts`, `menu.routes.ts` | Trường |
 | **Circle** | `circle.controller.ts`, `circle.service.ts`, `circle.routes.ts` | Trường |
 | **Steward** | `steward.controller.ts`, `steward.routes.ts` | Trường |
+| **Friends** | `friends.controller.ts`, `friends.service.ts`, `friends.routes.ts` | Trường |
+| **Notifications** | `notifications.controller.ts`, `notifications.service.ts`, `notifications.routes.ts` | Trường |
+| **Users** | `users.controller.ts`, `users.service.ts`, `users.routes.ts`, `users.validation.ts` | Trường |
+| **Profile** | `profile.controller.ts`, `profile.service.ts`, `profile.routes.ts` | Trường |
 
 ### Shared Services ✅
 - `ocr.service.ts` — Tesseract OCR wrapper
 - `menuParser.service.ts` — Vietnamese menu parser
 - `preferenceLearner.service.ts` — User preference learning
+- `lockets/lockets.storage.ts` — Media storage service
+- `lockets/lockets.imageProcessor.ts` — Image processing
+- `lockets/lockets.mediaAccess.ts` — Media access control
+- `lockets/lockets.validation.ts` — Locket validation rules
+
+### Tests ✅
+- `__tests__/friends.test.ts` — Friends API tests
+- `__tests__/notifications.test.ts` — Notifications API tests
+- `__tests__/profile.test.ts` — Profile API tests
+- `__tests__/lockets.test.ts` — Lockets API tests
+- `__tests__/smoke.test.ts` — Health check tests
+- `lockets/lockets.*.test.ts` — 6 test files (lifecycle, authorization, mediaAccess, storage, validation, imageProcessor)
+- `users/users.validation.test.ts` — User validation tests
 
 ### Đang làm 🟡
 - [ ] API integration testing
@@ -96,7 +163,21 @@
 | Login | `app/auth/login.tsx` | Hoàng Hiếu |
 | Register | `app/auth/register.tsx` | Hoàng Hiếu |
 | Locket Capture | `app/locket/capture.tsx` | Hoàng Hiếu + Gia Bình |
+| Locket Detail | `app/locket/[id].tsx` | Gia Bình |
 | Restaurant Detail | `app/restaurant/[id].tsx` | Hoàng Hiếu |
+| Public Profile | `app/u/[public_id].tsx` | Gia Bình |
+| Profile Edit | `app/profile/edit.tsx` | Gia Bình |
+| Profile Settings | `app/profile/settings.tsx` | Gia Bình |
+| **Group Spin Layout** | `app/group-spin/_layout.tsx` | Hoàng Hiếu |
+| **Group Spin Lobby** | `app/group-spin/lobby.tsx` | Hoàng Hiếu |
+| **Group Spin Result** | `app/group-spin/result.tsx` | Hoàng Hiếu |
+| **Group Spin Veto** | `app/group-spin/veto.tsx` | Hoàng Hiếu |
+| **Group Spin Check-in** | `app/group-spin/check-in.tsx` | Hoàng Hiếu |
+| **Group Spin Rewards** | `app/group-spin/rewards.tsx` | Hoàng Hiếu |
+| **Lucky Spin Wheel** | `app/spin/lucky-spin.tsx` | Hoàng Hiếu |
+| **Spin Result** | `app/spin/result.tsx` | Hoàng Hiếu |
+| **Spin Check-in** | `app/spin/check-in.tsx` | Hoàng Hiếu |
+| **Spin Rewards** | `app/spin/rewards.tsx` | Hoàng Hiếu |
 
 ### Infrastructure ✅
 - Expo SDK 52 + Expo Router
@@ -107,16 +188,13 @@
 - TypeScript config (v2 - without path aliases for TS 7.0 compatibility)
 
 ### Đang làm 🟡
-- [ ] Spin wheel animation (Reanimated 3)
+- [x] ✅ Spin wheel animation (Reanimated 3)
+- [x] ✅ Group spin flow UI
 - [ ] Onboarding flow
 
 ### Còn lại ⬜
 - [ ] Onboarding screens (4-5 screens)
-- [ ] Group spin flow UI
-- [ ] Taste Board management UI
-- [ ] Review writing UI
-- [ ] Menu capture UI
-- [ ] AI suggestion UI
+- [ ] Review writing UI (full)
 - [ ] Push notification setup
 - [ ] Spin Shop UI
 - [ ] Spin Wallet UI
@@ -134,8 +212,8 @@
 | Feature | Components |
 |---------|------------|
 | **Auth** | `LoginPage.tsx`, `RegisterPage.tsx` |
-| **Roulette** | `LuckySpinWheel.tsx`, `SpinResult.tsx`, `MysteryBoxReveal.tsx`, `HomeSpinRewards.tsx` |
-| **Groups** | `GroupSpinWhoSpins.tsx`, `GroupVoteResult.tsx`, `GroupVoteVeto.tsx`, `GroupCheckInVerification.tsx`, `GroupCheckInCompleteRewards.tsx`, `CircleAiSuggestionCard.tsx` |
+| **Roulette** | `LuckySpinWheel.tsx`, `SpinResult.tsx`, `MysteryBoxReveal.tsx`, `HomeSpinRewards.tsx`, `SpinFilterModal.tsx` |
+| **Groups** | `GroupSpinFoodWheel.tsx`, `GroupSpinWhoSpins.tsx`, `GroupVoteResult.tsx`, `GroupVoteVeto.tsx`, `GroupCheckInVerification.tsx`, `GroupCheckInCompleteRewards.tsx`, `CircleAiSuggestionCard.tsx` |
 | **Lockets** | `LocketFeed.tsx`, `ShareYourHarvestSuccess.tsx` |
 | **Profile** | `PreferencesScreen.tsx`, `ProfileTasteProfile.tsx`, `StreakDashboard.tsx` |
 | **Restaurants** | `NearbyRestaurantsMapView.tsx`, `NearbyRestaurantsLeaderboard.tsx`, `FriendsLeaderboardDetail.tsx`, `KhCCommitment.tsx` |
@@ -144,10 +222,10 @@
 | **Rewards** | `SeasonGarden.tsx`, `EnhancedSeasonGardenProgress.tsx` |
 | **Layout** | `MainLayout.tsx` |
 
-### Đang làm 🟡
-- [ ] Page routing setup (React Router)
-- [ ] API hooks (TanStack Query)
-- [ ] State integration
+### Hoàn thành ✅
+- [x] ✅ Page routing setup (React Router)
+- [x] ✅ API hooks (TanStack Query)
+- [x] ✅ State integration
 
 ### Còn lại ⬜
 - [ ] Landing page (full)
@@ -210,19 +288,22 @@
 ## CI/CD (Thành Nam)
 
 ### Đã xong ✅
-- [x] GitHub Actions iOS EAS Build workflow
+- [x] GitHub Actions iOS EAS Build workflow (`mobile-ci-ios.yml`)
+- [x] GitHub Actions Android EAS Build workflow (`mobile-ci-android.yml`)
 - [x] GitHub Actions Web CI workflow
-- [x] Dependabot config
+- [x] GitHub Actions Backend CI workflow (updated)
+- [x] Dependabot config (updated)
 - [x] CODEOWNERS
 - [x] Module-specific .gitignore
+- [x] `backend.Dockerfile` - Backend container
+- [x] `docker/backend.Dockerfile` - GitHub Actions build context
+- [x] Locket upload pipeline (backend)
+- [x] Review API pipeline (backend)
 
 ### Còn lại ⬜
 - [ ] EAS Submit (store submission)
-- [ ] Android CI/CD
 - [ ] Automated testing workflow
 - [ ] Preview deployments
-- [ ] Locket upload pipeline
-- [ ] Review API pipeline
 
 ---
 
@@ -261,6 +342,36 @@
 
 ---
 
+## Team Work Assignment
+
+Xem chi tiết trong: `plans/team-assignment.md`
+
+### Summary
+
+| Person | Role | Total Hours | Main Features |
+|--------|------|-------------|---------------|
+| **Trường** | Backend Lead | ~98h | Voice Spin, AI services, APIs |
+| **Hoàng Hiếu** | Frontend Lead | ~122h | All UI screens, Landing page |
+| **Gia Bình** | Content + Frontend | ~43h | UI polish, Copy, Mobile |
+| **Thành Nam** | DevOps | ~40h | CI/CD, EAS, Testing |
+| **Tuấn Anh** | PM + Architect | ~66h | Review, Architecture, AI Moderation, Schemas |
+
+### Tuấn Anh Sprint Plans
+
+| Sprint | Plan | Focus |
+|--------|------|-------|
+| Sprint 1 | `plans/sprint-1-v1-completion.md` | v1.0 + EAS Submit |
+| Sprint 2 | `plans/sprint-2-discover-map.md` | Discover Map + CHANGELOG |
+| Sprint 3 | `plans/sprint-3-ai-moderation.md` | AI Moderation (Lead) |
+| Sprint 4 | `plans/sprint-4-ai-suggestion.md` | AI Suggestion + WebSocket |
+| Sprint 5 | `plans/sprint-5-v2-gamification.md` | Gamification + Chat schemas |
+| Sprint 6 | `plans/sprint-6-launch.md` | Multi-city + Launch prep |
+
+**Overview:** `plans/plan-tuan-anh-overview.md`
+**Step by step:** `plans/tuan-anh-action-plan.md`
+
+---
+
 ## Open Questions
 
 | # | Question | Owner | Status |
@@ -275,20 +386,27 @@
 ## Next Steps (1-2 tuần tới)
 
 ### Priority 1 — MVP Complete
-1. **Mobile**: Spin wheel animation + onboarding
-2. **Web**: Page routing + API hooks
-3. **Integration**: Mobile ↔ Backend full test
+1. ~~Spin wheel animation~~ → ✅ Done
+2. ~~Group spin flow (mobile)~~ → ✅ Done
+3. Onboarding flow (mobile + web)
+4. Landing page + Privacy/Terms pages
+5. Integration: Mobile ↔ Backend full test
 
 ### Priority 2 — v1.0 Full
-4. Landing page (hero + sections)
-5. Privacy policy + Terms pages
-6. Group spin flow (mobile)
-7. Taste Board management (mobile)
+6. Store listing assets (icon, splash)
+7. EAS Submit (App Store submission)
+8. Corporate Account UI (mobile)
+9. Taste Board management (mobile)
 
 ### Priority 3 — Polish
-8. CI/CD: Android CI + EAS Submit
-9. Store listing assets
-10. Onboarding flow (web)
+10. CI/CD: Android CI + EAS Submit
+11. Payment integration (Spin Packs)
+12. Real-time notifications (WebSocket)
+13. Onboarding flow (web)
+
+### New Features — v1.2 Planning
+- [ ] **Menu Scan + Taste Filter** - AI scan menu, filter by user preferences
+- [ ] **Voice Group Spin** - Voice input to add candidates in group spin
 
 ---
 
@@ -352,5 +470,5 @@ KADA-Food-Roulette/
 
 ---
 
-*Updated: 2026-08-10 · Last update by: Cursor AI*
+*Updated: 2026-08-11 · Last update by: Cursor AI (sync from git commits)*
 *Based on: `brand/FOOD-ROULETTE-SITEMAP.md` v2.4*

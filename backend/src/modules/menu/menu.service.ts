@@ -1,3 +1,6 @@
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import prisma from '../../shared/utils/prisma';
 import { extractMenuItems } from '../../shared/services/ocr.service';
 

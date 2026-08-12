@@ -29,3 +29,11 @@ dist/
 main
 scripts/close-dependabot-prs.ps1
 scripts/close-dependabot-prs.sh
+plans/plan-tuan-anh-overview.md
+plans/sprint-1-v1-completion.md
+plans/sprint-2-discover-map.md
+plans/sprint-3-ai-moderation.md
+plans/sprint-4-ai-suggestion.md
+plans/sprint-5-v2-gamification.md
+plans/sprint-6-launch.md
+plans/tuan-anh-action-plan.md

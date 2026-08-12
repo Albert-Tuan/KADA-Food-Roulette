@@ -57,12 +57,19 @@ export const restaurantApi = {
   },
 
   create: async (data: CreateRestaurantRequest): Promise<Restaurant> => {
-    const response = await apiClient.post<Restaurant>('/restaurants', data);
-    return response.data;
+    const response = await apiClient.post<{ data: Restaurant }>('/v1/restaurants', data);
+    return response.data.data;
   },
 
   approve: async (id: string): Promise<Restaurant> => {
     const response = await apiClient.put<Restaurant>(`/restaurants/${id}`, { status: 'APPROVED' });
     return response.data;
   },
+};
+
+export const placesApi = {
+  seedNearby: async (lat: number, lng: number, radius = 5): Promise<{ added: number; skipped: number }> => {
+    // Temporary mock for seeding
+    return { added: 0, skipped: 0 };
+  }
 };
