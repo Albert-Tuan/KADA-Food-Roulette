@@ -138,30 +138,19 @@ export default function MenuReviewScreen() {
       }
       // Assuming you have a route to start spinning with specific items.
       // E.g., redirect to main spin tab or a specific spin route
-      if (params.target === 'group') {
-        finalItems.forEach((item) => {
-          addCustomCandidate({
-            id: `menu-${Date.now()}-${Math.random()}`,
-            name: item.name,
-            category: item.category || 'Món từ Menu Scan',
-            rating: 5.0,
-            totalReviews: 1,
-            distance: 0,
-            priceLevel: 2 as const,
-            imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400',
-          });
+      finalItems.forEach((item) => {
+        addCustomCandidate({
+          name: item.name,
+          category: item.category || 'Món từ Menu Scan',
         });
+      });
+
+      if (params.target === 'group') {
         router.replace('/group-spin/lobby');
         return;
       }
 
-      router.push({
-        pathname: '/(tabs)/spin' as any, // or '/spin/lucky-spin'
-        params: {
-          menuItems: JSON.stringify(finalItems),
-          fromMenuCapture: 'true',
-        },
-      });
+      router.push('/(tabs)/spin');
     } catch (err) {
       console.error(err);
       // Fallback navigation

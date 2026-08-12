@@ -153,38 +153,20 @@ export default function VoicePickScreen() {
   const handleConfirmAndSpin = (selectedItemNames: string[]) => {
     setIsModalVisible(false);
 
-    if (params.target === 'group') {
-      // Option A: Add AI-extracted items directly to group spin store candidates
-      selectedItemNames.forEach((name) => {
-        addCustomCandidate({
-          id: `voice-${Date.now()}-${Math.random()}`,
-          name,
-          category: 'Gợi ý Voice AI',
-          rating: 5.0,
-          totalReviews: 1,
-          distance: 0,
-          priceLevel: 2 as const,
-          imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400',
-        });
+    // Add selected items to the global SpinStore custom candidates
+    selectedItemNames.forEach((name) => {
+      addCustomCandidate({
+        name,
+        category: 'Gợi ý Voice AI',
       });
+    });
+
+    if (params.target === 'group') {
       router.back();
       return;
     }
 
-    // Map names back to full MenuItem objects
-    const finalItems = menuItems.filter((i) =>
-      selectedItemNames.some((name) => name.toLowerCase() === i.name.toLowerCase())
-    );
-
-    const itemsToPass = finalItems.length > 0 ? finalItems : menuItems;
-
-    router.push({
-      pathname: '/(tabs)/spin' as any,
-      params: {
-        menuItems: JSON.stringify(itemsToPass),
-        fromMenuCapture: 'true',
-      },
-    });
+    router.push('/(tabs)/spin');
   };
 
   const minutes = Math.floor(secondsLeft / 60);
