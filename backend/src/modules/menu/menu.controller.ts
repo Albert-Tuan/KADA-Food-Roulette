@@ -5,22 +5,24 @@ export const menuController = {
   capture: async (req: Request, res: Response) => {
     try {
       const restaurantId = (req.body?.restaurantId || req.query?.restaurantId as string) || 'rest-1';
-      const files = req.files as Express.Multer.File[];
       const userId = req.user?.id || 'anonymous';
+      const rawFiles = req.files || (req.file ? [req.file] : []);
+      const files = Array.isArray(rawFiles) ? rawFiles : (typeof rawFiles === 'object' ? Object.values(rawFiles).flat() : []);
 
       if (!files || files.length === 0) {
-        return res.status(400).json({ message: 'Vui lòng tải lên ít nhất 1 ảnh menu' });
+        return res.status(400).json({ message: 'Vui lòng tải lên ít nhất 1 ảnh menu.' });
       }
 
       console.log(`[menuController.capture] Processing menu for restaurant: ${restaurantId}, user: ${userId}, files: ${files.length}`);
       
-      const imagePaths = files.map(file => file.path);
+      const imagePaths = files.map((f: Express.Multer.File | { path: string }) => f.path);
       const result = await menuService.createMenu(restaurantId, userId, imagePaths);
       
       return res.status(201).json(result);
-    } catch (error: any) {
-      console.error('[MenuController] capture error:', error);
-      return res.status(500).json({ message: error.message || 'Lỗi khi xử lý menu' });
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('[menuController.capture Error]:', err);
+      return res.status(500).json({ message: 'Lỗi khi xử lý menu', error: err.message });
     }
   },
 
@@ -32,8 +34,9 @@ export const menuController = {
 
       const result = await menuService.verifyMenu(menuId, items, userId);
       return res.status(200).json(result);
-    } catch (error: any) {
-      return res.status(500).json({ message: 'Lỗi khi xác nhận menu', error: error.message });
+    } catch (error: unknown) {
+      const err = error as Error;
+      return res.status(500).json({ message: 'Lỗi khi xác nhận menu', error: err.message });
     }
   },
 
@@ -42,8 +45,9 @@ export const menuController = {
       const menuId = req.params.menuId as string;
       const result = await menuService.getMenuById(menuId);
       return res.status(200).json(result);
-    } catch (error: any) {
-      return res.status(404).json({ message: 'Không tìm thấy menu', error: error.message });
+    } catch (error: unknown) {
+      const err = error as Error;
+      return res.status(404).json({ message: 'Không tìm thấy menu', error: err.message });
     }
   },
 
@@ -52,8 +56,9 @@ export const menuController = {
       const restaurantId = req.params.restaurantId as string;
       const result = await menuService.getMenusByRestaurant(restaurantId);
       return res.status(200).json(result);
-    } catch (error: any) {
-      return res.status(500).json({ message: 'Lỗi khi tải danh sách menu', error: error.message });
+    } catch (error: unknown) {
+      const err = error as Error;
+      return res.status(500).json({ message: 'Lỗi khi tải danh sách menu', error: err.message });
     }
   }
 };

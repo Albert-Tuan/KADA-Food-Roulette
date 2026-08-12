@@ -136,12 +136,11 @@ export default function MenuReviewScreen() {
       if (menuId) {
         await menuApi.verifyMenu(menuId, finalItems);
       }
-      // Assuming you have a route to start spinning with specific items.
-      // E.g., redirect to main spin tab or a specific spin route
+
       finalItems.forEach((item) => {
         addCustomCandidate({
           name: item.name,
-          category: item.category || 'Món từ Menu Scan',
+          category: item.category || 'Mon tu Menu Scan',
         });
       });
 
@@ -149,21 +148,25 @@ export default function MenuReviewScreen() {
         router.replace('/group-spin/lobby');
         return;
       }
-
-      router.push('/(tabs)/spin');
     } catch (err) {
-      console.error(err);
-      // Fallback navigation
-      router.push({
-        pathname: '/(tabs)/spin' as any,
-        params: {
-          menuItems: JSON.stringify(finalItems),
-          fromMenuCapture: 'true',
-        }
-      });
+      console.error('Menu verify error (non-blocking):', err);
     } finally {
       setIsSubmitting(false);
     }
+
+    // Save to localStorage for fallback retrieval
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('active_spin_menu', JSON.stringify(finalItems));
+    }
+
+    // Navigate to the actual spinning wheel with menu items
+    router.push({
+      pathname: '/spin/menu-wheel' as any,
+      params: {
+        menuItems: JSON.stringify(finalItems),
+        fromMenuCapture: 'true',
+      },
+    });
   };
 
   return (

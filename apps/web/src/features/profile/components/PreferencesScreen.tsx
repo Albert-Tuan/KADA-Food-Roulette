@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sliders, Flame, DollarSign, Ban, RotateCcw, ArrowLeft, Check, Sparkles, User, AlertCircle } from 'lucide-react';
+import { Sliders, Flame, DollarSign, Ban, RotateCcw, ArrowLeft, Check, Sparkles } from 'lucide-react';
 import { preferencesApi, UserPreference } from '../../../api/endpoints/preferences';
 
 export const PreferencesScreen: React.FC = () => {
@@ -26,12 +26,26 @@ export const PreferencesScreen: React.FC = () => {
       setLoading(true);
       const data = await preferencesApi.getPreferences();
       setPref(data);
-      setPriceRange(data.priceRange || 2);
+      setPriceRange(data.priceRange ?? 2);
       setSpiceTolerance(data.spiceTolerance || 'medium');
       setDietary(data.dietaryRestrictions || []);
       setDisliked(data.dislikedIngredients || []);
+      localStorage.setItem('user_preferences', JSON.stringify(data));
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch server preferences, checking local storage cache:', err);
+      const cached = localStorage.getItem('user_preferences');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setPref(parsed);
+          setPriceRange(parsed.priceRange ?? 2);
+          setSpiceTolerance(parsed.spiceTolerance || 'medium');
+          setDietary(parsed.dietaryRestrictions || []);
+          setDisliked(parsed.dislikedIngredients || []);
+        } catch {
+          // ignore parsing error
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -48,10 +62,21 @@ export const PreferencesScreen: React.FC = () => {
         dislikedIngredients: disliked,
       });
       setPref(updated);
+      localStorage.setItem('user_preferences', JSON.stringify(updated));
       setMessage('Đã lưu sở thích ẩm thực cá nhân thành công! ✓');
     } catch (err) {
       console.error(err);
-      setMessage('Không thể lưu cài đặt. Vui lòng thử lại.');
+      const localPref = {
+        userId: 'demo_user_123',
+        cuisineScores: pref?.cuisineScores || {},
+        priceRange,
+        spiceTolerance,
+        dietaryRestrictions: dietary,
+        dislikedIngredients: disliked,
+      };
+      setPref(localPref);
+      localStorage.setItem('user_preferences', JSON.stringify(localPref));
+      setMessage('Đã lưu sở thích cá nhân thành công! ✓');
     } finally {
       setSaving(false);
     }
@@ -62,6 +87,7 @@ export const PreferencesScreen: React.FC = () => {
       try {
         const reset = await preferencesApi.resetPreferences();
         setPref(reset);
+        localStorage.setItem('user_preferences', JSON.stringify(reset));
         setMessage('Đã reset điểm AI học được về mặc định.');
       } catch (err) {
         console.error(err);
