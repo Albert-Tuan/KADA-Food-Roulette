@@ -93,7 +93,7 @@ export default function LocketsScreen() {
 
 function LocketCard({ locket }: { locket: Locket }) {
   return (
-    <Link href={`/locket/${locket.id}`} asChild>
+    <Link href={`/locket/${locket.id}` as any} asChild>
       <TouchableOpacity className="mx-4 mb-4 overflow-hidden rounded-3xl border border-secondary-100 bg-white">
         <View className="flex-row items-center p-4">
           {locket.author.avatarUrl ? (

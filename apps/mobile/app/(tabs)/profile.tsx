@@ -81,7 +81,7 @@ function Stat({ value, label }: { value: number; label: string }) {
 
 function MenuLink({ href, title }: { href: '/profile/edit' | '/profile/taste-preferences' | '/profile/settings' | `/u/${string}`; title: string }) {
   return (
-    <Link href={href} asChild>
+    <Link href={href as any} asChild>
       <TouchableOpacity className="bg-white border border-secondary-100 rounded-2xl p-4 flex-row items-center">
         <Text className="flex-1 text-secondary-900 font-semibold">{title}</Text>
         <Text className="text-secondary-400">›</Text>

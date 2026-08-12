@@ -5,10 +5,12 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import { menuApi, MenuItem } from '../../src/api/endpoints/menu';
 import { Href } from 'expo-router';
 import { preferencesApi, UserPreference } from '../../src/api/endpoints/preferences';
+import { useSpinStore } from '../../src/stores/spinStore';
 
 export default function MenuReviewScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { addCustomCandidate } = useSpinStore();
 
   const [items, setItems] = useState<MenuItem[]>([]);
   const [confidence, setConfidence] = useState<number | undefined>();
@@ -136,13 +138,19 @@ export default function MenuReviewScreen() {
       }
       // Assuming you have a route to start spinning with specific items.
       // E.g., redirect to main spin tab or a specific spin route
-      router.push({
-        pathname: '/(tabs)/spin' as any, // or '/spin/lucky-spin'
-        params: {
-          menuItems: JSON.stringify(finalItems),
-          fromMenuCapture: 'true',
-        },
+      finalItems.forEach((item) => {
+        addCustomCandidate({
+          name: item.name,
+          category: item.category || 'Món từ Menu Scan',
+        });
       });
+
+      if (params.target === 'group') {
+        router.replace('/group-spin/lobby');
+        return;
+      }
+
+      router.push('/(tabs)/spin');
     } catch (err) {
       console.error(err);
       // Fallback navigation

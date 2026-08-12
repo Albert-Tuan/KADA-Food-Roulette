@@ -43,7 +43,7 @@ export default function PublicProfileScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <Link href={`/locket/${item.id}`} asChild>
+          <Link href={`/locket/${item.id}` as any} asChild>
             <TouchableOpacity style={{ flex: 1 / 3, aspectRatio: 1, marginBottom: 3 }}>
               <Image source={{ uri: item.imageUrl }} className="w-full h-full bg-secondary-100" />
             </TouchableOpacity>
