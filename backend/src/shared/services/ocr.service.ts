@@ -1,13 +1,33 @@
- 
- 
- 
- 
 import fs from 'fs';
 import path from 'path';
+import Tesseract from 'tesseract.js';
+import sharp from 'sharp';
 
 interface TextPart { text: string }
 interface InlineDataPart { inlineData: { data: string; mimeType: string } }
 type GeminiPart = TextPart | InlineDataPart;
+
+export class OcrService {
+  static async extractText(imagePath: string): Promise<string> {
+    try {
+      const resolvedPath = path.isAbsolute(imagePath) ? imagePath : path.resolve(process.cwd(), imagePath);
+      if (!fs.existsSync(resolvedPath)) {
+        return '';
+      }
+      const preprocessedBuffer = await sharp(resolvedPath)
+        .rotate()
+        .grayscale()
+        .normalize()
+        .sharpen()
+        .toBuffer();
+
+      const { data: { text } } = await Tesseract.recognize(preprocessedBuffer, 'vie+eng');
+      return text || '';
+    } catch (e: any) {
+      return '';
+    }
+  }
+}
 
 export const extractMenuItems = async (imagePaths: string[]): Promise<Record<string, unknown>[]> => {
   try {
@@ -16,7 +36,7 @@ export const extractMenuItems = async (imagePaths: string[]): Promise<Record<str
       return [];
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || '';
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY is not defined in environment variables');
     }
@@ -27,13 +47,13 @@ export const extractMenuItems = async (imagePaths: string[]): Promise<Record<str
 Return ONLY a valid JSON array of objects with the following schema:
 [
   {
-    "name": "string", // name of the dish/drink
-    "priceVND": number, // numeric price in VND (e.g. 50k -> 50000, 50,000 -> 50000). If unknown, use null.
-    "category": "string", // categorize into: "món chính", "đồ uống", "khai vị", "tráng miệng", "khác"
-    "tags": ["string"] // array of tags matching exactly these: "cay", "chay", "chiên", "nướng", "hấp", "soup" (can be empty array [])
+    "name": "string",
+    "priceVND": number,
+    "category": "string",
+    "tags": ["string"]
   }
 ]
-Extract items exactly as they appear. Do not hallucinate items. If no items found, return []. DO NOT wrap the output in markdown blocks (\`\`\`json). Return raw JSON array only starting with '[' and ending with ']'.`
+Return raw JSON array only.`
     });
 
     for (const imagePath of imagePaths) {
@@ -66,7 +86,7 @@ Extract items exactly as they appear. Do not hallucinate items. If no items foun
       })
     }];
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`;
     
     const apiResponse = await fetch(url, {
       method: 'POST',
