@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import apiClient from '../client';
 
 export interface MenuItem {
@@ -30,20 +31,27 @@ export interface Menu {
 }
 
 export const menuApi = {
-  captureMenu: async (restaurantId: string, imageUri: string): Promise<MenuCaptureResponse> => {
+  captureMenu: async (restaurantId: string, imageUris: string[]): Promise<MenuCaptureResponse> => {
     const formData = new FormData();
     formData.append('restaurantId', restaurantId);
     
-    // In React Native, we need to append the file like this
-    const filename = imageUri.split('/').pop() || 'menu.jpg';
-    const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : `image/jpeg`;
+    for (const imageUri of imageUris) {
+      const filename = imageUri.split('/').pop() || 'menu.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
 
-    formData.append('menuImage', {
-      uri: imageUri,
-      name: filename,
-      type,
-    } as any);
+      if (Platform.OS === 'web') {
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        formData.append('menuImages', blob, filename);
+      } else {
+        formData.append('menuImages', {
+          uri: imageUri,
+          name: filename,
+          type,
+        } as any);
+      }
+    }
 
     const response = await apiClient.post<MenuCaptureResponse>('/menu/capture', formData, {
       headers: {

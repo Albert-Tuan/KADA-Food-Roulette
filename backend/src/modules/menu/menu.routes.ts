@@ -38,8 +38,8 @@ const upload = multer({
   },
 });
 
-router.post('/capture', authenticateJWT, upload.single('menuImage'), menuController.capture);
-router.post('/', authenticateJWT, upload.single('menuImage'), menuController.capture);
+router.post('/capture', authenticateJWT, upload.array('menuImages', 5), menuController.capture);
+router.post('/', authenticateJWT, upload.array('menuImages', 5), menuController.capture);
 router.post('/:menuId/verify', authenticateJWT, menuController.verify);
 router.get('/restaurant/:restaurantId', authenticateJWT, menuController.getByRestaurant);
 router.get('/:menuId', authenticateJWT, menuController.getById);

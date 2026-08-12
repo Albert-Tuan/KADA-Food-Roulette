@@ -1,4 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const DEVICE_HASH_KEY = 'locket-device-hash-v1';
 
@@ -103,7 +105,10 @@ function createInstallationId(): Uint8Array {
 }
 
 export async function getInstallationDeviceHash(): Promise<string> {
-  const storedHash = await SecureStore.getItemAsync(DEVICE_HASH_KEY);
+  const getItem = Platform.OS === 'web' ? AsyncStorage.getItem.bind(AsyncStorage) : SecureStore.getItemAsync;
+  const setItem = Platform.OS === 'web' ? AsyncStorage.setItem.bind(AsyncStorage) : SecureStore.setItemAsync;
+
+  const storedHash = await getItem(DEVICE_HASH_KEY);
   if (storedHash && /^[a-f0-9]{64}$/.test(storedHash)) {
     return storedHash;
   }
@@ -111,6 +116,6 @@ export async function getInstallationDeviceHash(): Promise<string> {
   const installationId = createInstallationId();
   const deviceHash = sha256(installationId);
   installationId.fill(0);
-  await SecureStore.setItemAsync(DEVICE_HASH_KEY, deviceHash);
+  await setItem(DEVICE_HASH_KEY, deviceHash);
   return deviceHash;
 }

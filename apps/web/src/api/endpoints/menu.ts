@@ -30,10 +30,13 @@ export interface Menu {
 }
 
 export const menuApi = {
-  captureMenu: async (restaurantId: string, imageFile: File): Promise<MenuCaptureResponse> => {
+  captureMenu: async (restaurantId: string, imageFiles: File[]): Promise<MenuCaptureResponse> => {
     const formData = new FormData();
     formData.append('restaurantId', restaurantId);
-    formData.append('menuImage', imageFile);
+    
+    imageFiles.forEach(file => {
+      formData.append('menuImages', file);
+    });
 
     const response = await apiClient.post<MenuCaptureResponse>('/menu/capture', formData);
     return response.data;
