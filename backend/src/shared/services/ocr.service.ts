@@ -5,6 +5,10 @@
 import fs from 'fs';
 import path from 'path';
 
+interface TextPart { text: string }
+interface InlineDataPart { inlineData: { data: string; mimeType: string } }
+type GeminiPart = TextPart | InlineDataPart;
+
 export const extractMenuItems = async (imagePaths: string[]): Promise<Record<string, unknown>[]> => {
   try {
     if (!imagePaths || imagePaths.length === 0) {
@@ -17,7 +21,7 @@ export const extractMenuItems = async (imagePaths: string[]): Promise<Record<str
       throw new Error('GEMINI_API_KEY is not defined in environment variables');
     }
 
-    const parts: Record<string, unknown>[] = [];
+    const parts: GeminiPart[] = [];
     parts.push({
       text: `You are an expert OCR parser for restaurant menus. Extract all food and drink items from the provided menu images. 
 Return ONLY a valid JSON array of objects with the following schema:
@@ -51,8 +55,8 @@ Extract items exactly as they appear. Do not hallucinate items. If no items foun
     // Convert parts format to the REST API format
     const contents = [{
       parts: parts.map(p => {
-        if (p.text) return { text: p.text };
-        if (p.inlineData) return {
+        if ('text' in p) return { text: p.text };
+        if ('inlineData' in p) return {
           inline_data: {
             mime_type: p.inlineData.mimeType,
             data: p.inlineData.data
@@ -84,7 +88,16 @@ Extract items exactly as they appear. Do not hallucinate items. If no items foun
       throw new Error(errorText);
     }
 
-    const data = await apiResponse.json();
+    interface GeminiResponse {
+      candidates?: Array<{
+        content?: {
+          parts?: Array<{
+            text?: string;
+          }>;
+        };
+      }>;
+    }
+    const data = (await apiResponse.json()) as GeminiResponse;
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
     let items = [];
     try {
