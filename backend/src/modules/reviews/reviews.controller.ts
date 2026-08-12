@@ -1,3 +1,6 @@
+ 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { Request, Response } from 'express';
 import { prisma } from '../../shared/utils/prisma';
 import { AuthRequest } from '../../shared/middleware/auth.middleware';
