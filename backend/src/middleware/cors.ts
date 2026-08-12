@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from 'express'
 const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:5173',
   'http://localhost:3000',
+  'http://localhost:8081',
 ]
 
 export const corsMiddleware = cors({

@@ -1,48 +1,119 @@
-import Tesseract from 'tesseract.js';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
 
-export class OcrService {
-  static async extractText(imagePath: string): Promise<string> {
-    try {
-      const resolvedPath = path.isAbsolute(imagePath)
-        ? imagePath
-        : path.resolve(process.cwd(), imagePath);
+export const extractMenuItems = async (imagePaths: string[]): Promise<any[]> => {
+  try {
+    if (!imagePaths || imagePaths.length === 0) {
+      console.warn('[OCR] No images provided to extractMenuItems');
+      return [];
+    }
 
-      if (!fs.existsSync(resolvedPath)) {
-        console.error(`[OCR] File not found at path: ${resolvedPath}`);
-        return '';
-      }
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is not defined in environment variables');
+    }
 
-      console.log(`[OCR] Starting Tesseract recognition for file: ${resolvedPath}`);
-      const imageBuffer = fs.readFileSync(resolvedPath);
+    const parts: any[] = [];
+    parts.push({
+      text: `You are an expert OCR parser for restaurant menus. Extract all food and drink items from the provided menu images. 
+Return ONLY a valid JSON array of objects with the following schema:
+[
+  {
+    "name": "string", // name of the dish/drink
+    "priceVND": number, // numeric price in VND (e.g. 50k -> 50000, 50,000 -> 50000). If unknown, use null.
+    "category": "string", // categorize into: "món chính", "đồ uống", "khai vị", "tráng miệng", "khác"
+    "tags": ["string"] // array of tags matching exactly these: "cay", "chay", "chiên", "nướng", "hấp", "soup" (can be empty array [])
+  }
+]
+Extract items exactly as they appear. Do not hallucinate items. If no items found, return []. DO NOT wrap the output in markdown blocks (\`\`\`json). Return raw JSON array only starting with '[' and ending with ']'.`
+    });
 
-      const { data: { text } } = await Tesseract.recognize(imageBuffer, 'vie+eng', {
-        logger: (m) => {
-          if (m.status === 'recognizing text') {
-            console.log(`[OCR] Progress: ${Math.round((m.progress || 0) * 100)}%`);
-          }
-        },
-      });
-
-      console.log(`[OCR] Extracted ${text ? text.length : 0} characters from image.`);
-      return text || '';
-    } catch (error: any) {
-      console.error(`[OCR Warning] Primary vie+eng recognition error:`, error?.message || error);
-      
-      // Fallback: try default 'eng' recognition if vie+eng traineddata fails
-      try {
-        const resolvedPath = path.isAbsolute(imagePath)
-          ? imagePath
-          : path.resolve(process.cwd(), imagePath);
+    for (const imagePath of imagePaths) {
+      const resolvedPath = path.isAbsolute(imagePath) ? imagePath : path.resolve(process.cwd(), imagePath);
+      if (fs.existsSync(resolvedPath)) {
         const imageBuffer = fs.readFileSync(resolvedPath);
-        const { data: { text } } = await Tesseract.recognize(imageBuffer, 'eng');
-        console.log(`[OCR Fallback] Extracted ${text ? text.length : 0} characters.`);
-        return text || '';
-      } catch (fallbackErr) {
-        console.error(`[OCR Fallback Error]:`, fallbackErr);
-        return '';
+        const mimeType = resolvedPath.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+        parts.push({
+          inlineData: {
+            data: imageBuffer.toString('base64'),
+            mimeType
+          }
+        });
       }
     }
+
+    console.log(`[OCR] Starting Gemini OCR for ${imagePaths.length} images using REST API...`);
+    
+    // Convert parts format to the REST API format
+    const contents = [{
+      parts: parts.map(p => {
+        if (p.text) return { text: p.text };
+        if (p.inlineData) return {
+          inline_data: {
+            mime_type: p.inlineData.mimeType,
+            data: p.inlineData.data
+          }
+        };
+        return p;
+      })
+    }];
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
+    
+    const apiResponse = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey.replace(/['"]/g, '').trim()
+      },
+      body: JSON.stringify({
+        contents,
+        generationConfig: {
+          responseMimeType: 'application/json'
+        }
+      })
+    });
+
+    if (!apiResponse.ok) {
+      const errorText = await apiResponse.text();
+      console.error('[OCR] Gemini API HTTP Error:', apiResponse.status, errorText);
+      throw new Error(errorText);
+    }
+
+    const data = await apiResponse.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+    let items = [];
+    try {
+      // Strip out markdown code blocks if Gemini ignores the instruction
+      const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+      items = JSON.parse(cleanText);
+      
+      // Ensure items is an array
+      if (!Array.isArray(items)) {
+        if (items.items && Array.isArray(items.items)) {
+          items = items.items;
+        } else {
+          items = [items];
+        }
+      }
+      
+      // Fix any string prices
+      items = items.map((item: any) => {
+        if (typeof item.priceVND === 'string') {
+          const num = parseInt(item.priceVND.replace(/\D/g, ''), 10);
+          item.priceVND = isNaN(num) ? null : (num < 1000 ? num * 1000 : num);
+        }
+        return item;
+      });
+
+      console.log(`[OCR] Gemini OCR successfully extracted ${items.length} items.`);
+      return items;
+    } catch (e) {
+      console.error('[OCR] Failed to parse Gemini response as JSON:', text);
+      throw new Error('AI returned invalid data format.');
+    }
+  } catch (error: any) {
+    console.error(`[OCR Error] Gemini OCR failed:`, error?.message || error);
+    throw error;
   }
-}
+};

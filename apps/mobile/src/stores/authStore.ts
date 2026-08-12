@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { authApi, UserProfile } from '../api';
 
 interface UserState {
@@ -18,6 +19,29 @@ interface UserState {
   checkAuth: () => Promise<void>;
 }
 
+const setStorageItem = async (key: string, value: string) => {
+  if (Platform.OS === 'web') {
+    await AsyncStorage.setItem(key, value);
+  } else {
+    await SecureStore.setItemAsync(key, value);
+  }
+};
+
+const getStorageItem = async (key: string) => {
+  if (Platform.OS === 'web') {
+    return await AsyncStorage.getItem(key);
+  }
+  return await SecureStore.getItemAsync(key);
+};
+
+const removeStorageItem = async (key: string) => {
+  if (Platform.OS === 'web') {
+    await AsyncStorage.removeItem(key);
+  } else {
+    await SecureStore.deleteItemAsync(key);
+  }
+};
+
 export const useAuthStore = create<UserState>()((set, get) => ({
   user: null,
   token: null,
@@ -28,9 +52,9 @@ export const useAuthStore = create<UserState>()((set, get) => ({
 
   setToken: async (token) => {
     if (token) {
-      await SecureStore.setItemAsync('token', token);
+      await setStorageItem('token', token);
     } else {
-      await SecureStore.deleteItemAsync('token');
+      await removeStorageItem('token');
     }
     set({ token });
   },
@@ -38,7 +62,7 @@ export const useAuthStore = create<UserState>()((set, get) => ({
   login: async (email: string, password: string) => {
     try {
       const result = await authApi.login({ email, password });
-      await SecureStore.setItemAsync('token', result.token);
+      await setStorageItem('token', result.token);
       set({ token: result.token, user: result.user, isAuthenticated: true });
     } catch (error) {
       console.error('Login error:', error);
@@ -47,7 +71,7 @@ export const useAuthStore = create<UserState>()((set, get) => ({
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync('token');
+    await removeStorageItem('token');
     await AsyncStorage.removeItem('user-storage');
     set({ token: null, user: null, isAuthenticated: false });
   },
@@ -60,7 +84,7 @@ export const useAuthStore = create<UserState>()((set, get) => ({
   checkAuth: async () => {
     try {
       set({ isLoading: true });
-      const token = await SecureStore.getItemAsync('token');
+      const token = await getStorageItem('token');
       if (token) {
         set({ token, isAuthenticated: true });
         // Optionally fetch user data here
