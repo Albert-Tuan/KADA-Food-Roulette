@@ -27,9 +27,9 @@ export const MainLayout: React.FC = () => {
               <Sparkles className="w-4 h-4" />
             </Link>
             <Link
-              to="/preferences"
+              to="/profile"
               className="p-2 rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
-              title="Khẩu vị Cá nhân"
+              title="Hồ sơ cá nhân"
             >
               <User className="w-4 h-4" />
             </Link>
@@ -66,9 +66,9 @@ export const MainLayout: React.FC = () => {
           </Link>
 
           <Link
-            to="/preferences"
+            to="/profile"
             className={`flex flex-col items-center gap-0.5 text-xs font-medium transition-colors ${
-              location.pathname === '/preferences' ? 'text-orange-500' : 'text-stone-400 hover:text-stone-600'
+              location.pathname === '/profile' ? 'text-orange-500' : 'text-stone-400 hover:text-stone-600'
             }`}
           >
             <User className="w-5 h-5" />
