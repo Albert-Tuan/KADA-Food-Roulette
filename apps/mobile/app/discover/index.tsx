@@ -15,17 +15,7 @@ import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { restaurantApi, Restaurant, placesApi } from '@/api';
 
-// Conditionally import react-native-maps only on native platforms
-let MapView: any = null;
-let Marker: any = null;
-let PROVIDER_GOOGLE: any = null;
-
-if (Platform.OS !== 'web') {
-  const RNMaps = require('react-native-maps');
-  MapView = RNMaps.default;
-  Marker = RNMaps.Marker;
-  PROVIDER_GOOGLE = RNMaps.PROVIDER_GOOGLE;
-}
+import { MapView, Marker, PROVIDER_GOOGLE } from '../../src/components/MapProvider';
 
 // Color scheme per brand/brand.md
 // Region type for map
@@ -171,7 +161,7 @@ export default function DiscoverScreen() {
     <SafeAreaView className="flex-1 bg-background">
       {/* Map or Web fallback */}
       <View className="flex-1">
-        {MapView ? (
+        {Platform.OS !== 'web' ? (
           <MapView
             ref={mapRef}
             className="w-full h-full"

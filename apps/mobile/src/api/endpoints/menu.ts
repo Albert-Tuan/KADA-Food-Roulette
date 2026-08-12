@@ -30,6 +30,14 @@ export interface Menu {
   isFresh?: boolean;
 }
 
+export interface VoicePickResponse {
+  transcription: string;
+  cravedItems: Array<{ name: string; reason: string }>;
+  matchedItems: Array<{ name: string; reason: string }>;
+  excludedItems: Array<{ name: string; reason: string }>;
+  aiSuggestions: Array<{ name: string; reason: string }>;
+}
+
 export const menuApi = {
   captureMenu: async (restaurantId: string, imageUris: string[]): Promise<MenuCaptureResponse> => {
     const formData = new FormData();
@@ -54,6 +62,32 @@ export const menuApi = {
     }
 
     const response = await apiClient.post<MenuCaptureResponse>('/menu/capture', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  processVoicePick: async (audioUri: string, menuItems: MenuItem[]): Promise<VoicePickResponse> => {
+    const formData = new FormData();
+    formData.append('menuItems', JSON.stringify(menuItems));
+
+    const filename = audioUri.split('/').pop() || 'recording.m4a';
+
+    if (Platform.OS === 'web') {
+      const response = await fetch(audioUri);
+      const blob = await response.blob();
+      formData.append('audioFile', blob, filename);
+    } else {
+      formData.append('audioFile', {
+        uri: audioUri,
+        name: filename,
+        type: 'audio/m4a',
+      } as any);
+    }
+
+    const response = await apiClient.post<VoicePickResponse>('/menu/voice-pick', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
