@@ -5,22 +5,23 @@ export const menuController = {
   capture: async (req: Request, res: Response) => {
     try {
       const restaurantId = (req.body?.restaurantId || req.query?.restaurantId as string) || 'rest-1';
-      const files = req.files as Express.Multer.File[];
       const userId = req.user?.id || 'anonymous';
+      const rawFiles = req.files || (req.file ? [req.file] : []);
+      const files = Array.isArray(rawFiles) ? rawFiles : (typeof rawFiles === 'object' ? Object.values(rawFiles).flat() : []);
 
       if (!files || files.length === 0) {
-        return res.status(400).json({ message: 'Vui lòng tải lên ít nhất 1 ảnh menu' });
+        return res.status(400).json({ message: 'Vui lòng tải lên ít nhất 1 ảnh menu.' });
       }
 
       console.log(`[menuController.capture] Processing menu for restaurant: ${restaurantId}, user: ${userId}, files: ${files.length}`);
       
-      const imagePaths = files.map(file => file.path);
+      const imagePaths = files.map((f: any) => f.path);
       const result = await menuService.createMenu(restaurantId, userId, imagePaths);
       
       return res.status(201).json(result);
     } catch (error: any) {
-      console.error('[MenuController] capture error:', error);
-      return res.status(500).json({ message: error.message || 'Lỗi khi xử lý menu' });
+      console.error('[menuController.capture Error]:', error);
+      return res.status(500).json({ message: 'Lỗi khi xử lý menu', error: error.message });
     }
   },
 
