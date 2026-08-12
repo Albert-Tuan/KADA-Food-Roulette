@@ -28,11 +28,12 @@ export const voiceController = {
       const result = await analyzeVoiceIntent(file.path, mimeType, menuItems);
 
       return res.status(200).json(result);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('[voiceController] Error processing voice pick:', error);
       return res.status(500).json({
         message: 'Lỗi khi xử lý giọng nói với AI',
-        error: error?.message || error,
+        error: errorMessage,
       });
     }
   },

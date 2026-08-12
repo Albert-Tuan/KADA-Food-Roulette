@@ -136,8 +136,8 @@ Return ONLY a valid raw JSON object matching the structure below. DO NOT wrap in
       excludedItems: parsed.excludedItems || [],
       aiSuggestions: parsed.aiSuggestions || [],
     };
-  } catch (e) {
+  } catch (e: unknown) {
     console.error('[VoiceService] Failed to parse JSON from Gemini:', rawText);
-    throw new Error('AI returned invalid format for voice analysis.');
+    throw new Error('AI returned invalid format for voice analysis.', { cause: e });
   }
 };
