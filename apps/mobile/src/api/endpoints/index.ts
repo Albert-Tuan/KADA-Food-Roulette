@@ -6,3 +6,4 @@ export * from './groups';
 export * from './lockets';
 export * from './preferences';
 export * from './users';
+export * from './menu';

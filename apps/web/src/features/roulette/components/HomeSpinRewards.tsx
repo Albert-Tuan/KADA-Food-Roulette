@@ -69,11 +69,11 @@ const HomeSpinRewards: React.FC = () => {
             style={{
               background: candidates.length > 0
                 ? `conic-gradient(${candidates.map((_, i) => {
-                    const colors = ['#ff5a5f', '#ffab69', '#55a37a', '#FFC107', '#b52330', '#88d7aa'];
-                    const start = (i * 360) / candidates.length;
-                    const end = ((i + 1) * 360) / candidates.length;
-                    return `${colors[i % colors.length]} ${start}deg ${end}deg`;
-                  }).join(', ')})`
+                  const colors = ['#ff5a5f', '#ffab69', '#55a37a', '#FFC107', '#b52330', '#88d7aa'];
+                  const start = (i * 360) / candidates.length;
+                  const end = ((i + 1) * 360) / candidates.length;
+                  return `${colors[i % colors.length]} ${start}deg ${end}deg`;
+                }).join(', ')})`
                 : '#e1d9cb',
               transform: `rotate(${rotation}deg)`,
               transition: isSpinning ? 'transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none'
