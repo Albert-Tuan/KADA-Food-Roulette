@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Check, Plus, Trash2, Edit3, Dices, ArrowLeft, Tag, DollarSign, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Dices, ArrowLeft, Tag, Sparkles } from 'lucide-react';
 import { menuApi, MenuItem } from '../../../api/endpoints/menu';
 
 export const MenuReviewScreen: React.FC = () => {

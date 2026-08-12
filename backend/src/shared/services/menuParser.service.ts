@@ -275,7 +275,7 @@ export class MenuParserService {
       }
 
       // Pre-clean the line
-      let workLine = line
+      const workLine = line
         .replace(/[œŒ©®™—–|~`_^=@#$*%{}[\]\\<>()]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();

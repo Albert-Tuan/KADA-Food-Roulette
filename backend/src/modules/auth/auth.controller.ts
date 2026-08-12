@@ -135,7 +135,7 @@ export const authController = {
       let user = null;
       try {
         user = await prisma.user.findUnique({ where: { email } });
-      } catch (dbErr) {
+      } catch {
         console.log('[Auth] DB query notice, using in-memory demo session');
       }
 
@@ -217,7 +217,7 @@ export const authController = {
         success: true,
         data: formatUserProfile(user)
       });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({
         success: false,
         error: 'Lỗi máy chủ khi lấy thông tin.'
@@ -228,7 +228,6 @@ export const authController = {
   // POST /api/auth/google
   google: async (req: Request, res: Response) => {
     try {
-      const { idToken } = req.body;
       // In production, verify idToken with Google
       const mockEmail = `user_${Date.now()}@google.com`;
       const publicId = `u_${Math.random().toString(36).substring(2, 9)}`;
@@ -259,7 +258,7 @@ export const authController = {
           expires_in: 604800
         }
       });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({
         success: false,
         error: 'Lỗi đăng nhập Google.'
@@ -370,7 +369,7 @@ export const authController = {
         success: true,
         message: 'Hướng dẫn khôi phục mật khẩu đã được gửi đến email của bạn.'
       });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({
         success: false,
         error: 'Lỗi gửi yêu cầu quên mật khẩu.'
@@ -399,7 +398,7 @@ export const authController = {
       let payload: any;
       try {
         payload = jwt.verify(resetToken, JWT_SECRET);
-      } catch (err) {
+      } catch {
         return res.status(400).json({
           success: false,
           error: 'Mã khôi phục không hợp lệ hoặc đã hết hạn.'
@@ -427,7 +426,7 @@ export const authController = {
         success: true,
         message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.'
       });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({
         success: false,
         error: 'Lỗi đặt lại mật khẩu.'
@@ -449,7 +448,7 @@ export const authController = {
       let payload: any;
       try {
         payload = jwt.verify(refresh_token, JWT_SECRET);
-      } catch (err) {
+      } catch {
         return res.status(401).json({
           success: false,
           error: 'Refresh token không hợp lệ hoặc đã hết hạn.'
@@ -480,7 +479,7 @@ export const authController = {
           expires_in: 604800
         }
       });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({
         success: false,
         error: 'Lỗi làm mới token.'

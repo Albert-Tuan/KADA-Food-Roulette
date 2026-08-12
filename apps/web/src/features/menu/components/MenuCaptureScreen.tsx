@@ -7,7 +7,7 @@ export const MenuCaptureScreen: React.FC = () => {
   const navigate = useNavigate();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  const [restaurantId, setRestaurantId] = useState<string>('rest-1');
+  const [restaurantId] = useState<string>('rest-1');
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 

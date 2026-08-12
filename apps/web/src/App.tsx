@@ -9,7 +9,6 @@ import SpinResult from './features/roulette/components/SpinResult';
 import MysteryBoxReveal from './features/roulette/components/MysteryBoxReveal';
 
 // Features - Lockets
-import LocketFeed from './features/lockets/components/LocketFeed';
 import ShareYourHarvestSuccess from './features/lockets/components/ShareYourHarvestSuccess';
 
 // Features - Profile

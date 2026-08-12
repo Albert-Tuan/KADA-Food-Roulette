@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sliders, Flame, DollarSign, Ban, RotateCcw, ArrowLeft, Check, Sparkles, User, AlertCircle } from 'lucide-react';
+import { Sliders, Flame, DollarSign, Ban, RotateCcw, ArrowLeft, Check, Sparkles } from 'lucide-react';
 import { preferencesApi, UserPreference } from '../../../api/endpoints/preferences';
 
 export const PreferencesScreen: React.FC = () => {

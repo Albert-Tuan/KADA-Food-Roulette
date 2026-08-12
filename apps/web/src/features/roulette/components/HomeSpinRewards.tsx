@@ -1,13 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Camera, Sparkles, Dices, ArrowRight } from 'lucide-react';
+import { Camera, ArrowRight } from 'lucide-react';
 import { useSpinStore } from '../../../stores/spinStore';
 import SpinFilterModal from './SpinFilterModal';
 
 const HomeSpinRewards: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { spin, candidates, setCurrentResult } = useSpinStore();
+  const { candidates, setCurrentResult } = useSpinStore();
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -128,7 +128,6 @@ const HomeSpinRewards: React.FC = () => {
                     const end = ((i + 1) * 360) / activeCandidates.length;
                     return `${colors[i % colors.length]} ${start}deg ${end}deg`;
                   }).join(', ')})`
-                : '#e1d9cb',
                 : '#e1d9cb',
               transform: `rotate(${rotation}deg)`,
               transition: isSpinning ? 'transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none'

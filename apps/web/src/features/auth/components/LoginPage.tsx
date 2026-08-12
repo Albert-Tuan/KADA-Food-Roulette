@@ -30,7 +30,7 @@ export const LoginPage: React.FC = () => {
       setPassword('password123');
       await login({ email: 'test@foodroulette.app', password: 'password123' });
       navigate(ROUTES.HOME);
-    } catch (err: any) {
+    } catch {
       setError('Đăng nhập demo thất bại. Vui lòng thử lại.');
     }
   };

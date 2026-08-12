@@ -15,13 +15,14 @@ export const menuController = {
 
       console.log(`[menuController.capture] Processing menu for restaurant: ${restaurantId}, user: ${userId}, files: ${files.length}`);
       
-      const imagePaths = files.map((f: any) => f.path);
+      const imagePaths = files.map((f: Express.Multer.File | { path: string }) => f.path);
       const result = await menuService.createMenu(restaurantId, userId, imagePaths);
       
       return res.status(201).json(result);
-    } catch (error: any) {
-      console.error('[menuController.capture Error]:', error);
-      return res.status(500).json({ message: 'Lỗi khi xử lý menu', error: error.message });
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('[menuController.capture Error]:', err);
+      return res.status(500).json({ message: 'Lỗi khi xử lý menu', error: err.message });
     }
   },
 
@@ -33,8 +34,9 @@ export const menuController = {
 
       const result = await menuService.verifyMenu(menuId, items, userId);
       return res.status(200).json(result);
-    } catch (error: any) {
-      return res.status(500).json({ message: 'Lỗi khi xác nhận menu', error: error.message });
+    } catch (error: unknown) {
+      const err = error as Error;
+      return res.status(500).json({ message: 'Lỗi khi xác nhận menu', error: err.message });
     }
   },
 
@@ -43,8 +45,9 @@ export const menuController = {
       const menuId = req.params.menuId as string;
       const result = await menuService.getMenuById(menuId);
       return res.status(200).json(result);
-    } catch (error: any) {
-      return res.status(404).json({ message: 'Không tìm thấy menu', error: error.message });
+    } catch (error: unknown) {
+      const err = error as Error;
+      return res.status(404).json({ message: 'Không tìm thấy menu', error: err.message });
     }
   },
 
@@ -53,8 +56,9 @@ export const menuController = {
       const restaurantId = req.params.restaurantId as string;
       const result = await menuService.getMenusByRestaurant(restaurantId);
       return res.status(200).json(result);
-    } catch (error: any) {
-      return res.status(500).json({ message: 'Lỗi khi tải danh sách menu', error: error.message });
+    } catch (error: unknown) {
+      const err = error as Error;
+      return res.status(500).json({ message: 'Lỗi khi tải danh sách menu', error: err.message });
     }
   }
 };

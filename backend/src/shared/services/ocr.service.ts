@@ -23,7 +23,7 @@ export class OcrService {
 
       const { data: { text } } = await Tesseract.recognize(preprocessedBuffer, 'vie+eng');
       return text || '';
-    } catch (e: any) {
+    } catch {
       return '';
     }
   }

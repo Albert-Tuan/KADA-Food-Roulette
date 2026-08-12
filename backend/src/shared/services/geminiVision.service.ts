@@ -18,7 +18,7 @@ export interface GeminiVisionParseResult {
 }
 
 export class GeminiVisionService {
-  private static repairAndParseJson(jsonString: string): any {
+  private static repairAndParseJson(jsonString: string): Record<string, unknown> {
     let str = jsonString.trim();
     const firstBrace = str.indexOf('{');
     if (firstBrace !== -1) {
@@ -185,8 +185,11 @@ Quy tắc quan trọng:
         return null;
       }
 
-      const data = await response.json() as any;
-      const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const data = await response.json() as Record<string, unknown>;
+      const candidates = data.candidates as Array<Record<string, unknown>> | undefined;
+      const content = candidates?.[0]?.content as Record<string, unknown> | undefined;
+      const parts = content?.parts as Array<Record<string, unknown>> | undefined;
+      const textContent = parts?.[0]?.text as string | undefined;
 
       if (!textContent) {
         console.error('[GeminiVision] Empty response from Gemini API');
@@ -195,7 +198,8 @@ Quy tắc quan trọng:
 
       const parsedJson = GeminiVisionService.repairAndParseJson(textContent);
 
-      const items: GeminiParsedMenuItem[] = (parsedJson.items || []).map((item: any) => ({
+      const rawItems = Array.isArray(parsedJson.items) ? parsedJson.items : [];
+      const items: GeminiParsedMenuItem[] = rawItems.map((item: Record<string, unknown>) => ({
         name: String(item.name || '').trim(),
         priceVND: typeof item.priceVND === 'number' ? item.priceVND : null,
         category: String(item.category || 'món chính').toLowerCase(),
@@ -212,8 +216,9 @@ Quy tắc quan trọng:
         confidence: items.length > 0 ? 0.98 : 0,
         rawText: textContent
       };
-    } catch (err: any) {
-      console.error('[GeminiVision Exception]:', err?.message || err);
+    } catch (err: unknown) {
+      const e = err as Error;
+      console.error('[GeminiVision Exception]:', e?.message || e);
       return null;
     }
   }

@@ -20,13 +20,13 @@ export interface MenuItemParsed {
 
 export class MenuService {
   async createMenu(restaurantId: string, capturedBy: string, imagePaths: string[]): Promise<Record<string, unknown>> {
-    const allItems: any[] = [];
+    const allItems: Record<string, unknown>[] = [];
     let bestConfidence = 0;
 
     for (const imgPath of imagePaths) {
       const result = await this.captureMenuSingle(restaurantId, imgPath, capturedBy);
       if (result.items && Array.isArray(result.items)) {
-        allItems.push(...result.items);
+        allItems.push(...(result.items as Record<string, unknown>[]));
       }
       if (typeof result.confidence === 'number' && result.confidence > bestConfidence) {
         bestConfidence = result.confidence;
@@ -41,7 +41,7 @@ export class MenuService {
     // Deduplicate by item name (case-insensitive)
     const seen = new Set<string>();
     const uniqueItems = allItems.filter(item => {
-      const key = (item.name || '').toLowerCase().trim();
+      const key = (String(item.name || '')).toLowerCase().trim();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -57,7 +57,7 @@ export class MenuService {
 
   async captureMenuSingle(restaurantId: string, imagePath: string, userId: string) {
     // 1. Fetch User Preferences for Personalization
-    let userPref: any = null;
+    let userPref: unknown = null;
     try {
       userPref = await prisma.userPreference.findUnique({
         where: { userId }
@@ -66,9 +66,9 @@ export class MenuService {
       console.log(`[MenuService] No UserPreference found for user ${userId}, proceeding with default scoring.`);
     }
 
-    let rawItems: any[] = [];
-    let confidence = 0;
-    let extractedText = '';
+    let rawItems: Record<string, unknown>[];
+    let confidence: number;
+    let extractedText: string;
 
     // 2. Try Online Vision AI Engine (Gemini 1.5 Flash)
     console.log(`[MenuService] Attempting Vision AI menu recognition...`);
@@ -99,7 +99,7 @@ export class MenuService {
     }
 
     // 5. Apply Real-time Personalization Matching Engine
-    const personalizedItems: PersonalizedMenuItem[] = PersonalizationService.personalizeMenuItems(rawItems, userPref);
+    const personalizedItems: PersonalizedMenuItem[] = PersonalizationService.personalizeMenuItems(rawItems as unknown as MenuItemParsed[], userPref as unknown as Record<string, unknown>);
 
     // 6. Ensure valid User and Restaurant FKs exist in DB
     let actualUserId = userId;
@@ -196,7 +196,7 @@ export class MenuService {
           id: dbItem.id,
           name: dbItem.name,
           priceVND: dbItem.priceVND,
-          category: dbItem.category,
+          category: dbItem.category || 'món chính',
           tags: dbItem.tags as string[],
           sortOrder: dbItem.sortOrder,
           matchScore: match.matchScore,
@@ -206,8 +206,9 @@ export class MenuService {
         };
       });
       console.log(`[MenuService] Successfully saved menu ${menuId} to database.`);
-    } catch (dbErr: any) {
-      console.log(`[MenuService] DB save bypassed (graceful in-memory mode):`, dbErr?.message || dbErr);
+    } catch (dbErr: unknown) {
+      const err = dbErr as Error;
+      console.log(`[MenuService] DB save bypassed (graceful in-memory mode):`, err?.message || err);
     }
 
     return {
