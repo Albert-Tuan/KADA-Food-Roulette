@@ -1,29 +1,38 @@
 import React, { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Camera, Sparkles, Dices, ArrowRight } from 'lucide-react';
 import { useSpinStore } from '../../../stores/spinStore';
 import SpinFilterModal from './SpinFilterModal';
 
 const HomeSpinRewards: React.FC = () => {
   const navigate = useNavigate();
-  const { spin, candidates } = useSpinStore();
+  const location = useLocation();
+  const { spin, candidates, setCurrentResult } = useSpinStore();
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const wheelRef = useRef<HTMLDivElement>(null);
 
-  // State for filters
-  const [selectedPrice, setSelectedPrice] = useState<string>('$$');
-  const [selectedDistance, setSelectedDistance] = useState<string>('Trung bình (2-5km)');
-  const [selectedStyle, setSelectedStyle] = useState<string>('Cơm');
-  const [selectedTaste, setSelectedTaste] = useState<string>('Cay');
-  const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
+  const state = (location.state as {
+    menuItems?: Array<{ name: string; priceVND?: number | null; matchScore?: number; tags?: string[] }>;
+    fromMenuCapture?: boolean;
+  }) || {};
 
-  const toggleAllergy = (a: string) => {
-    setSelectedAllergies(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
-  };
+  // Convert menuItems from Menu Capture to Spin Candidates if available
+  const menuCandidates = (state.menuItems || []).map((item, idx) => ({
+    id: `menu-item-${idx}`,
+    name: item.name,
+    category: item.tags?.[0] || 'Món Menu',
+    rating: item.matchScore ? Number((item.matchScore / 20).toFixed(1)) : 4.8,
+    totalReviews: 100,
+    distance: 100,
+    priceLevel: (item.priceVND && item.priceVND > 300000 ? 3 : 2) as 1 | 2 | 3 | 4,
+    imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400',
+  }));
+
+  const activeCandidates = menuCandidates.length > 0 ? menuCandidates : candidates;
 
   const handleSpin = () => {
-    if (isSpinning) return;
+    if (isSpinning || activeCandidates.length === 0) return;
     setIsSpinning(true);
 
     const extraSpins = (Math.floor(Math.random() * 4) + 3) * 360;
@@ -33,18 +42,57 @@ const HomeSpinRewards: React.FC = () => {
 
     // Calculate which candidate the pointer lands on
     const pointerAngle = (360 - (newRotation % 360)) % 360;
-    const sliceAngle = 360 / candidates.length;
+    const sliceAngle = 360 / activeCandidates.length;
     const winnerIndex = Math.floor(pointerAngle / sliceAngle);
 
     setTimeout(() => {
       setIsSpinning(false);
-      spin(winnerIndex); // Pass the exact calculated winner
+      const winner = activeCandidates[winnerIndex];
+      setCurrentResult(winner);
       navigate('/spin/result');
     }, 3000);
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg flex flex-col items-center">
+    <main className="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg flex flex-col items-center pb-28">
+
+      {/* Prominent AI Menu Scanner Banner */}
+      <Link
+        to="/spin/menu-capture"
+        className="w-full max-w-md mb-6 p-4 rounded-3xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-xl shadow-orange-500/20 flex items-center justify-between hover:scale-[1.02] active:scale-[0.98] transition-all border border-amber-300/40 group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner">
+            <Camera className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full border border-white/30">
+                AI Vision 3.5 🔥
+              </span>
+            </div>
+            <h3 className="font-black text-base leading-snug">📷 Quét Menu AI Chọn Món</h3>
+            <p className="text-xs text-amber-100 font-medium">Chụp menu quán ➔ AI tự lọc món & tạo vòng quay</p>
+          </div>
+        </div>
+        <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-orange-600 transition-colors">
+          <ArrowRight className="w-5 h-5" />
+        </div>
+      </Link>
+      {/* Menu Capture Success Banner */}
+      {state.fromMenuCapture && menuCandidates.length > 0 && (
+        <div className="w-full max-w-md mb-4 p-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🎉</span>
+            <div>
+              <p className="font-bold text-xs">Vòng Quay Menu AI Đã Nạp!</p>
+              <p className="text-[11px] text-amber-100">{menuCandidates.length} món từ menu vừa quét đã sẵn sàng</p>
+            </div>
+          </div>
+          <span className="text-[10px] font-extrabold bg-white/20 px-2 py-1 rounded-full border border-white/30">AI OCR</span>
+        </div>
+      )}
+
       {/* Page Title Context & Filter */}
       <div className="text-center mb-stack-lg relative w-full max-w-md">
         <button
@@ -53,8 +101,14 @@ const HomeSpinRewards: React.FC = () => {
         >
           <span className="material-symbols-outlined">tune</span>
         </button>
-        <h2 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-stack-sm mt-4 md:mt-0">Ăn gì hôm nay?</h2>
-        <p className="font-body-md text-body-md text-on-surface-variant">Chọn một quán ngẫu nhiên xung quanh bạn!</p>
+        <h2 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-stack-sm mt-4 md:mt-0">
+          {menuCandidates.length > 0 ? 'Quay Chọn Món Menu!' : 'Ăn gì hôm nay?'}
+        </h2>
+        <p className="font-body-md text-body-md text-on-surface-variant">
+          {menuCandidates.length > 0
+            ? 'Bánh xe Roulette đã nạp danh sách món ăn từ menu của quán!'
+            : 'Chọn một quán ngẫu nhiên xung quanh bạn!'}
+        </p>
       </div>
 
       {/* Wheel Component */}
@@ -67,21 +121,22 @@ const HomeSpinRewards: React.FC = () => {
           <div
             className="w-full h-full rounded-full border-8 border-surface-white shadow-[0_12px_24px_rgba(0,0,0,0.1)] relative overflow-hidden bg-surface-container-low"
             style={{
-              background: candidates.length > 0
-                ? `conic-gradient(${candidates.map((_, i) => {
-                  const colors = ['#ff5a5f', '#ffab69', '#55a37a', '#FFC107', '#b52330', '#88d7aa'];
-                  const start = (i * 360) / candidates.length;
-                  const end = ((i + 1) * 360) / candidates.length;
-                  return `${colors[i % colors.length]} ${start}deg ${end}deg`;
-                }).join(', ')})`
+              background: activeCandidates.length > 0
+                ? `conic-gradient(${activeCandidates.map((_, i) => {
+                    const colors = ['#ff5a5f', '#ffab69', '#55a37a', '#FFC107', '#b52330', '#88d7aa'];
+                    const start = (i * 360) / activeCandidates.length;
+                    const end = ((i + 1) * 360) / activeCandidates.length;
+                    return `${colors[i % colors.length]} ${start}deg ${end}deg`;
+                  }).join(', ')})`
+                : '#e1d9cb',
                 : '#e1d9cb',
               transform: `rotate(${rotation}deg)`,
               transition: isSpinning ? 'transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none'
             }}
           >
             {/* Segment labels */}
-            {candidates.map((candidate, i) => {
-              const sliceAngle = 360 / candidates.length;
+            {activeCandidates.map((candidate, i) => {
+              const sliceAngle = 360 / activeCandidates.length;
               const rotationAngle = (i * sliceAngle) + (sliceAngle / 2) - 90;
               return (
                 <div

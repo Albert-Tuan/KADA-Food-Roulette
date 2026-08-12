@@ -26,7 +26,6 @@ export const MenuCaptureScreen: React.FC = () => {
       setPreviewUrls(prev => [...prev, ...newUrls]);
       setErrorMessage(null);
     }
-    // reset input
     e.target.value = '';
   };
 
@@ -64,7 +63,11 @@ export const MenuCaptureScreen: React.FC = () => {
       });
     } catch (err: any) {
       console.error('Menu capture API error:', err);
-      setErrorMessage(err.response?.data?.message || err.message || 'Lỗi kết nối đến AI server. Vui lòng kiểm tra backend.');
+      let msg = err?.response?.data?.message || err?.message || 'Lỗi kết nối máy chủ OCR AI.';
+      if (err?.code === 'ECONNABORTED' || msg.toLowerCase().includes('timeout')) {
+        msg = 'Quá thời gian xử lý AI OCR (Timeout). Vui lòng thử lại với ảnh rõ nét hơn.';
+      }
+      setErrorMessage(msg);
     } finally {
       setIsScanning(false);
     }

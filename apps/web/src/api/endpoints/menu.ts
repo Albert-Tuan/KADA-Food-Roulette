@@ -6,6 +6,11 @@ export interface MenuItem {
   priceVND?: number | null;
   category?: string;
   tags?: string[];
+  subDishes?: string[];
+  matchScore?: number;
+  isRecommended?: boolean;
+  warnings?: string[];
+  recommendationReason?: string;
   sortOrder?: number;
 }
 
@@ -38,7 +43,9 @@ export const menuApi = {
       formData.append('menuImages', file);
     });
 
-    const response = await apiClient.post<MenuCaptureResponse>('/menu/capture', formData);
+    const response = await apiClient.post<MenuCaptureResponse>('/menu/capture', formData, {
+      timeout: 90000,
+    });
     return response.data;
   },
 
