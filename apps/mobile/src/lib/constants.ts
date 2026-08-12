@@ -5,7 +5,7 @@ export const APP_TAGLINE = 'Không biết ăn gì? Để vòng quyết định.'
 
 // API
 export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
-export const API_TIMEOUT = 10000;
+export const API_TIMEOUT = 60000; // Increased for AI Processing
 
 // Pagination
 export const DEFAULT_PAGE_SIZE = 20;

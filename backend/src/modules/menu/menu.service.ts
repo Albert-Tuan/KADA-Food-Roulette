@@ -1,6 +1,8 @@
+ 
+ 
+ 
 import prisma from '../../shared/utils/prisma';
-import { OcrService } from '../../shared/services/ocr.service';
-import { MenuParserService } from '../../shared/services/menuParser.service';
+import { extractMenuItems } from '../../shared/services/ocr.service';
 
 export interface VerifyItemInput {
   name: string;
@@ -9,47 +11,38 @@ export interface VerifyItemInput {
   tags?: string[];
 }
 
-export class MenuService {
-  async captureMenu(restaurantId: string, imagePath: string, userId: string) {
-    const extractedText = await OcrService.extractText(imagePath);
-    const parsedData = MenuParserService.parse(extractedText);
+export interface MenuItemParsed {
+  name: string;
+  priceVND?: number;
+  category?: string;
+  tags?: string[];
+}
 
-    // If OCR returned 0 items (blurry photo or network lag), provide initial editable items
-    let finalItems = parsedData.items;
-    let confidence = parsedData.confidence || 0;
+export class MenuService {
+  async createMenu(restaurantId: string, capturedBy: string, imagePaths: string[]): Promise<Record<string, unknown>> {
+    const primaryImageUrl = imagePaths.length > 0 ? imagePaths[0] : '';
+    
+    // Process OCR on all images using Gemini
+    const finalItems = (await extractMenuItems(imagePaths)) as unknown as MenuItemParsed[];
+    
+    // Calculate confidence based on whether items were found
+    const confidence = finalItems.length > 0 ? 0.95 : 0;
+    const extractedText = JSON.stringify(finalItems);
 
     if (finalItems.length === 0) {
-      console.log(`[MenuService] Providing Highlands Coffee menu items from uploaded menu.`);
-      finalItems = [
-        { name: 'Phin Sữa Đá', priceVND: 29000, category: 'đồ uống', tags: [] },
-        { name: 'Phin Đen Đá', priceVND: 29000, category: 'đồ uống', tags: [] },
-        { name: 'Bạc Xỉu', priceVND: 29000, category: 'đồ uống', tags: [] },
-        { name: 'PhinDi Hạnh Nhân', priceVND: 45000, category: 'đồ uống', tags: [] },
-        { name: 'PhinDi Kem Sữa', priceVND: 45000, category: 'đồ uống', tags: [] },
-        { name: 'Trà Sen Vàng', priceVND: 45000, category: 'đồ uống', tags: [] },
-        { name: 'Trà Thạch Đào', priceVND: 45000, category: 'đồ uống', tags: [] },
-        { name: 'Freeze Trà Xanh', priceVND: 55000, category: 'đồ uống', tags: [] },
-        { name: 'Cookies & Cream Freeze', priceVND: 55000, category: 'đồ uống', tags: [] },
-        { name: 'Bánh Mì Que Patê', priceVND: 19000, category: 'món chính', tags: [] },
-        { name: 'Bánh Mì Que Gà Phô Mai', priceVND: 19000, category: 'món chính', tags: [] },
-        { name: 'Bánh Mì Que Bò Xốt Phô Mai', priceVND: 25000, category: 'món chính', tags: [] },
-        { name: 'Phô Mai Trà Xanh', priceVND: 35000, category: 'tráng miệng', tags: [] },
-        { name: 'Tiramisu Highlands', priceVND: 35000, category: 'tráng miệng', tags: [] },
-        { name: 'Bánh Chuối', priceVND: 29000, category: 'tráng miệng', tags: [] },
-      ];
-      confidence = 0.95;
+      throw new Error("AI không nhận diện được món ăn nào từ ảnh.");
     }
 
     const menu = await prisma.menu.create({
       data: {
         restaurantId,
-        imageUrl: imagePath,
+        imageUrl: primaryImageUrl,
         extractedText,
         confidence,
-        capturedBy: userId,
+        capturedBy,
         status: 'PENDING',
         items: {
-          create: finalItems.map((item: any, index: number) => ({
+          create: finalItems.map((item: MenuItemParsed, index: number) => ({
             name: item.name,
             priceVND: item.priceVND,
             category: item.category,
@@ -139,7 +132,7 @@ export class MenuService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    return menus.map((menu: any) => ({
+    return menus.map((menu) => ({
       ...menu,
       isFresh: menu.capturedAt >= thirtyDaysAgo,
     }));

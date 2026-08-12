@@ -10,9 +10,18 @@
 ```markdown
 ### [YYYY-MM-DD] - [Version]
 
+<<<<<<< HEAD
 **Type:** [feature|breaking|enhancement|deprecation|deprecated-removal]
 **Author:** [Tên người thay đổi]
 **Source:** [Link đến PR/discussion]
+=======
+### Added
+- [Mô tả feature/tính năng mới]
+  - By: [Tên người] - [Role]
+  - Via: [AI Tool]
+  - Spec: [File và section] 
+  - Files affected: [Danh sách files]
+>>>>>>> 47489dc4c34d31a38b54acb9c7c9776fe66ac874
 
 **Change:**
 - Mô tả ngắn gọn thay đổi
@@ -27,6 +36,42 @@
 ---
 
 ## Spec Change History
+
+### 2026-08-12
+
+### Added
+- **Mobile Android CI Workflow**
+  - By: Thành Nam - DevOps
+  - Via: Gemini 3.1 Pro
+  - Spec: N/A
+  - Files affected: `.github/workflows/mobile-ci-android.yml`
+- **Review & Discover Web Dashboard**
+  - By: Thành Nam - Review + Discover Lead
+  - Via: Gemini 3.1 Pro
+  - Spec: `brand/FOOD-ROULETTE-SITEMAP.md` §19 (Review + Discover)
+  - Files affected: `apps/web/src/features/restaurants/components/StewardDashboard.tsx`, `apps/web/src/features/restaurants/components/SubmitRestaurantForm.tsx`, `apps/web/src/features/checkin/components/WriteReview.tsx`, `apps/web/src/api/endpoints/steward.ts`
+
+### Changed
+- **Backend Prisma Model for Review**
+  - By: Thành Nam - Review + Discover Lead
+  - Via: Gemini 3.1 Pro
+  - Spec: `brand/FOOD-ROULETTE-SITEMAP.md`
+  - Reason: Đưa model Review vào database thật để xử lý đánh giá từ mobile/web thay vì deferred.
+  - Files affected: `backend/prisma/schema.prisma`
+- **Backend Real API Integrations (Steward, Restaurants, Reviews)**
+  - By: Thành Nam - Review + Discover Lead
+  - Via: Gemini 3.1 Pro
+  - Spec: `brand/FOOD-ROULETTE-SITEMAP.md`
+  - Reason: Chuyển đổi toàn bộ mock data controllers sang Prisma queries thực tế (bao gồm Geo filtering Haversine, Duplicate detection).
+  - Files affected: `backend/src/modules/restaurants/restaurants.controller.ts`, `backend/src/modules/steward/steward.controller.ts`
+- **Mobile API Integrations sync**
+  - By: Thành Nam - Review + Discover Lead
+  - Via: Gemini 3.1 Pro
+  - Spec: N/A (Technical Sync)
+  - Reason: Cập nhật response types để khớp với API mới.
+  - Files affected: `apps/mobile/src/api/endpoints/restaurants.ts`, `apps/mobile/app/discover/index.tsx`
+
+---
 
 ### 2026-08-11 - Schema v5.2 → v5.3 (Planning → Implementation)
 
