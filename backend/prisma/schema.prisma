@@ -1,7 +1,19 @@
-// Food Roulette - Prisma Schema v5.0 REVIEWED & OPTIMIZED
+// Food Roulette - Prisma Schema v5.3
 // Generated from: docs/food_roulette_erd_v5.0_reviewed.xml
-// Version: 5.0 | Date: 2026-08-06 | 15 entities
+// Version: 5.3 | Date: 2026-08-11 | 22 entities
 // BCNF/4NF compliant | Critical Issues Fixed
+//
+// v5.1 Changes:
+// - Added ModerationQueue table for AI moderation workflow (ADR-001)
+// - Added geospatial indexes to Restaurant (ADR-002)
+//
+// v5.2 Changes:
+// - Added gamification tables: UserStreak, Achievement, UserAchievement, UserXP (v2.0)
+// - Added chat tables: ChatRoom, ChatRoomParticipant, ChatMessage (v2.0)
+//
+// v5.3 Changes:
+// - Added City and CityDistrict tables for multi-city support (v2.0)
+// - Added User.preferredCityId and Restaurant.cityId/cityDistrictId FKs
 
 generator client {
   provider = "prisma-client-js"
@@ -34,6 +46,8 @@ model User {
   isOnboarded        Boolean   @default(false) @map("is_onboarded") // v5.0: onboarding progress
   lastActiveAt       DateTime? @map("last_active_at") // v5.0: inactive detection
   savedRestaurants   Json?     @map("saved_restaurants") // P2: TasteBoard
+  preferredCityId    String?   @map("preferred_city_id")
+  preferredCity      City?     @relation(fields: [preferredCityId], references: [id], onDelete: SetNull)
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
   deletedAt          DateTime? @map("deleted_at")
@@ -52,11 +66,17 @@ model User {
   preference            UserPreference?
   partnerVisits          RestaurantVisit[] // B2B: Restaurant visits
   corporateMemberships   CorporateMember[] // B2B: Corporate memberships
+  streak                 UserStreak?
+  achievements           UserAchievement[]
+  xp                     UserXP?
+  chatParticipations     ChatRoomParticipant[]
+  chatMessages           ChatMessage[]
   notifications          Notification[]
 
   @@index([subscriptionTier])
   @@index([deletedAt]) // v5.0: soft delete filter
   @@index([lastActiveAt]) // v5.0: inactive user queries
+  @@index([preferredCityId]) // v5.3: city filter
   @@map("users")
 }
 
@@ -123,11 +143,20 @@ model Restaurant {
   spinCandidates SpinSessionCandidate[]
   menus          Menu[]
   partner           RestaurantPartner? // B2B: Restaurant Partner relation
+  cityId            String?      @map("city_id")
+  cityDistrictId    String?      @map("city_district_id")
+  city              City?        @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  cityDistrict      CityDistrict? @relation(fields: [cityDistrictId], references: [id], onDelete: SetNull)
 
   @@index([status])
   @@index([status, category])
   @@index([source]) // v5.0: Filter by Google Places vs User Submitted
   @@index([deletedAt]) // v5.0: Soft delete filter
+  @@index([cityId]) // v5.3: City filter
+  // v5.2 (Discover Map): Geospatial indexes for nearby queries
+  @@index([lat, lng], name: "idx_restaurants_geo")
+  @@index([category], name: "idx_restaurants_category")
+  @@index([status, source], name: "idx_restaurants_status_source")
   // Note: For geo queries, use application-level Haversine formula
   // or MySQL 8.0+ spatial indexes with generated POINT column
   @@map("restaurants")
@@ -192,6 +221,7 @@ model Group {
   members         GroupMember[]
   spinSessions    SpinSession[]
   recommendations CircleRecommendation[]
+  chatRoom        ChatRoom?
 
   @@index([status]) // v5.0: Active groups
   @@index([deletedAt]) // v5.0: Soft delete
@@ -739,6 +769,191 @@ enum NotificationType {
   GROUP_INVITE
   LOCKET_NEW
   SYSTEM
+}
+
+// ============================================================
+// P1.5 - AI MODERATION (added 2026-08-11)
+// ============================================================
+// ModerationQueue - Auto-flagged content từ AI services
+// Reference: docs/decisions/001-ai-moderation.md
+model ModerationQueue {
+  id           String   @id @default(uuid())
+  contentType  String   @map("content_type") @db.VarChar(50) // 'review' | 'locket' | 'comment'
+  contentId    String   @map("content_id") // ID của content bị flag
+  flaggedBy    String   @map("flagged_by") @db.VarChar(100) // 'auto:openai-text' | 'auto:nsfw-image' | 'user:userId'
+  category     String   @db.VarChar(50) // 'profanity' | 'nsfw' | 'spam' | 'hate' | 'violence' | 'sexual'
+  confidence   Float    // 0.0 - 1.0
+  status       String   @default("pending") @db.VarChar(20) // 'pending' | 'approved' | 'rejected' | 'auto_hidden'
+  reviewedBy   String?  @map("reviewed_by") // User ID của steward review
+  reviewedAt   DateTime? @map("reviewed_at")
+  reviewerNote String?  @map("reviewer_note") @db.Text
+  payload      String?  @db.Text // JSON: raw API response, image URL, etc.
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([status, createdAt], name: "idx_modqueue_status_created")
+  @@index([contentType, contentId], name: "idx_modqueue_content")
+  @@index([flaggedBy, status], name: "idx_modqueue_flaggedby")
+  @@index([reviewedBy], name: "idx_modqueue_reviewer")
+  @@map("moderation_queue")
+}
+
+// ============================================================
+// v5.2 - GAMIFICATION (added 2026-08-11, planned for v2.0)
+// ============================================================
+// Reference: docs/decisions/005-gamification.md (tbd)
+// UserStreak - Daily activity streak tracking
+model UserStreak {
+  userId         String    @id @map("user_id")
+  currentStreak  Int       @default(0) @map("current_streak")
+  longestStreak  Int       @default(0) @map("longest_streak")
+  lastActivityAt DateTime? @map("last_activity_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_streaks")
+}
+
+// Achievement - Available badges user có thể unlock
+model Achievement {
+  id          String   @id @default(uuid())
+  code        String   @unique @db.VarChar(50) // 'first_spin', 'week_streak'...
+  name        String   @db.VarChar(100)
+  description String   @db.Text
+  iconUrl     String?  @map("icon_url") @db.VarChar(500)
+  category    String   @db.VarChar(50) // 'activity' | 'milestone' | 'social' | 'secret'
+  condition   String   @db.Text // JSON serialized condition
+  xpReward    Int      @default(0) @map("xp_reward")
+  isSecret    Boolean  @default(false) @map("is_secret")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  userAchievements UserAchievement[]
+
+  @@index([category])
+  @@index([isSecret])
+  @@map("achievements")
+}
+
+// UserAchievement - Junction: User unlocked which achievements
+model UserAchievement {
+  userId        String   @map("user_id")
+  achievementId String   @map("achievement_id")
+  earnedAt      DateTime @default(now()) @map("earned_at")
+  progress      Float    @default(1.0) // 0.0 - 1.0
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@id([userId, achievementId])
+  @@index([userId, earnedAt])
+  @@index([achievementId])
+  @@map("user_achievements")
+}
+
+// UserXP - Total XP và level cho mỗi user
+model UserXP {
+  userId    String   @id @map("user_id")
+  totalXP   Int      @default(0) @map("total_xp")
+  level     Int      @default(1)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_xp")
+}
+
+// ============================================================
+// v5.2 - CHAT (added 2026-08-11, planned for v2.0)
+// ============================================================
+// ChatRoom - 1 chat room per Group (or direct message in future)
+model ChatRoom {
+  id        String   @id @default(uuid())
+  type      String   @default("group") @db.VarChar(20) // 'group' | 'direct'
+  groupId   String?  @unique @map("group_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  group        Group?                 @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  messages     ChatMessage[]
+  participants ChatRoomParticipant[]
+
+  @@index([type])
+  @@map("chat_rooms")
+}
+
+// ChatRoomParticipant - Who's in each room
+model ChatRoomParticipant {
+  roomId     String   @map("room_id")
+  userId     String   @map("user_id")
+  joinedAt   DateTime @default(now()) @map("joined_at")
+  lastReadAt DateTime? @map("last_read_at")
+  muted      Boolean  @default(false)
+
+  room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, userId])
+  @@index([userId])
+  @@map("chat_room_participants")
+}
+
+// ChatMessage - Individual messages (retention: 90 days)
+model ChatMessage {
+  id        String    @id @default(uuid())
+  roomId    String    @map("room_id")
+  senderId  String    @map("sender_id")
+  content   String    @db.Text
+  type      String    @default("text") @db.VarChar(20) // 'text' | 'image' | 'system' | 'spin_result'
+  metadata  String?   @db.Text // JSON
+  edited    Boolean   @default(false)
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, createdAt])
+  @@index([senderId])
+  @@map("chat_messages")
+}
+
+// ============================================================
+// v5.3 - MULTI-CITY (added 2026-08-11, planned for v2.0)
+// ============================================================
+model City {
+  id        String   @id @default(uuid())
+  code      String   @unique @db.VarChar(20) // 'HCMC', 'HANOI'...
+  name      String   @db.VarChar(100)
+  region    String   @db.VarChar(20) // 'south' | 'north' | 'central'
+  latitude  Float    @db.Double
+  longitude Float    @db.Double
+  zoomLevel Int      @default(12) @map("zoom_level")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  districts   CityDistrict[]
+  restaurants Restaurant[]
+  users       User[]
+
+  @@index([region])
+  @@index([isActive])
+  @@map("cities")
+}
+
+model CityDistrict {
+  id        String   @id @default(uuid())
+  cityId    String   @map("city_id")
+  name      String   @db.VarChar(100)
+  latitude  Float    @db.Double
+  longitude Float    @db.Double
+
+  city        City         @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  restaurants Restaurant[]
+
+  @@index([cityId])
+  @@map("city_districts")
 }
 
 // ============================================================

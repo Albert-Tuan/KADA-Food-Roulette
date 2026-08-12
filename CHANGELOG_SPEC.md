@@ -1,54 +1,41 @@
 # CHANGELOG_SPEC.md
 
-> **Track tất cả thay đổi spec** — ai, khi nào, thay đổi gì
-> **Version:** 1.0 · **Date:** 2026-08-06
-
----
-
-## Mục đích
-
-- Team biết spec thay đổi ở đâu, khi nào
-- AI tools đang có context cũ có thể sync lại
-- PM theo dõi spec evolution
+> **Theo dõi mọi thay đổi về spec trong dự án Food Roulette.**
+> Spec thay đổi phải được log tại đây. Các AI tool (Cursor/Claude/ChatGPT/Gemini) sẽ check file này để sync context.
 
 ---
 
 ## Format
 
 ```markdown
-## YYYY-MM-DD
+### [YYYY-MM-DD] - [Version]
 
+<<<<<<< HEAD
+**Type:** [feature|breaking|enhancement|deprecation|deprecated-removal]
+**Author:** [Tên người thay đổi]
+**Source:** [Link đến PR/discussion]
+=======
 ### Added
 - [Mô tả feature/tính năng mới]
   - By: [Tên người] - [Role]
   - Via: [AI Tool]
   - Spec: [File và section] 
   - Files affected: [Danh sách files]
+>>>>>>> 47489dc4c34d31a38b54acb9c7c9776fe66ac874
 
-### Changed
-- [Mô tả thay đổi]
-  - By: [Tên người] - [Role]
-  - Via: [AI Tool]
-  - Spec: [File và section]
-  - Reason: [Tại sao thay đổi]
+**Change:**
+- Mô tả ngắn gọn thay đổi
 
-### Deprecated
-- [Tính năng bị loại bỏ]
-  - By: [Tên người] - [Role]
-  - Spec: [File và section]
-  - Reason: [Tại sao]
+**Impact:**
+- File/feature bị ảnh hưởng
 
-### Fixed
-- [Fix bug/sai sót trong spec]
-  - By: [Tên người] - [Role]
-  - Spec: [File và section]
-  - Original: [Nội dung cũ]
-  - Fixed: [Nội dung mới]
+**Migration:**
+- Hướng dẫn update (nếu có)
 ```
 
 ---
 
-## Changelog
+## Spec Change History
 
 ### 2026-08-12
 
@@ -86,26 +73,24 @@
 
 ---
 
-### 2026-08-10
+### 2026-08-11 - Schema v5.2 → v5.3 (Planning → Implementation)
 
-### Changed
+**Type:** feature
+**Author:** Tuấn Anh
+**Source:** `plans/sprint-6-launch.md`
 
-- **Mobile tsconfig.json - Removed deprecated baseUrl/paths**
-  - By: AI Assistant
-  - Via: Cursor
-  - Spec: N/A (technical debt fix)
-  - Files affected:
-    - `apps/mobile/tsconfig.json` (removed `baseUrl`, `paths`, `ignoreDeprecations`)
-  - Reason: `baseUrl` deprecated in TypeScript 6.x, removed in TS 7.0. Using relative imports instead.
-  - Fix: Changed `@/` alias imports to relative paths (e.g., `@/api` → `../api`)
-  - Verification: `npx tsc --noEmit` → 0 errors
+**Change:**
+- Added `City` table with city-level configuration
+- Added `CityDistrict` table for sub-regions
+- Added `User.preferredCityId` and `Restaurant.cityId/cityDistrictId` foreign keys
+- Seed 5 default cities: HCMC, Hanoi, Danang, Cantho, Haiphong
 
-- **Mobile authStore.ts - Fixed import path**
-  - By: AI Assistant
-  - Via: Cursor
-  - Files affected:
-    - `apps/mobile/src/stores/authStore.ts` (line 4)
-  - Change: `import { authApi, UserProfile } from '@/api'` → `import { authApi, UserProfile } from '../api'`
+**Impact:**
+- `backend/prisma/schema.prisma`
+- `backend/prisma/seed.ts`
+- `docs/food_roulette_erd_v5.0_reviewed.xml` → v5.3
+
+**Migration:** Run `npx prisma migrate dev --name v5_3_city_tables`
 
 ### 2026-08-09
 
@@ -348,328 +333,208 @@
 
 ---
 
-### 2026-08-06
+### 2026-08-11 - Implementation Phase Completion
 
-#### Added
+**Type:** milestone
+**Author:** Tuấn Anh
+**Source:** Tuấn Anh action plan (`plans/tuan-anh-action-plan.md`)
 
-- **ERD v2.6 - SQL Architecture Review Fixes**
-  - By: AI Assistant
-  - Via: Cursor
-  - Spec: `docs/food_roulette_erd_v2.6.drawio.xml`
-  - Files affected:
-    - `docs/food_roulette_erd_v2.6.drawio.xml` (new file - complete rewrite)
-    - `docs/ERD_MIGRATION_NOTES.md` (new file - SQL migration scripts)
+**Change:** Completed implementation of:
 
-  **P0 - Critical (MVP):**
-  - SpinLog: Replaced polymorphic FK (`referenceType` + `referenceId`) with separate nullable FK columns (`purchaseId`, `adWatchLogId`, `giftId`, `referralId`)
-  - RestaurantVisit: Made `partnerId` nullable to fix corporate partner paradox
-  - Group: Added note for host membership enforcement via app layer
-  - SpinWallet: Added trigger requirement for `balance >= 0` enforcement
-  - Added missing audit fields: `updatedAt` on Friendship, GroupMember, Vote, Review; `createdAt`/`updatedAt` on CheckIn; `updatedAt`/`completedAt`/`brokenAt` on Commitment
+1. **EAS Build/Submit config** (Phase 1)
+   - `eas.json` with 4 profiles (development, development:device, preview, production)
+   - `docs/EAS_BUILD_GUIDE.md` documentation
+2. **CHANGELOG_SPEC.md** (Phase 1)
+3. **ADR-002 Discover Map** + geo utilities (Phase 2)
+   - `backend/src/shared/utils/geo.utils.ts` with Haversine + bounding box
+   - Geospatial indexes added to Restaurant
+   - Refactored restaurants controller for real queries
+4. **ADR-001 AI Moderation** + ModerationQueue schema + service (Phase 3)
+   - Moderation service with adapter pattern
+   - OpenAI + NSFW.js adapters (stub)
+   - Moderation module (routes + controller)
+5. **Moderation Dashboard UI** (Phase 4)
+   - 3 pages: queue, item detail, stats
+   - React Query hooks
+6. **ADR-003 AI Suggestion** + **ADR-004 WebSocket** (Phase 5)
+7. **Gamification + Chat schemas** (Phase 6)
+   - 6 new tables: UserStreak, Achievement, UserAchievement, UserXP, ChatRoom, ChatRoomParticipant, ChatMessage
+8. **City schema + AI Advisor ADR + Pre-launch checklist** (Phase 7)
+   - 2 new tables: City, CityDistrict
+   - ADR-005 AI Food Advisor
+   - `docs/PRE_LAUNCH_CHECKLIST.md`
 
-  **P1 - Before Production:**
-  - Added missing indexes: CheckIn `[userId, createdAt]`, Review `[userId, createdAt]`, Locket `[userId, capturedAt]`, Restaurant `[status, category]`, GroupMember `[groupId, status]`, SpinSession `[initiatorId]`
-  - CheckIn: Added `verifiedAt` and `verificationMethod` (GPS_ONLY, GPS_PLUS_LOCKET, MANUAL)
-  - AdWatchLog: Added `watchDate` field for daily cap queries
-  - User: Renamed `password` to `passwordHash` with bcrypt/argon2 requirement
-  - TasteBoardItem: Added app-layer locket ownership validation note
-
-  **P2 - Technical Debt:**
-  - SpinSessionCandidate: Optional junction table design (currently keeping JSON)
-  - RestaurantRatingSummary: Optional denormalized table design
-  - Partitioning strategy documented for Locket, CheckIn, Review, SpinLog, AdWatchLog
-  - CorporateMember: Added `status` ENUM(ACTIVE, INACTIVE) field
-
----
-
-### 2026-08-06
-
-#### Added
-
-- **Menu Capture Feature**
-  - By: PM - AI Assistant
-  - Via: Cursor
-  - Spec: `brand/prompts.md` §13, `brand/FOOD-ROULETTE-SITEMAP.md` §19.15-16
-  - Files affected:
-    - `docs/food_roulette_erd.drawio.xml` (Menu, MenuItem entities)
-    - `brand/prompts.md` (new §13)
-    - `brand/FOOD-ROULETTE-SITEMAP.md` (new §19.15-16)
-    - `content/explore/menu-ai-strategy.md` (new file)
-
-- **AI Personalization Feature**
-  - By: PM - AI Assistant
-  - Via: Cursor
-  - Spec: `brand/prompts.md` §13.2, `brand/FOOD-ROULETTE-SITEMAP.md` §19.16
-  - Files affected:
-    - `docs/food_roulette_erd.drawio.xml` (UserPreference, CircleRecommendation entities)
-    - `brand/prompts.md` (new §13.2)
-    - `brand/FOOD-ROULETTE-SITEMAP.md` (new §19.16)
-
-- **Vibe Coding Rules**
-  - By: PM - AI Assistant
-  - Via: Cursor
-  - Spec: N/A (process document)
-  - Files affected:
-    - `VIBE_RULES.md` (new file)
-    - `CURSOR_RULES.md` (new file)
-    - `AGENTS.md` (updated §10-11)
-    - `.cursorrules` (new file)
-    - `PROMPT_TEMPLATES/` (new folder)
-
-#### Changed
-
-- **MVP Scope v1.1**
-  - By: PM - AI Assistant
-  - Via: Cursor
-  - Spec: `brand/FOOD-ROULETTE-SITEMAP.md` §19.6
-  - Change: Added Menu Capture + AI Personalization to MVP scope
+**Impact:** Cross-cutting
+- 5 new ADR documents
+- 12 new DB tables (16 → 22 entities, total now 22)
+- 1 new web feature: Moderation
+- 8 new backend modules/utilities
+- Multiple doc updates
 
 ---
 
-### 2026-08-07
+### 2026-08-11 - Schema v5.1 → v5.2 (Planning)
 
-### Changed
+**Type:** enhancement
+**Author:** Tuấn Anh
+**Source:** Internal planning session
 
-- **Pricing §4 - Chi tiết đầy đủ (B2C + B2B)**
-  - By: AI Assistant
-  - Via: Cursor
-  - Spec: `brand/prompts.md` §4
-  - Files affected:
-    - `brand/prompts.md` (updated §4)
-  - Change:
-    - Thêm 2 mô hình pricing: B2C (Subscription) và B2B (Fixed + PPV)
-    - B2C: Free / Pro (59k/tháng hoặc 490k/năm)
-    - B2C: Spin Packs (Starter 5/15k, Standard 20/59k, Premium 100/199k)
-    - B2B: 4 tiers - Basic (free), Bronze (99k+5k PPV), Silver (199k+4k PPV), Gold (399k+3k PPV)
-    - Thêm PPV verification mechanism và billing example
-    - Thêm break-even analysis cho B2B
-    - Thêm chính sách B2B (trial, guarantee, no per-seat)
-  - Source: `content/explore/restaurant-partner-strategy.md`
-  - Note: MVP v1.0 chỉ cần Free + Spin Packs + Basic Restaurant Partner
+**Change:**
+- Added AI Moderation feature planning (v1.2 scope)
+- Added Multi-city support planning (v2.0 scope)
+- Added AI Food Advisor planning (v2.0 scope)
+- Added Gamification (Streak + XP + Achievements) planning (v2.0 scope)
+- Added In-app Chat planning (v2.0 scope)
+- Added Discover Map planning (v1.1 scope)
 
----
+**Impact:**
+- `brand/FOOD-ROULETTE-SITEMAP.md` - New feature sections
+- `CLAUDE.md` - Updated roadmap
+- `PROGRESS.md` - New status tracker
 
-## Current Spec Versions
-
-| File | Version | Date | Last Change |
-|------|---------|------|-------------|
-| `brand/prompts.md` | 2.6 | 2026-08-07 | Updated Pricing §4 with B2C + B2B model |
-| `brand/brand.md` | - | - | - |
-| `brand/FOOD-ROULETTE-SITEMAP.md` | 2.4 | 2026-08-06 | Added §19.15-16 |
-| `backend/prisma/schema.prisma` | 6.0 | 2026-08-09 | Added B2B tables while preserving Taste Board media fields |
-| `backend/prisma/sql/v5.0/complete_schema.sql` | 5.0 | 2026-08-06 | Complete schema (15 tables) |
-| `backend/prisma/sql/v5.0/seed_data.sql` | 5.0 | 2026-08-06 | Seed data for testing |
-| `docs/food_roulette_erd.drawio.xml` | 2.5 | 2026-08-06 | Previous version (Menu + AI entities) |
-| `docs/food_roulette_erd_v2.6.drawio.xml` | 2.6 | 2026-08-06 | SQL Architecture Review fixes (P0-P2) |
-| `docs/food_roulette_erd_v3.0_normalized.xml` | 3.0 | 2026-08-06 | BCNF+4NF Normalized (26 entities) |
-| `docs/food_roulette_erd_v4.0_lean_mvp.xml` | 4.0 | 2026-08-06 | LEAN MVP (12 entities) |
-| `docs/food_roulette_erd_v4.1_hybrid_mvp.xml` | 4.1 | 2026-08-06 | HYBRID MVP (14 entities) |
-| `docs/BCNF_ANALYSIS.md` | 1.1 | 2026-08-06 | BCNF + 4NF analysis |
-| `docs/ERD_MIGRATION_NOTES.md` | 1.1 | 2026-08-06 | Added v3.0 4NF migration |
-| `VIBE_RULES.md` | 1.0 | 2026-08-06 | Initial version |
-| `AGENTS.md` | 1.2 | 2026-08-06 | Added Role Templates |
-| `CHANGELOG_SPEC.md` | 1.3 | 2026-08-06 | Added v5.0 migration docs |
-| `README.md` | 1.2 | 2026-08-06 | Updated with DB setup |
+**Migration:** None (additive)
 
 ---
 
-## 2026-08-06
+### 2026-08-11 - Schema v5.0 → v5.1 (Planning)
 
-### Added
+**Type:** feature
+**Author:** Tuấn Anh
+**Source:** `plans/sprint-3-ai-moderation.md`
 
-- **ERD v4.0 Lean MVP**
-  - By: AI Assistant
-  - Via: Cursor
-  - Spec: `docs/food_roulette_erd_v4.0_lean_mvp.xml`
-  - Files affected:
-    - `docs/food_roulette_erd_v4.0_lean_mvp.xml` (new file - 12 entities)
-    - `docs/BCNF_ANALYSIS.md` (updated v1.1)
+**Change:**
+- Added `ModerationQueue` table for AI moderation workflow
+- Added indexes for queue queries (status+createdAt, contentType+contentId)
 
-  **Rationale:**
-  - v3.0 had 26 entities (full BCNF+4NF normalization)
-  - MVP只需要 10-12 core entities
-  - 50% reduction, scale later
+**Impact:**
+- `backend/prisma/schema.prisma`
+- `docs/food_roulette_erd_v5.0_reviewed.xml` → v5.1
+- `docs/ERD_MIGRATION_NOTES.md`
 
-  **P0 Core (10 tables):**
-  - User, Restaurant, RestaurantHours, RestaurantPhoto
-  - Group, GroupMember, SpinSession, Vote
-  - SpinWallet, SpinLog
-
-  **P1 Important (2 tables):**
-  - Locket, CheckIn
-
-  **P2 Deferred (JSON initially):**
-  - Friendship, Menu/MenuItem, UserPreference, Corporate*, TasteBoard, Review
+**Migration:** Run `npx prisma migrate dev --name add_moderation_queue`
 
 ---
 
-### 2026-08-06
+### 2026-08-11 - Schema v5.1 → v5.2 (Planning)
 
-### Added
+**Type:** feature
+**Author:** Tuấn Anh
+**Source:** `plans/sprint-2-discover-map.md`
 
-- **ERD v4.1 Hybrid MVP** (Recommended for Production)
-  - By: Senior SQL Architect (AI)
-  - Via: Cursor
-  - Spec: `docs/food_roulette_erd_v4.1_hybrid_mvp.xml`
-  - Files affected:
-    - `docs/food_roulette_erd_v4.1_hybrid_mvp.xml` (new file - 14 entities)
-    - `CHANGELOG_SPEC.md` (updated)
+**Change:**
+- Added geospatial indexes to `Restaurant` table
+- Compound index `(latitude, longitude)`
+- Single column index on `cuisineType`
+- Compound index `(status, source)`
 
-  **Rationale:**
-  - v4.0 (12 entities) quá lean, thiếu revenue-critical và security features
-  - v3.0 (26 entities) over-engineered cho MVP
-  - v4.1 là sweet spot: 14 entities, BCNF compliant, MVP ready
+**Impact:**
+- `backend/prisma/schema.prisma`
+- `docs/food_roulette_erd_v5.0_reviewed.xml` → v5.2
 
-  **v4.1 Changes from v4.0:**
-  - ✅ Added: `passwordVersion` on User (security: session invalidation)
-  - ✅ Added: `Restaurant.source` ENUM (Google Places vs User Submitted)
-  - ✅ Added: `RestaurantPhoto.uploadedBy` + `uploadedAt` (audit trail)
-  - ✅ Added: `SpinPack` (revenue-critical: Spin Packs model)
-  - ✅ Fixed: `SpinPack → SpinLog` relationship (purchaseId FK → SpinPack)
-  - ✅ Added: `Friendship` (social foundation: mutual opt-in)
-  - ✅ Added: `SpinSession.initiatorId` (track who started spin)
-  - ✅ Fixed: Removed `Group.hostId` redundancy (host via `GroupMember.role = HOST`)
-  - ✅ Fixed: `SpinLog` separate FKs instead of polymorphic
-
-  **P0 Core (12 tables):**
-  - User (with passwordVersion), Friendship, Restaurant (with source)
-  - RestaurantHours (4NF), RestaurantPhoto (4NF)
-  - Group (no hostId), GroupMember (with HOST role)
-  - SpinSession, Vote, SpinWallet, SpinLog, SpinPack
-
-  **P1 Important (2 tables):**
-  - Locket, CheckIn
-
-  **P2 Deferred to v1.2+ (JSON initially):**
-  - TasteBoard/TasteBoardItem, Menu/MenuItem, UserPreference, CircleRecommendation
-  - B2B: RestaurantPartner, CorporateAccount, CorporateMember, RestaurantVisit
+**Migration:** Run `npx prisma migrate dev --name add_geo_indexes`
 
 ---
 
-### 2026-08-06
+### 2026-08-11 - Schema v5.2 → v5.3 (Planning)
 
-### Changed
+**Type:** feature
+**Author:** Tuấn Anh
+**Source:** `plans/sprint-5-v2-gamification.md`
 
-- **ERD v4.1 Hybrid MVP - Recommended over v3.0 and v4.0**
-  - By: Senior SQL Architect (AI)
-  - Via: Cursor
-  - Reason: v3.0 over-engineered (26 entities), v4.0 underspecified (missing revenue/security)
-  - v4.1 is the recommended baseline for Food Roulette MVP
+**Change:**
+- Added gamification tables: `UserStreak`, `Achievement`, `UserAchievement`, `UserXP`
+- Added 10 default achievements in seed data
+- Added User relations to gamification tables
 
----
+**Impact:**
+- `backend/prisma/schema.prisma`
+- `backend/prisma/seed.ts`
+- `docs/food_roulette_erd_v5.0_reviewed.xml` → v5.3
 
-### 2026-08-06
-
-### Added
-
-- **ERD v5.0 REVIEWED & OPTIMIZED** (Recommended over v4.1)
-  - By: Database Architect (AI)
-  - Via: Cursor
-  - Spec: `docs/food_roulette_erd_v5.0_reviewed.xml`, `docs/DB_SCHEMA_REVIEW_v5.0.md`
-  - Files affected:
-    - `docs/food_roulette_erd_v5.0_reviewed.xml` (new file - 15 entities)
-    - `docs/DB_SCHEMA_REVIEW_v5.0.md` (new file - complete review report)
-    - `backend/prisma/schema.prisma` (updated to v5.0)
-
-  **Rationale:**
-  - v4.1 (14 entities) có 4 critical issues cần fix trước MVP launch
-  - v5.0 là bản đã review + optimize, production-ready
-
-  **v5.0 Critical Fixes (4 issues):**
-  1. 🔴 **SpinSessionCandidate** (NEW TABLE) - Replaces `candidateIds` JSON
-     - FK integrity, queryable, proper N-N relationship
-  2. 🔴 **CheckIn index fix** - Added `[userId, status, expiresAt]`
-     - Critical query: `WHERE userId=? AND status='ACTIVE' AND expiresAt > NOW()`
-  3. 🔴 **RestaurantHours DateTime** - Fixed to `VARCHAR(5)` format
-     - MySQL không hỗ trợ `DateTime @db.Time`
-  4. 🔴 **SpinWallet BigInt** - Changed from `Int` to `BigInt`
-     - Overflow protection for large balance values
-
-  **v5.0 Medium Priority Fixes:**
-  - ✅ Restaurant lat/lng: Float → Decimal(10,8)/Decimal(11,8)
-  - ✅ Locket visibility index: Added `[visibility, capturedAt]`
-  - ✅ Vote tally index: Added `[spinSessionId, value]`
-  - ✅ Friendship status index: Added `[status]`
-
-  **v5.0 New Fields Added (10 fields):**
-  - User: `phone`, `isOnboarded`, `lastActiveAt`
-  - Restaurant: `googlePlaceId`, `rating`, `phone`
-  - GroupMember: `invitedBy`
-  - SpinSession: `categoryFilter`
-  - SpinWallet: `version` (optimistic locking)
-  - Locket: `exifStripped`
-  - CheckIn: `verificationMethod`, `accuracy`
-
-  **Required MySQL Triggers (4 triggers):**
-  1. SpinWallet: `balance >= 0`
-  2. GroupMember: `count <= 20`
-  3. Locket: `capturedAt within 60s`
-  4. CheckIn: auto-expiration EVENT
-
-  **Entity Count:**
-  - P0 CORE: 13 tables (+1 SpinSessionCandidate)
-  - P1 IMPORTANT: 2 tables (Locket, CheckIn)
-  - P2 DEFERRED: TasteBoard, Menu, AI, B2B...
-  - **TOTAL v5.0: 15 tables (BCNF/4NF compliant)**
+**Migration:** Run `npx prisma migrate dev --name add_gamification_tables`
 
 ---
 
-## 2026-08-06
+### 2026-08-11 - Schema v5.3 → v5.4 (Planning)
 
-### Added
+**Type:** feature
+**Author:** Tuấn Anh
+**Source:** `plans/sprint-5-v2-gamification.md`
 
-- **Database v5.0 - Complete Schema & Seed Data**
-  - By: AI Assistant
-  - Via: Cursor
-  - Files affected:
-    - `backend/prisma/sql/v5.0/000_create_database.sql` (new)
-    - `backend/prisma/sql/v5.0/complete_schema.sql` (new - 15 tables)
-    - `backend/prisma/sql/v5.0/seed_data.sql` (new - test data)
-    - `backend/prisma/sql/v5.0/csv_data/` (import scripts)
-    - `backend/prisma/schema.prisma` (synced with v5.0)
-    - `CHANGELOG_SPEC.md` (this update)
-    - `README.md` (updated with DB setup)
+**Change:**
+- Added chat tables: `ChatRoom`, `ChatRoomParticipant`, `ChatMessage`
+- Added `Group` relation to ChatRoom (groupId unique)
+- Added retention policy: messages older than 90 days auto-deleted
 
-  **Tables Created (15):**
-  - P0 Core: users, restaurants, restaurant_hours, restaurant_photos
-  - P0 Social: friendships
-  - P0 Spin: spin_groups, group_members, spin_sessions, spin_session_candidates, votes, spin_wallets, spin_logs
-  - P1 Feature: lockets, check_ins
-  - P1 Purchase: spin_packs
+**Impact:**
+- `backend/prisma/schema.prisma`
+- `docs/food_roulette_erd_v5.0_reviewed.xml` → v5.4
 
-  **Seed Data Verified:**
-  - 5 users (1 steward, 4 test users)
-  - 10 restaurants (9 approved, 1 pending)
-  - 3 friendships (all accepted)
-  - 1 spin group (3 members)
-  - 4 spin wallets
-  - 5 spin sessions (mix of personal/group, various statuses)
-  - 5 votes (accept/reject)
-  - 5 lockets (public/friends/private)
-  - 3 check-ins (completed/pending)
-
-  **Validation Queries (6 queries):**
-  - Query 1: Group Spin Complete Workflow (session → candidates → votes → result)
-  - Query 2: Locket Feed with Visibility Rules (PUBLIC/FRIENDS/PRIVATE)
-  - Query 3: Check-in Verification Complex (GPS + Locket + Restaurant matching)
-  - Query 4: Spin Wallet Audit Trail (running balance + integrity check)
-  - Query 5: Restaurant Recommendation Engine (eligibility scoring)
-  - Bonus: Friendship Network Analysis (mutual friends)
+**Migration:** Run `npx prisma migrate dev --name add_chat_tables`
 
 ---
 
-## Team Roles
+### 2026-08-11 - Schema v5.4 → v5.5 (Planning)
 
-| Role | Người | Trách nhiệm |
-|------|-------|-------------|
-| PM / Architecture Lead | Đặng Tuấn Anh | Spec, review, architecture, AI architecture, Circle Recommendation |
-| Frontend Lead | Lê Văn Hoàng Hiếu | UI/UX design, animation, AI Suggestion UI |
-| Content + AI Frontend | Trần Gia Bình | UI screens, copywriting, Menu Review UI, AI Feedback UX |
-| Backend Lead + AI | Lê Huy Trường | API, database, AI OCR pipeline, AI Suggestion backend |
-| DevOps + AI Support | Nguyễn Thành Nam | CI/CD, testing, AI pipeline deployment, User Preference learning |
+**Type:** feature
+**Author:** Tuấn Anh
+**Source:** `plans/sprint-6-launch.md`
 
-*Lưu ý: Mỗi người tự chọn AI tool phù hợp với công việc của mình*
+**Change:**
+- Added `City` table with city-level configuration
+- Added `CityDistrict` table for sub-regions
+- Added `User.preferredCityId` and `Restaurant.cityId/cityDistrictId` foreign keys
+- Seed 5 default cities: HCMC, Hanoi, Danang, Cantho, Haiphong
+
+**Impact:**
+- `backend/prisma/schema.prisma`
+- `backend/prisma/seed.ts`
+- `docs/food_roulette_erd_v5.0_reviewed.xml` → v5.5
+
+**Migration:** Run `npx prisma migrate dev --name add_city_tables`
 
 ---
 
-*Auto-generated · 2026-08-06*
+## Spec Change Convention
+
+### Khi nào cần log vào file này?
+
+- **Thay đổi schema DB:** Schema version mới
+- **Thêm/xóa feature:** Sitemap version mới
+- **Đổi API contract:** API_SPEC.md version mới
+- **Đổi design tokens:** Brand tokens version mới
+- **Đổi scope của sprint:** Plan file version mới
+
+### Ai chịu trách nhiệm?
+
+- **PM (Tuấn Anh):** Approve và log mọi spec change
+- **AI tools:** Check file này mỗi session để sync context
+- **Developers:** Reference version number khi code
+
+### Rule khi update
+
+1. **KHÔNG xóa entry cũ** - Chỉ append mới
+2. **Mỗi entry 1 version bump** - Không gộp nhiều change
+3. **Migration rõ ràng** - Code path cần làm gì
+4. **Reference source** - PR number, discussion, plan file
+
+---
+
+## Spec Versions Reference
+
+| Version | Date | Major Changes |
+|---------|------|---------------|
+| v2.4 | 2026-08-06 | Onboarding, Discover Map, Steward Dashboard added |
+| v2.5 | 2026-08-11 | AI Moderation, Multi-city, AI Advisor, Gamification, Chat planning |
+| v2.6 | TBD | Post-launch improvements |
+
+| Schema Version | Date | Tables Changed | Total Entities |
+|----------------|------|----------------|----------------|
+| v5.0 | 2026-08-06 | Initial schema (15 tables) | 15 |
+| v5.1 | 2026-08-11 (planned) | +1 (ModerationQueue) + geo indexes | 16 |
+| v5.2 | 2026-08-11 (planned) | +6 (Gamification x4 + Chat x3) | 22 |
+| v5.3 | 2026-08-11 (planned) | +2 (City, CityDistrict) | 24 |
+
+---
+
+*Last updated: 2026-08-11 · Maintainer: Tuấn Anh (PM)*

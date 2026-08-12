@@ -1,0 +1,104 @@
+{
+  "$schema": "https://docs.expo.dev/eas/schema/eas.json",
+  "cli": {
+    "version": ">= 13.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "base": {
+      "node": "22.11.0",
+      "env": {
+        "EXPO_NO_TELEMETRY": "1"
+      }
+    },
+    "development": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "ios": {
+        "simulator": true,
+        "bundleIdentifier": "com.foodroulette.app.dev"
+      },
+      "android": {
+        "gradleCommand": ":app:assembleDebug",
+        "packageName": "com.foodroulette.app.dev"
+      }
+    },
+    "development:device": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "ios": {
+        "bundleIdentifier": "com.foodroulette.app.dev"
+      },
+      "android": {
+        "packageName": "com.foodroulette.app.dev"
+      }
+    },
+    "preview": {
+      "extends": "base",
+      "distribution": "internal",
+      "channel": "preview",
+      "ios": {
+        "bundleIdentifier": "com.foodroulette.app.preview"
+      },
+      "android": {
+        "packageName": "com.foodroulette.app.preview"
+      }
+    },
+    "production": {
+      "extends": "base",
+      "channel": "production",
+      "autoIncrement": true,
+      "ios": {
+        "bundleIdentifier": "com.foodroulette.app"
+      },
+      "android": {
+        "packageName": "com.foodroulette.app"
+      }
+    }
+  },
+  "submit": {
+    "base": {
+      "node": "22.11.0"
+    },
+    "development": {
+      "extends": "base",
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      },
+      "ios": {
+        "distributionMethod": "ad-hoc"
+      }
+    },
+    "preview": {
+      "extends": "base",
+      "android": {
+        "track": "internal",
+        "releaseStatus": "completed"
+      },
+      "ios": {
+        "distributionMethod": "ad-hoc"
+      }
+    },
+    "production": {
+      "extends": "base",
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal",
+        "releaseStatus": "draft",
+        "changesNotSentForReview": false
+      },
+      "ios": {
+        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID",
+        "appleTeamId": "REPLACE_WITH_APPLE_TEAM_ID"
+      }
+    }
+  },
+  "runtimeVersion": {
+    "policy": "sdkVersion"
+  }
+}
