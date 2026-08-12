@@ -1,5 +1,5 @@
-/* eslint-disable prefer-const */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
+ 
  
 import prisma from '../../shared/utils/prisma';
 import { extractMenuItems } from '../../shared/services/ocr.service';
@@ -11,15 +11,22 @@ export interface VerifyItemInput {
   tags?: string[];
 }
 
+export interface MenuItemParsed {
+  name: string;
+  priceVND?: number;
+  category?: string;
+  tags?: string[];
+}
+
 export class MenuService {
-  async createMenu(restaurantId: string, capturedBy: string, imagePaths: string[]): Promise<any> {
+  async createMenu(restaurantId: string, capturedBy: string, imagePaths: string[]): Promise<Record<string, unknown>> {
     const primaryImageUrl = imagePaths.length > 0 ? imagePaths[0] : '';
     
     // Process OCR on all images using Gemini
-    let finalItems = await extractMenuItems(imagePaths);
+    const finalItems = (await extractMenuItems(imagePaths)) as unknown as MenuItemParsed[];
     
     // Calculate confidence based on whether items were found
-    let confidence = finalItems.length > 0 ? 0.95 : 0;
+    const confidence = finalItems.length > 0 ? 0.95 : 0;
     const extractedText = JSON.stringify(finalItems);
 
     if (finalItems.length === 0) {
@@ -35,7 +42,7 @@ export class MenuService {
         capturedBy,
         status: 'PENDING',
         items: {
-          create: finalItems.map((item: any, index: number) => ({
+          create: finalItems.map((item: MenuItemParsed, index: number) => ({
             name: item.name,
             priceVND: item.priceVND,
             category: item.category,
@@ -125,7 +132,7 @@ export class MenuService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    return menus.map((menu: any) => ({
+    return menus.map((menu) => ({
       ...menu,
       isFresh: menu.capturedAt >= thirtyDaysAgo,
     }));

@@ -57,7 +57,7 @@ export const reviewsController = {
               : { createdAt: 'desc' };
 
       const [reviews, total, agg] = await Promise.all([
-        prisma.review.findMany({
+        (prisma as any).review.findMany({
           where: { restaurantId: String(restaurantId), deletedAt: null },
           orderBy,
           take: pageSize,
@@ -72,10 +72,10 @@ export const reviewsController = {
             },
           },
         }),
-        prisma.review.count({
+        (prisma as any).review.count({
           where: { restaurantId: String(restaurantId), deletedAt: null },
         }),
-        prisma.review.aggregate({
+        (prisma as any).review.aggregate({
           where: { restaurantId: String(restaurantId), deletedAt: null },
           _avg: {
             overallRating: true,
@@ -195,7 +195,7 @@ export const reviewsController = {
         },
       });
 
-      const review = await prisma.review.create({
+      const review = await (prisma as any).review.create({
         data: {
           userId,
           restaurantId,
@@ -221,7 +221,7 @@ export const reviewsController = {
       });
 
       // Update restaurant.rating (avg)
-      const avg = await prisma.review.aggregate({
+      const avg = await (prisma as any).review.aggregate({
         where: { restaurantId, deletedAt: null },
         _avg: { overallRating: true },
         _count: true,
@@ -262,7 +262,7 @@ export const reviewsController = {
         });
       }
 
-      const review = await prisma.review.findFirst({
+      const review = await (prisma as any).review.findFirst({
         where: { id, deletedAt: null },
       });
       if (!review) {
@@ -279,7 +279,7 @@ export const reviewsController = {
         });
       }
 
-      await prisma.review.update({
+      await (prisma as any).review.update({
         where: { id },
         data: { deletedAt: new Date() },
       });
@@ -311,7 +311,7 @@ export const reviewsController = {
         });
       }
 
-      const review = await prisma.review.findFirst({
+      const review = await (prisma as any).review.findFirst({
         where: { id, deletedAt: null },
       });
       if (!review) {
@@ -321,7 +321,7 @@ export const reviewsController = {
         });
       }
 
-      const updated = await prisma.review.update({
+      const updated = await (prisma as any).review.update({
         where: { id },
         data: { helpfulCount: { increment: 1 } },
       });
