@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, SafeAreaView, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { menuApi, MenuItem } from '../../src/api/endpoints/menu';
 import { Href } from 'expo-router';
+import { preferencesApi, UserPreference } from '../../src/api/endpoints/preferences';
 
 export default function MenuReviewScreen() {
   const router = useRouter();
@@ -16,6 +17,21 @@ export default function MenuReviewScreen() {
   const [newItemName, setNewItemName] = useState<string>('');
   const [newItemPrice, setNewItemPrice] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const [preferences, setPreferences] = useState<UserPreference | null>(null);
+  const [isFilterEnabled, setIsFilterEnabled] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchPrefs = async () => {
+      try {
+        const prefs = await preferencesApi.getPreferences();
+        setPreferences(prefs);
+      } catch (err) {
+        console.log('Failed to fetch preferences', err);
+      }
+    };
+    fetchPrefs();
+  }, []);
 
   useEffect(() => {
     try {
@@ -64,18 +80,66 @@ export default function MenuReviewScreen() {
     setNewItemPrice('');
   };
 
+  const getFilteredItems = () => {
+    if (!isFilterEnabled || !preferences) return items;
+    
+    return items.filter(item => {
+      const itemTags = item.tags || [];
+      
+      // 1. Dietary restrictions
+      if (preferences.dietaryRestrictions && preferences.dietaryRestrictions.length > 0) {
+        const isVeg = preferences.dietaryRestrictions.includes('vegetarian') || preferences.dietaryRestrictions.includes('vegan');
+        if (isVeg && !itemTags.includes('chay')) {
+           return false;
+        }
+      }
+      
+      // 2. Spice tolerance
+      if (preferences.spiceTolerance === 'none' && itemTags.includes('cay')) {
+        return false;
+      }
+      
+      // 3. Disliked ingredients
+      if (preferences.dislikedIngredients && preferences.dislikedIngredients.length > 0) {
+        const nameLower = item.name.toLowerCase();
+        const hasDisliked = preferences.dislikedIngredients.some(ingredient => {
+           const mapping: Record<string, string> = {
+              'onion': 'hành',
+              'garlic': 'tỏi',
+              'cilantro': 'ngò',
+              'peanut': 'đậu phộng',
+              'seafood': 'hải sản',
+              'pork': 'heo',
+              'beef': 'bò'
+           };
+           const viTerm = mapping[ingredient];
+           return viTerm && nameLower.includes(viTerm);
+        });
+        if (hasDisliked) return false;
+      }
+      
+      return true;
+    });
+  };
+
   const handleConfirmAndSpin = async () => {
+    const finalItems = getFilteredItems();
+    if (finalItems.length === 0) {
+      Alert.alert('Không có món phù hợp', 'Bộ lọc khẩu vị đã loại bỏ tất cả các món. Vui lòng tắt bộ lọc hoặc thêm món khác.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       if (menuId) {
-        await menuApi.verifyMenu(menuId, items);
+        await menuApi.verifyMenu(menuId, finalItems);
       }
       // Assuming you have a route to start spinning with specific items.
       // E.g., redirect to main spin tab or a specific spin route
       router.push({
         pathname: '/(tabs)/spin' as any, // or '/spin/lucky-spin'
         params: {
-          menuItems: JSON.stringify(items),
+          menuItems: JSON.stringify(finalItems),
           fromMenuCapture: 'true',
         },
       });
@@ -85,7 +149,7 @@ export default function MenuReviewScreen() {
       router.push({
         pathname: '/(tabs)/spin' as any,
         params: {
-          menuItems: JSON.stringify(items),
+          menuItems: JSON.stringify(finalItems),
           fromMenuCapture: 'true',
         }
       });
@@ -206,6 +270,29 @@ export default function MenuReviewScreen() {
             ))}
           </View>
 
+          {/* Taste Filter Toggle */}
+          <View className="mt-2 mb-2 p-3 rounded-2xl bg-white border border-amber-200 flex-row items-center justify-between shadow-sm">
+            <View className="flex-row items-center flex-1 pr-4">
+              <View className="p-2 bg-amber-100 rounded-full mr-3">
+                <Ionicons name="filter" size={18} color="#D97706" />
+              </View>
+              <View>
+                <Text className="font-bold text-stone-800 text-sm">✨ Lọc theo khẩu vị của tôi</Text>
+                <Text className="text-xs text-stone-500 mt-0.5">
+                  {preferences 
+                    ? `Áp dụng ${preferences.dietaryRestrictions?.length || 0} ăn kiêng, ${preferences.dislikedIngredients?.length || 0} dị ứng`
+                    : 'Đang tải thiết lập...'}
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={isFilterEnabled}
+              onValueChange={setIsFilterEnabled}
+              trackColor={{ false: "#E5E7EB", true: "#F59E0B" }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
           {/* Add New Item Row */}
           <View className="mt-4 p-3 rounded-2xl bg-amber-50 border border-dashed border-amber-300 flex-row items-center">
             <TextInput
@@ -232,7 +319,27 @@ export default function MenuReviewScreen() {
       </KeyboardAvoidingView>
 
       {/* Sticky Bottom Action */}
-      <View className="absolute bottom-0 left-0 right-0 p-4 bg-white/90 border-t border-amber-200 shadow-lg">
+      <View className="absolute bottom-0 left-0 right-0 p-4 bg-white/95 border-t border-amber-200 shadow-lg gap-2">
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: '/spin/voice-pick' as any,
+              params: {
+                menuItems: JSON.stringify(getFilteredItems()),
+              },
+            })
+          }
+          disabled={items.length === 0 || isSubmitting}
+          className={`w-full py-3.5 rounded-xl flex-row items-center justify-center border-2 ${
+            items.length === 0 ? 'bg-amber-50 border-amber-200' : 'bg-amber-100 border-amber-400'
+          }`}
+        >
+          <Ionicons name="mic" size={20} color="#D97706" style={{ marginRight: 8 }} />
+          <Text className="text-amber-900 font-bold text-sm">
+            🎤 Voice Pick - Nói để chọn món cho Nhóm
+          </Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           onPress={handleConfirmAndSpin}
           disabled={items.length === 0 || isSubmitting}
@@ -246,7 +353,7 @@ export default function MenuReviewScreen() {
             <Ionicons name="dice-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
           )}
           <Text className="text-white font-bold text-sm">
-            Quay Vòng Chọn Món Ngay ({items.length} món)
+            Quay Vòng Chọn Món Ngay ({getFilteredItems().length} món)
           </Text>
         </TouchableOpacity>
       </View>

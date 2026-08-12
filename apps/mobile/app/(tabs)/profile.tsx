@@ -58,6 +58,7 @@ export default function ProfileScreen() {
 
         <View className="px-4 gap-3">
           <MenuLink href="/profile/edit" title="Chỉnh sửa hồ sơ" />
+          <MenuLink href="/profile/taste-preferences" title="Thiết lập khẩu vị" />
           <MenuLink href={`/u/${data.publicId}`} title="Xem profile công khai" />
           <MenuLink href="/profile/settings" title="Cài đặt" />
           <TouchableOpacity onPress={handleLogout} className="bg-white border border-red-100 rounded-2xl p-4 mt-3">
@@ -78,7 +79,7 @@ function Stat({ value, label }: { value: number; label: string }) {
   );
 }
 
-function MenuLink({ href, title }: { href: '/profile/edit' | '/profile/settings' | `/u/${string}`; title: string }) {
+function MenuLink({ href, title }: { href: '/profile/edit' | '/profile/taste-preferences' | '/profile/settings' | `/u/${string}`; title: string }) {
   return (
     <Link href={href} asChild>
       <TouchableOpacity className="bg-white border border-secondary-100 rounded-2xl p-4 flex-row items-center">
