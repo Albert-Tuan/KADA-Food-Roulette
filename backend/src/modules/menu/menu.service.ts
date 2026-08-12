@@ -2,7 +2,7 @@ import prisma from '../../shared/utils/prisma';
 import { OcrService } from '../../shared/services/ocr.service';
 import { MenuParserService } from '../../shared/services/menuParser.service';
 import { GeminiVisionService } from '../../shared/services/geminiVision.service';
-import { PersonalizationService, PersonalizedMenuItem } from '../../shared/services/personalization.service';
+import { PersonalizationService, PersonalizedMenuItem, PreferenceInput } from '../../shared/services/personalization.service';
 
 export interface VerifyItemInput {
   name: string;
