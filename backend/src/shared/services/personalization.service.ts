@@ -24,8 +24,8 @@ export class PersonalizationService {
    */
   private static calculateBaseScore(item: {
     name: string;
-    priceVND: number | null;
-    category: string;
+    priceVND?: number | null;
+    category?: string;
     subDishes?: string[];
     tags?: string[];
   }): number {
@@ -60,8 +60,8 @@ export class PersonalizationService {
   static personalizeMenuItems(
     items: Array<{
       name: string;
-      priceVND: number | null;
-      category: string;
+      priceVND?: number | null;
+      category?: string;
       subDishes?: string[];
       tags?: string[];
       ingredients?: string[];
@@ -185,8 +185,8 @@ export class PersonalizationService {
 
       return {
         name: item.name,
-        priceVND: item.priceVND,
-        category: item.category,
+        priceVND: item.priceVND ?? null,
+        category: item.category || 'món chính',
         subDishes: item.subDishes || [],
         tags: Array.from(itemTags),
         matchScore: finalScore,

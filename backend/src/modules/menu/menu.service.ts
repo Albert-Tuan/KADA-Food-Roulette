@@ -13,9 +13,13 @@ export interface VerifyItemInput {
 
 export interface MenuItemParsed {
   name: string;
-  priceVND?: number;
+  priceVND?: number | null;
   category?: string;
+  subDishes?: string[];
   tags?: string[];
+  ingredients?: string[];
+  spicinessLevel?: number;
+  isVegetarian?: boolean;
 }
 
 export class MenuService {
@@ -66,7 +70,7 @@ export class MenuService {
       console.log(`[MenuService] No UserPreference found for user ${userId}, proceeding with default scoring.`);
     }
 
-    let rawItems: Record<string, unknown>[];
+    let rawItems: MenuItemParsed[];
     let confidence: number;
     let extractedText: string;
 
@@ -99,7 +103,7 @@ export class MenuService {
     }
 
     // 5. Apply Real-time Personalization Matching Engine
-    const personalizedItems: PersonalizedMenuItem[] = PersonalizationService.personalizeMenuItems(rawItems as unknown as MenuItemParsed[], userPref as unknown as Record<string, unknown>);
+    const personalizedItems: PersonalizedMenuItem[] = PersonalizationService.personalizeMenuItems(rawItems, userPref as PreferenceInput | null);
 
     // 6. Ensure valid User and Restaurant FKs exist in DB
     let actualUserId = userId;
