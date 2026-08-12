@@ -36,7 +36,7 @@
 | **Taste Board** | ✅ | ✅ | ✅ | ✅ Done |
 | **Profile công khai** | ✅ | ✅ | ✅ | ✅ Done |
 | **Thêm quán (user-submitted)** | ✅ | ❌ | ❌ | 🟡 Partial |
-| **Steward dashboard** | ✅ | ❌ | ❌ | 🟡 Partial |
+| **Steward dashboard** | ✅ | ❌ | ✅ | 🟡 Partial |
 | **Google Places lookup** | ✅ | ❌ | ❌ | 🟡 Partial |
 | **Restaurant Partner (B2B)** | ✅ | ✅ | ✅ | ✅ Done |
 | **Corporate Account (B2B)** | ✅ | ❌ | ❌ | 🟡 Partial |
@@ -55,8 +55,8 @@
 |---------|---------|--------|-----|--------|-----------|
 | **Onboarding Flow** | 🟡 | ❌ | ❌ | 🟡 Partial | `plans/feature-v1.1-onboarding.md` |
 | **Discover Map** | 🟡 | ❌ | ❌ | ❌ Not Started | `plans/feature-v1.1-discover-map.md` |
-| **Steward Dashboard** | ✅ | ❌ | ❌ | 🟡 Partial | `plans/feature-v1.1-steward.md` |
-| **Review UI** | ✅ | 🟡 | ❌ | 🟡 Partial | `plans/feature-v1.1-review-ui.md` |
+| **Steward Dashboard** | ✅ | ❌ | ✅ | 🟡 Partial | `plans/feature-v1.1-steward.md` |
+| **Review UI** | ✅ | 🟡 | ✅ | 🟡 Partial | `plans/feature-v1.1-review-ui.md` |
 
 ---
 
@@ -289,6 +289,7 @@
 
 ### Đã xong ✅
 - [x] GitHub Actions iOS EAS Build workflow (`mobile-ci-ios.yml`)
+- [x] GitHub Actions Android EAS Build workflow (`mobile-ci-android.yml`)
 - [x] GitHub Actions Web CI workflow
 - [x] GitHub Actions Backend CI workflow (updated)
 - [x] Dependabot config (updated)
@@ -301,7 +302,6 @@
 
 ### Còn lại ⬜
 - [ ] EAS Submit (store submission)
-- [ ] Android CI/CD
 - [ ] Automated testing workflow
 - [ ] Preview deployments
 
