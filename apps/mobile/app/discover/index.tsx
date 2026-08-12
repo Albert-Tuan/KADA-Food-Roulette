@@ -69,7 +69,7 @@ const INITIAL_REGION: Region = {
 
 export default function DiscoverScreen() {
   const router = useRouter();
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<any>(null);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [region, setRegion] = useState<Region>(INITIAL_REGION);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -302,15 +302,13 @@ export default function DiscoverScreen() {
             {FILTERS.map((f) => (
               <TouchableOpacity
                 key={f.value}
-                className={`px-3 py-1.5 rounded-full ${
-                  filter === f.value ? 'bg-primary' : 'bg-background border border-border'
-                }`}
+                className={`px-3 py-1.5 rounded-full ${filter === f.value ? 'bg-primary' : 'bg-background border border-border'
+                  }`}
                 onPress={() => setFilter(f.value)}
               >
                 <Text
-                  className={`text-xs font-medium ${
-                    filter === f.value ? 'text-white' : 'text-primary'
-                  }`}
+                  className={`text-xs font-medium ${filter === f.value ? 'text-white' : 'text-primary'
+                    }`}
                 >
                   {f.label}
                 </Text>
