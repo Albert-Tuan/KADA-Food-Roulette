@@ -2,8 +2,10 @@
 
 > Owner: Trần Gia Bình
 > Role: Locket + Profile Lead
-> Cập nhật: 2026-08-10
+> Cập nhật: 2026-08-13
 > Branch: `feature/locket-profile`
+
+Entry point cho model/session mới: [SESSION_HANDOFF.md](./SESSION_HANDOFF.md).
 
 ## 1. Mục tiêu
 
@@ -16,7 +18,7 @@ Hoàn thiện phần Locket + Profile trên mobile bằng React Native + Expo + 
 - Upload ảnh: mobile → Express Route → validate/strip EXIF → Supabase Storage → Prisma/MySQL.
 - `device_hash`: hash dựa trên App Installation ID; không lưu App Installation ID gốc.
 - Public profile: `/u/:public_id`.
-- Locket MVP có `note`, `rating`, `tags` và `visibility`.
+- Taste Board mới có ảnh camera-only, `note` tùy chọn và `visibility`; `rating`, `tags` và metadata món/quán chỉ còn để tương thích dữ liệu/API cũ.
 - Visibility: `PRIVATE`, `FRIENDS`, `PUBLIC`.
 - Public profile không được expose `display_name_private`.
 - Friendship chỉ là bạn khi mutual opt-in đã hoàn tất.
@@ -53,7 +55,7 @@ Hoàn thiện phần Locket + Profile trên mobile bằng React Native + Expo + 
 - Image processing: `sharp@^0.35.3` để validate, re-encode, strip EXIF và resize.
 - Supabase SDK: `@supabase/supabase-js`.
 
-Hiện không còn blocker về quyết định schema, API, navigation hoặc Storage. Backend lint baseline và dependency audit đã hoàn tất; còn cần verification với MySQL/Supabase thật.
+Hiện không còn blocker về quyết định schema, API, navigation hoặc Storage. Backend lint baseline, dependency audit và verification với MySQL disposable đã hoàn tất; còn cần smoke test với Supabase bucket thật.
 
 ## 3. Đã có trong code
 
@@ -62,7 +64,7 @@ Hiện không còn blocker về quyết định schema, API, navigation hoặc S
 - Refresh GPS trước khi chụp.
 - Re-encode ảnh phía mobile với `expo-image-manipulator`.
 - App Installation ID-based hash utility.
-- Preview form với tên món, nhà hàng, note, rating, tags và visibility.
+- Preview form tối giản với ảnh, review `note` tùy chọn và visibility; không còn input món, nhà hàng, rating hoặc tags.
 - Locket feed prototype với filter, loading, empty, error và retry state.
 - Locket detail prototype.
 - Public profile route `/u/[public_id]`.
@@ -94,7 +96,7 @@ Các commit liên quan:
 - Hoàn thiện copy/label tiếng Việt.
 - Hoàn thiện capture → preview → submit → detail/feed.
 - Đảm bảo không còn gallery picker.
-- Bổ sung validation cho note, rating, tags và visibility.
+- Hoàn thiện validation cho review tùy chọn và visibility; metadata legacy vẫn được backend validate khi client cũ gửi lên.
 - Hoàn thiện loading/error/retry states.
 - Hoàn thiện public/private profile UI.
 - Cập nhật mock data để test đủ các visibility state.
@@ -111,25 +113,25 @@ Các commit liên quan:
 
 | Hạng mục | Trạng thái | Người cần phối hợp |
 |---|---|---|
-| Prisma fields cho `bio` và Locket metadata | Đã triển khai bước đầu, cần test migration MySQL | Trường |
-| Prisma migration và ERD sync | Đã triển khai, cần chạy trên DB test dùng một lần | Trường |
-| Express multipart upload route | Đã triển khai bước đầu, cần integration/smoke test | Trường |
-| EXIF strip server-side bằng `sharp` | Đã triển khai với `sharp@^0.35.3`, cần test thực tế | Trường |
+| Prisma fields cho `bio` và Locket metadata | Hoàn tất; migration MySQL disposable pass | Trường đã duyệt |
+| Prisma migration và ERD sync | Hoàn tất cho schema hiện hành | Trường đã duyệt |
+| Express multipart upload route | Hoàn tất và có automated test | Trường đã duyệt |
+| EXIF strip server-side bằng `sharp` | Hoàn tất và có image pipeline test | Trường đã duyệt |
 | Supabase Storage integration | Đã có adapter, cần smoke test bucket private thật | Thành Nam + Trường |
 | Bucket name/path/policy | Đã chốt | Thành Nam |
 | API response contract chính thức | Đã chốt | Trường |
-| Backend lint baseline | Đã hoàn tất controlled adoption; 77 lỗi legacy được suppress có kiểm soát và phải trả dần theo module | Trường + owner từng module |
+| Backend lint baseline | Đã hoàn tất controlled adoption; sau merge có 149 lỗi legacy được suppress có kiểm soát và phải trả dần theo module | Trường + owner từng module |
 | Backend dependency audit | Đã xử lý; audit hiện có 0 vulnerability | Trường |
-| Friendship backend và authorization | Chưa làm | Trường |
-| Navigation Spin → Locket | Đã chốt | Hoàng Hiếu |
+| Friendship backend và authorization | Đã nhận từ `origin/main`, có API/test; cần tiếp tục security review theo owner | Trường |
+| Navigation Spin → Taste Board | Đã hợp nhất và typecheck pass | Hoàng Hiếu |
 
 ### Gate trước merge/deploy
 
-- Backend lint pass với ESLint recommended ở severity error; 77 lỗi legacy ngoài Locket/Profile được suppress có kiểm soát, media pipeline Locket không có lint error hoặc suppression.
+- Backend lint pass với ESLint recommended ở severity error; 149 lỗi legacy của code cũ/incoming-main được suppress có kiểm soát, media pipeline Locket production không có lint error hoặc suppression.
 - `npm audit --json` và `npm audit --audit-level=high` đều pass với 0 vulnerability; không dùng `npm audit fix --force`.
-- Backend test hiện đạt 35 pass, 1 skip; cần chạy `RUN_DB_INTEGRATION=true` với MySQL test database.
+- Backend test sau merge đạt 69 pass, 0 fail khi bật `RUN_DB_INTEGRATION=true`; gồm 3 regression test CORS.
 - Cần smoke test Supabase thật: bucket private, path original/thumbnail, signed URL 1 giờ, public qua Express, xóa object khi xóa Taste Board và cleanup khi Prisma lỗi.
-- Cần tách staged diff backend khỏi các file Expo phát sinh trước khi commit.
+- Hai thay đổi Expo-generated local đã được giữ ngoài merge commit: `apps/mobile/.gitignore` và `apps/mobile/package-lock.json`.
 
 ### Kết quả Giai đoạn 1 — controlled lint adoption
 
@@ -583,21 +585,21 @@ Không force-push và không merge vào `main`.
 
 ## 7. Checklist sau mỗi task
 
-- [ ] Camera-only vẫn được đảm bảo.
-- [ ] Không lưu App Installation ID gốc.
-- [ ] Public profile không lộ `display_name_private`.
-- [ ] Không gọi API trực tiếp trong component nếu đã có repository.
-- [ ] UI có loading/error/empty/retry state.
-- [ ] Mobile typecheck pass.
+- [x] Camera-only vẫn được đảm bảo cho Taste Board; image picker chỉ dùng đổi avatar Profile.
+- [x] Không lưu App Installation ID gốc.
+- [x] Public profile không lộ `display_name_private` theo repository/API contract.
+- [x] Component Taste Board/Profile đi qua repository và hooks, không gọi API trực tiếp.
+- [x] UI có loading/error/empty/retry state.
+- [x] Mobile typecheck pass.
 - [x] Lint pass.
 - [x] Backend build/typecheck pass.
-- [x] Backend Locket/Profile tests pass: 36 pass, 0 skip khi bật DB integration.
-- [ ] Không sửa README.
-- [ ] Không commit/push.
+- [x] Backend test suite pass: 66 pass, 0 fail khi bật DB integration.
+- [x] Không sửa brand spec.
+- [x] Đã tạo commit local theo xác nhận của người dùng; chưa push change set mới.
 
 ## 8. Đồng bộ `origin/main` cho bản demo (2026-08-10)
 
-- Đã merge `origin/main` vào working tree bằng `--no-commit` và giải quyết toàn bộ conflict theo contract Taste Board hiện tại.
+- Đã merge `origin/main`, giải quyết toàn bộ conflict theo contract Taste Board hiện tại và tạo merge commit `da1cd95`.
 - Giữ luồng Taste Board camera-only, API multipart/Sharp/Supabase và technical identifiers `Locket`/`lockets`.
 - Nhận các module mới từ `main`: Spin, Friends, Notifications, Profile và B2B Partner.
 - Đồng bộ backend về Node 22 trong CI/Docker; CI dùng Prisma migrations và `test:run`, không dùng `db push --accept-data-loss`.
@@ -605,7 +607,152 @@ Không force-push và không merge vào `main`.
 - Migration đã apply thành công trên MySQL 8 disposable: 4/4 migrations.
 - Backend DB integration: 13 test files, 62 tests pass, 0 fail.
 - Backend lint/build/Prisma validate pass; npm audit: 0 vulnerability.
-- Mobile typecheck và lint pass; lint còn 15 warning từ các màn Spin/Restaurant mới, không có error.
+- Mobile typecheck và lint pass; lint hiện còn 28 warning legacy/incoming-main, không có error.
 - Mobile dependency audit hiện báo 25 advisory trong graph Expo; chưa chạy `npm audit fix --force` vì có thể gây breaking change trước demo.
 - Supabase bucket thật chưa smoke test vì chưa có credential/bucket local.
-- Chưa push. Merge commit chỉ được tạo sau review staged diff; push vẫn cần xác nhận riêng của người dùng.
+- Đã push thành công lên `origin/feature/locket-profile`; local và remote đồng bộ tại `da1cd95`.
+
+## 9. Recap toàn bộ quá trình — snapshot hiện hành
+
+Phần này là bản tổng hợp mới nhất và được ưu tiên khi các ghi chú lịch sử phía trên còn chứa số liệu của một giai đoạn cũ.
+
+Tài liệu giải thích code và vị trí dòng hiện tại: [LOCKET_PROFILE_CODE_WALKTHROUGH.md](./LOCKET_PROFILE_CODE_WALKTHROUGH.md).
+
+### 9.1. Prototype mobile ban đầu
+
+- Xây dựng luồng Taste Board bằng technical module `Locket`: camera-only capture, permission camera/GPS, preview và đăng lên feed.
+- Capture lưu thời điểm, GPS đã refresh trước khi chụp và `device_hash` dựa trên App Installation ID đã hash; không lưu installation ID gốc.
+- Prototype ban đầu từng có tên món, tên quán, rating và tags; UI hiện hành đã bỏ các input này, chỉ giữ review tối đa 280 ký tự và visibility `PRIVATE`/`FRIENDS`/`PUBLIC`.
+- Hoàn thiện feed, detail, xóa Taste Board, public profile `/u/:public_id`, profile edit và settings prototype.
+- Thêm loading, empty, error và retry states cho các màn chính.
+- Trong quá trình test iOS Simulator đã xác nhận City Run/Freeway Drive làm GPS thay đổi. Quyết định giữ vị trí hiện tại trong cùng phiên capture khi người dùng reload/chụp lại, không reset state không cần thiết.
+
+Các commit nền:
+
+- `aa2aaae feat(mobile): add Locket and profile prototype flows`
+- `d4270f8 fix(mobile): refresh GPS before Locket capture`
+
+### 9.2. Repository boundary và kết nối mobile/API
+
+- Giữ `LocketRepository` và `ProfileRepository` làm boundary; component không gọi Axios hoặc mock data trực tiếp.
+- Thêm Express API adapters, response mappers và cơ chế chọn API/mock repository bằng `EXPO_PUBLIC_USE_MOCK_REPOSITORIES`.
+- Bổ sung TanStack Query hooks và invalidate feed sau create/delete.
+- Đồng bộ auth flow để mobile có thể đăng nhập, tải profile và đăng Taste Board bằng API thật khi backend sẵn sàng.
+- Thêm unit tests cho mapper, mock repository và mobile flow.
+
+Các commit chính:
+
+- `01491a8 feat(mobile): connect locket and profile repositories`
+- `772dda1 test(locket-profile): add schema API and mobile flow coverage`
+
+### 9.3. Naming ở lớp hiển thị
+
+- Đổi toàn bộ user-facing copy chính từ “Locket” sang “Taste Board”: tab, header, CTA, form submit, loading/error/empty state và profile.
+- Giữ nguyên technical identifiers `Locket`, `locket`, `lockets`, route `/locket/...`, API `/api/v1/lockets`, Prisma model, repository và storage path.
+- Commit: `fae7fb3 feat(mobile): rename locket display to Taste Board`.
+
+### 9.4. Prisma, schema và migration
+
+- Thêm `User.bio` và structured fields cho Locket: `dishName`, `restaurantName`, `note`, `rating`, `tags`.
+- Thêm media metadata: `thumbnailUrl`, `imageWidth`, `imageHeight`, `imageBytes`, `thumbnailBytes`.
+- Tạo canonical baseline `20260808_baseline`, migration media/profile và `migration_lock.toml` cho MySQL.
+- Chuyển SQL bootstrap/validation cũ khỏi Prisma migration history sang `backend/prisma/sql/v5.0/`.
+- Đồng bộ Prisma schema, complete schema SQL, ERD, migration notes và schema contract tests.
+- Khi merge `origin/main`, giữ contract Taste Board hiện hành, nhận Notifications/B2B schema và tạo migration Prisma chuẩn `20260810131814_add_main_modules`.
+- Ba SQL thủ công từ `main` được giữ làm tài liệu tại `backend/prisma/sql/main-merge/`, không để Prisma hiểu nhầm là executable migration.
+- Đã apply thành công 4/4 migrations trên MySQL 8 disposable; database/container test đã được xóa sau khi chạy.
+
+Commit chính: `cc566a8 feat(database): add locket media metadata`.
+
+### 9.5. Backend API và media pipeline
+
+- Hoàn thiện Express routes cho feed/detail/create/update/delete và public media proxy.
+- Upload bắt buộc qua Express multipart; validate JWT, file MIME/size, `device_hash`, `captured_at`, GPS và metadata.
+- Dùng `sharp@^0.35.3` để decode/re-encode JPEG, strip EXIF, chuẩn hóa original và tạo thumbnail.
+- Thêm Supabase server client bằng `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` và bucket `lockets`; service role key chỉ tồn tại ở backend.
+- Bucket contract là private với path:
+  - `lockets/{userId}/{locketId}/original.jpg`
+  - `lockets/{userId}/{locketId}/thumbnail.jpg`
+- `PRIVATE`/`FRIENDS` dùng signed URL TTL 1 giờ; `PUBLIC` đi qua Express endpoint và chỉ trả media khi visibility trong Prisma vẫn là `PUBLIC`.
+- Xóa Storage objects khi xóa Taste Board; cleanup objects nếu Prisma persistence thất bại.
+- Có mock `MediaStorage` cho unit/integration test khi local chưa có Supabase credential.
+
+Commit chính: `7b6d32e feat(backend): implement locket media pipeline`.
+
+### 9.6. Toolchain, lint và dependency security
+
+- Nâng backend baseline lên Node `>=22.13.0 <23`; thêm `.nvmrc`, đồng bộ CI và hai backend Dockerfile sang Node 22.
+- Dùng ESLint 10 flat config và controlled adoption. Hai lỗi source thật đã sửa tối thiểu; legacy violations được bulk-suppress bằng ESLint CLI để vi phạm mới vẫn bị chặn.
+- Sau merge, suppression hiện ghi nhận 149 legacy violations trên các module cũ/incoming-main; phần media pipeline production không cần suppression. Technical debt phải được trả theo module và prune suppression tương ứng.
+- Pin `vitest@4.1.10`, `vite@7.3.6`; xóa package `uuid` và `@types/uuid` không được sử dụng.
+- Backend `npm audit --audit-level=high`: 0 vulnerability; không dùng `npm audit fix --force`.
+
+Commit chính: `242e537 chore(backend): configure lint and secure dependencies`.
+
+### 9.7. Merge `origin/main` và trạng thái Git
+
+- Đã fetch và merge `origin/main` vào `feature/locket-profile`, không rebase/force-push.
+- Giữ implementation Taste Board camera-only và media pipeline đã test; nhận Spin/Group Spin, Friends, Notifications, Profile, B2B, CI và web changes từ `main`.
+- Lockfiles được regenerate từ manifest đã hợp nhất; không chỉnh lockfile thủ công.
+- CI backend dùng Node 22, `prisma migrate deploy` và DB integration tests; không dùng `db push --accept-data-loss`.
+- Merge commit: `da1cd95 merge: integrate origin/main into feature/locket-profile`.
+- Đã push tới `origin/feature/locket-profile`; tại thời điểm push, remote và local commit history đồng bộ.
+- Hai file Expo-generated local không nằm trong commit/push: `apps/mobile/.gitignore` và `apps/mobile/tsconfig.json`. Hai stash dự phòng vẫn được giữ.
+
+### 9.8. Kết quả test gần nhất
+
+- Backend lint: pass.
+- Backend build/typecheck: pass.
+- Prisma validate/generate: pass.
+- MySQL migration: 4/4 pass trên database disposable.
+- Backend tests với DB integration: 14 test files, 66 tests pass, 0 fail.
+- Backend audit: 0 vulnerability.
+- Mobile typecheck: pass.
+- Mobile lint: pass với 28 warning legacy/incoming-main, 0 error.
+- Web lint: pass với warning legacy; web production build: pass.
+- iOS Simulator: Expo bundle thành công trên iPhone 17 Pro, không có runtime error lúc khởi động.
+- Phiên test Simulator hiện dùng `EXPO_PUBLIC_USE_MOCK_REPOSITORIES=true`, vì vậy Taste Board/Profile dùng dữ liệu mock và không ghi vào API/Supabase thật.
+
+### 9.8.1. Spin → Taste Board handoff — đã triển khai
+
+- `spin/check-in.tsx` không còn giữ ảnh Unsplash/review local giả.
+- Check-in chuyển sang `locket/capture` với `restaurantId`, `restaurantName` và `returnTo`.
+- Taste Board capture đi qua `useCreateLocket` → `LocketRepository`, truyền `restaurantId` vào payload domain.
+- Submit thành công trả `tasteBoardId` về check-in; chỉ khi có ID này người dùng mới tiếp tục lucky spin.
+- Capture chặn restaurant ID không phải UUID khi chạy API mode; mock mode vẫn hỗ trợ fixture hiện tại để test UI.
+- Taste Board đã được tối giản: UI mới chỉ có ảnh camera-only, review chữ tùy chọn và visibility. `restaurantId` từ Spin vẫn truyền ngầm; tên món, tên quán, rating và tags chỉ giữ ở API/database để tương thích dữ liệu cũ và không còn hiển thị.
+- Mobile typecheck pass; mobile lint pass với 23 warning legacy, 0 error.
+- Chưa có mobile test runner riêng trong `apps/mobile`; cần manual test hoặc bổ sung test harness cho route handoff.
+
+### 9.9. Phần còn lại trước production/merge vào `main`
+
+- Smoke test Supabase thật: private bucket, upload original/thumbnail, signed URL TTL, public Express proxy, deletion và rollback cleanup.
+- Cấu hình credential/bucket thật ngoài repo; tuyệt đối không commit service role key.
+- Mobile dependency graph hiện còn 25 npm advisories (4 moderate, 20 high, 1 critical) trong Expo ecosystem; cần phân tích reachability và upgrade có kiểm soát sau demo, không chạy `audit fix --force`.
+- Review và bổ sung owner authorization cho B2B Partner endpoints trước khi coi module này production-ready; model hiện chưa thể hiện đầy đủ quan hệ giữa tài khoản đăng nhập và partner record.
+- Trả dần ESLint technical debt và 15 mobile lint warnings theo owner/module.
+- Chạy manual end-to-end bằng API thật: đăng nhập → capture → GPS → upload → feed/detail → visibility → xóa → kiểm tra Storage cleanup.
+- Chạy manual end-to-end Spin → check-in → Taste Board capture → LocketRepository/API → quay lại check-in → lucky spin.
+
+### 9.9.1. Verification ngày 2026-08-13
+
+- Sửa API URL web để tôn trọng `EXPO_PUBLIC_API_URL`; lỗi transport không còn hiển thị thẳng `Network Error`.
+- CORS development hỗ trợ Expo trên private LAN; production dùng `CLIENT_URLS`/`CLIENT_URL` allowlist và cho phép hai upload header `X-Device-ID`, `X-Captured-At`.
+- `run-app.sh` đã phát hiện đúng service dự án khác chiếm cổng `3000` và dừng an toàn.
+- Khôi phục hai route Profile edit/settings bị xóa nhầm tại commit `0e442f2`; mobile typecheck pass.
+- MySQL local có đủ 5 migrations; DB integration trước merge đạt 66/66, backend suite sau merge đạt 69/69.
+- API E2E với in-memory media pass: register `201`, create `201`, public media `200`, private proxy `403`, delete `204`; dữ liệu test được cleanup.
+- Backend audit: 0 vulnerability. Mobile audit vẫn có 25 advisory trong Expo SDK 52; bản vá tổng thể yêu cầu Expo major upgrade nên chưa tự động áp dụng.
+- Đã tích hợp 16 commit từ `origin/main` tại `0078c42` bằng merge commit local `708f888`; không còn commit main chưa merge tại thời điểm kiểm tra.
+- Merge review đã loại auth bypass, anonymous menu access, fake database persistence fallback và route casts `as any`; production bắt buộc `JWT_SECRET`.
+- Production JWT fail-closed check pass khi khởi động module không có `JWT_SECRET`; Google mock login cũng bị chặn trong production.
+- Verification sau merge: MySQL DB integration đạt 15 files/69 tests; API E2E lặp lại đạt register `201`, create `201`, public media `200`, đổi private `200`, public proxy cũ `403`, delete `204`; test user đã được xóa.
+- Supabase staging chưa smoke test vì chưa có project/credential trong môi trường hiện tại.
+
+### 9.10. Trạng thái tổng kết
+
+- Taste Board + Profile MVP: hoàn thiện tốt ở mức prototype tích hợp và automated test. Taste Board mới là post ảnh + review tùy chọn + visibility.
+- Backend media/storage boundary: đã implement đầy đủ, còn phụ thuộc smoke test Supabase thật.
+- Database/migrations: đã xác minh trên MySQL disposable.
+- Branch hiện tại: đã merge `origin/main` và tạo commit local; chưa push các commit mới.
+- Spec `brand/prompts.md` và sitemap đã được đồng bộ theo Taste Board tối giản sau khi người dùng duyệt.
