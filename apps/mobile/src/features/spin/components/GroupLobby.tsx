@@ -84,7 +84,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
         <View style={styles.aiToolsSection}>
           <TouchableOpacity
             style={styles.aiButton}
-            onPress={() => router.push({ pathname: '/spin/menu-capture', params: { target: 'group' } })}
+            onPress={() => router.push('/spin/menu-capture?target=group' as any)}
           >
             <Text style={styles.aiButtonIcon}>📷</Text>
             <Text style={styles.aiButtonText}>Quét Menu AI</Text>
@@ -92,7 +92,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
 
           <TouchableOpacity
             style={[styles.aiButton, styles.aiVoiceButton]}
-            onPress={() => router.push({ pathname: '/spin/voice-pick', params: { target: 'group' } })}
+            onPress={() => router.push('/spin/voice-pick?target=group' as any)}
           >
             <Text style={styles.aiButtonIcon}>🎤</Text>
             <Text style={styles.aiVoiceButtonText}>Voice Pick Cá Nhân</Text>

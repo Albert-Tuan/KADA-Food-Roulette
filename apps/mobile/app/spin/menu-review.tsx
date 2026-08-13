@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator,
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { menuApi, MenuItem } from '../../src/api/endpoints/menu';
+import { Href } from 'expo-router';
 import { preferencesApi, UserPreference } from '../../src/api/endpoints/preferences';
 import { useSpinStore } from '../../src/stores/spinStore';
 
@@ -160,7 +161,7 @@ export default function MenuReviewScreen() {
 
     // Navigate to the actual spinning wheel with menu items
     router.push({
-      pathname: '/spin/menu-wheel',
+      pathname: '/spin/menu-wheel' as any,
       params: {
         menuItems: JSON.stringify(finalItems),
         fromMenuCapture: 'true',
@@ -333,7 +334,7 @@ export default function MenuReviewScreen() {
         <TouchableOpacity
           onPress={() =>
             router.push({
-              pathname: '/spin/voice-pick',
+              pathname: '/spin/voice-pick' as any,
               params: {
                 menuItems: JSON.stringify(getFilteredItems()),
               },

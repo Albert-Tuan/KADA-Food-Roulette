@@ -95,7 +95,7 @@ export class PersonalizationService {
       let score = this.calculateBaseScore(item);
       const warnings: string[] = [];
       const itemTags = new Set<string>(item.tags || []);
-
+      
       const subDishesText = (item.subDishes || []).join(' ');
       const ingredientsText = (item.ingredients || []).join(' ');
       const fullText = `${item.name} ${subDishesText} ${ingredientsText}`;
@@ -116,8 +116,8 @@ export class PersonalizationService {
       }
 
       // 2. Spiciness check across item name & all sub-dishes
-      const hasSpicyKeywords = normalizedFullText.includes('cay') ||
-                               normalizedFullText.includes('ot') ||
+      const hasSpicyKeywords = normalizedFullText.includes('cay') || 
+                               normalizedFullText.includes('ot') || 
                                normalizedFullText.includes('sate') ||
                                normalizedFullText.includes('wasabi') ||
                                normalizedFullText.includes('tu xuyen') ||

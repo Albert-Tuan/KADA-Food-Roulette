@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { menuController } from './menu.controller';
 import { voiceController } from './voice.controller';
-import { requireJWT } from '../../shared/middleware/auth.middleware';
+import { optionalAuth } from '../../middleware/auth.js';
 
 const router = Router();
 
@@ -39,11 +39,11 @@ const upload = multer({
   },
 });
 
-router.post('/capture', requireJWT, upload.array('menuImages', 5), menuController.capture);
-router.post('/', requireJWT, upload.array('menuImages', 5), menuController.capture);
-router.post('/voice-pick', requireJWT, upload.single('audioFile'), voiceController.processVoicePick);
-router.post('/:menuId/verify', requireJWT, menuController.verify);
-router.get('/restaurant/:restaurantId', requireJWT, menuController.getByRestaurant);
-router.get('/:menuId', requireJWT, menuController.getById);
+router.post('/capture', optionalAuth, upload.any(), menuController.capture);
+router.post('/', optionalAuth, upload.any(), menuController.capture);
+router.post('/voice-pick', optionalAuth, upload.single('audioFile'), voiceController.processVoicePick);
+router.post('/:menuId/verify', optionalAuth, menuController.verify);
+router.get('/restaurant/:restaurantId', optionalAuth, menuController.getByRestaurant);
+router.get('/:menuId', optionalAuth, menuController.getById);
 
 export default router;

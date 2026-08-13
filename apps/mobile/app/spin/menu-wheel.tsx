@@ -29,8 +29,8 @@ export default function MenuWheelScreen() {
     if (params.menuItems) {
       try {
         parsed = typeof params.menuItems === 'string' ? JSON.parse(params.menuItems) : params.menuItems;
-      } catch (error) {
-        console.error('Failed to parse menuItems param:', error);
+      } catch (e) {
+        console.error('Failed to parse menuItems param:', e);
       }
     }
 
@@ -39,7 +39,7 @@ export default function MenuWheelScreen() {
       if (saved) {
         try {
           parsed = JSON.parse(saved);
-        } catch {}
+        } catch (e) {}
       }
     }
 
@@ -114,7 +114,7 @@ export default function MenuWheelScreen() {
       try {
         await window.navigator.clipboard.writeText(text);
         showToast('📋 Đã sao chép danh sách món! Gửi ngay cho nhóm bạn nhậu 🚀');
-      } catch {
+      } catch (e) {
         showToast('Đã tạo danh sách món thành công');
       }
     }
@@ -124,7 +124,7 @@ export default function MenuWheelScreen() {
         title: '🍻 Danh sách món ăn nhậu Food Roulette',
         message: text,
       });
-    } catch {}
+    } catch (e) {}
   };
 
   const handleGoBack = () => {

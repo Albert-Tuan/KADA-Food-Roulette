@@ -22,18 +22,18 @@ export const MenuDishSpinWheel: React.FC = () => {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        } catch {}
+        } catch (e) {}
       }
     }
     return [];
   };
 
-  const [dishes] = useState<MenuItem[]>(getInitialDishes());
+  const [dishes, setDishes] = useState<MenuItem[]>(getInitialDishes());
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [selectedDishes, setSelectedDishes] = useState<MenuItem[]>([]);
   const [lastWonDish, setLastWonDish] = useState<MenuItem | null>(null);
-
+  
   // Custom Modal & Toast States
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [copiedToast, setCopiedToast] = useState(false);

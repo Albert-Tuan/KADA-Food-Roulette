@@ -62,10 +62,10 @@ export const useSpinStore = create<SpinState>((set, get) => ({
 
     if (typeof item === 'string') {
       candidateName = item;
-    } else {
-      candidateName = item.name;
-      if (item.category) category = item.category;
-      if (item.imageUrl) imageUrl = item.imageUrl;
+    } else if (item && typeof item === 'object') {
+      candidateName = typeof item.name === 'string' ? item.name : String((item as any).name || 'Món ăn');
+      if ((item as any).category) category = (item as any).category;
+      if ((item as any).imageUrl) imageUrl = (item as any).imageUrl;
     }
 
     const newCustom: Restaurant = {

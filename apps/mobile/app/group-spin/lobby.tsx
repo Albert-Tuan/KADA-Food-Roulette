@@ -10,7 +10,7 @@ export default function GroupSpinLobbyScreen() {
 
   const handleSpinEnd = (winner: Restaurant) => {
     router.push({
-      pathname: '/spin/result',
+      pathname: '/spin/result' as any,
       params: {
         restaurantId: winner.id,
         restaurantName: winner.name,

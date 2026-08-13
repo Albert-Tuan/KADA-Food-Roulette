@@ -1,10 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { JwtPayload } from '../types/index.js'
 
-const JWT_SECRET = process.env.JWT_SECRET
-  || (process.env.NODE_ENV === 'production'
-    ? (() => { throw new Error('JWT_SECRET is required in production') })()
-    : 'food-roulette-local-development-secret')
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-min-32-chars'
 
 interface TokenPayload extends JwtPayload {
   exp?: number

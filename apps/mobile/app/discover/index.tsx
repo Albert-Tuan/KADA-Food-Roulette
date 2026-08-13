@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
   Linking,
   Platform,
+  StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -24,7 +26,7 @@ if (Platform.OS !== 'web') {
     MapView = RNMaps.default;
     Marker = RNMaps.Marker;
     PROVIDER_GOOGLE = RNMaps.PROVIDER_GOOGLE;
-  } catch {
+  } catch (e) {
     // react-native-maps fallback
   }
 }

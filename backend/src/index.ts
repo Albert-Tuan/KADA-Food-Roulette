@@ -24,7 +24,7 @@ const app: Express = express()
 const PORT = process.env.PORT || 3000
 
 // Security middleware
-app.use(helmet())
+app.use(helmet({ crossOriginResourcePolicy: false, crossOriginEmbedderPolicy: false }))
 app.use(requestContext)
 
 // CORS

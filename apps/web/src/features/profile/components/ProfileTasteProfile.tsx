@@ -24,10 +24,10 @@ const ProfileTasteProfile: React.FC = () => {
       <section className="flex flex-col items-center mt-4">
         <div className="relative mb-stack-md">
           <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-surface-white shadow-md">
-            <img
-              alt="Avatar"
-              className="w-full h-full object-cover"
-              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200"
+            <img 
+              alt="Avatar" 
+              className="w-full h-full object-cover" 
+              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200" 
             />
           </div>
           <div className="absolute bottom-0 right-0 w-8 h-8 bg-surface-white rounded-full flex items-center justify-center shadow-sm border border-subtle-gray">
