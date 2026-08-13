@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { API_TIMEOUT, API_URL as ENV_API_URL } from '@/lib/constants';
 
-const API_URL = Platform.OS === 'web' ? 'http://localhost:3000/api/v1' : (ENV_API_URL || 'http://192.168.1.181:3000/api/v1');
+const API_URL = ENV_API_URL;
 
 const getStorageItem = async (key: string) => {
   if (Platform.OS === 'web') {
@@ -58,6 +58,12 @@ apiClient.interceptors.response.use(
 
 export const getApiErrorMessage = (error: unknown, defaultMessage: string = 'Đã có lỗi xảy ra'): string => {
   if (axios.isAxiosError(error)) {
+    if (error.code === 'ECONNABORTED') {
+      return 'Kết nối API quá thời gian. Bạn kiểm tra backend và thử lại nhé.';
+    }
+    if (!error.response) {
+      return 'Không kết nối được API. Bạn kiểm tra địa chỉ backend, Wi-Fi và CORS rồi thử lại nhé.';
+    }
     return error.response?.data?.message || error.message || defaultMessage;
   }
   return error instanceof Error ? error.message : defaultMessage;
