@@ -744,7 +744,7 @@ Commit chính: `242e537 chore(backend): configure lint and secure dependencies`.
 - API E2E với in-memory media pass: register `201`, create `201`, public media `200`, private proxy `403`, delete `204`; dữ liệu test được cleanup.
 - Backend audit: 0 vulnerability. Mobile audit vẫn có 25 advisory trong Expo SDK 52; bản vá tổng thể yêu cầu Expo major upgrade nên chưa tự động áp dụng.
 - Đã tích hợp 16 commit từ `origin/main` tại `0078c42` bằng merge commit local `708f888`; không còn commit main chưa merge tại thời điểm kiểm tra.
-- Merge review đã loại auth bypass, anonymous menu access, fake database persistence fallback và route casts `as any`; production bắt buộc `JWT_SECRET`.
+- Merge review ban đầu đã thay đổi Auth/Menu ngoài ownership; commit hòa giải `0b9b4f7` sau đó đưa toàn bộ Auth/Menu/Preferences về đúng `origin/main` để tránh ghi đè code team.
 - Production JWT fail-closed check pass khi khởi động module không có `JWT_SECRET`; Google mock login cũng bị chặn trong production.
 - Verification sau merge: MySQL DB integration đạt 15 files/69 tests; API E2E lặp lại đạt register `201`, create `201`, public media `200`, đổi private `200`, public proxy cũ `403`, delete `204`; test user đã được xóa.
 - Supabase staging chưa smoke test vì chưa có project/credential trong môi trường hiện tại.
@@ -756,3 +756,13 @@ Commit chính: `242e537 chore(backend): configure lint and secure dependencies`.
 - Database/migrations: đã xác minh trên MySQL disposable.
 - Branch hiện tại: đã merge `origin/main` và tạo commit local; chưa push các commit mới.
 - Spec `brand/prompts.md` và sitemap đã được đồng bộ theo Taste Board tối giản sau khi người dùng duyệt.
+
+### 9.11. Làm sạch branch trước PR — 2026-08-13
+
+- Commit `0b9b4f7` khôi phục Auth, Menu, Preferences, personalization, Web và UI Spin/Menu ngoài phạm vi về đúng `origin/main`; PR Locket/Profile không đổi API các module này.
+- Commit `a60f244` bổ sung Prisma seed dùng transaction/upsert, bcrypt hash, production guard và dữ liệu demo tối thiểu; không tạo Locket giả.
+- Commit `824643f` thêm `API_PORT` cho `run-app.sh`; health check, backend và Expo dùng cùng cổng. Workaround đã chốt: `API_PORT=3001 ./scripts/run-app.sh simulator`.
+- Hai diff Expo-generated `apps/mobile/.gitignore` và `apps/mobile/package-lock.json` được giữ ngoài PR trong stash có tên và phải khôi phục sau khi hoàn tất.
+- Auth-state/redirect khi gặp `401` không thuộc scope; manual E2E phải đăng nhập tài khoản seed bằng session mới.
+- Supabase staging và iPhone thật là follow-up sau merge, không chặn PR; owner Supabase là Thành Nam + Trường.
+- Quality gates code gần nhất: backend lint/typecheck/build/69 tests/Prisma validate pass; mobile lint 0 error và typecheck pass; web lint/build pass. Cần chạy lại toàn bộ sau commit docs và hoàn tất manual Simulator E2E trước khi xin push.

@@ -2,7 +2,7 @@
 
 > Cập nhật: 2026-08-13
 > Branch: `feature/locket-profile`
-> Snapshot: HEAD `708f888`; đã chứa `origin/main` tại `0078c42`; chưa push các commit mới.
+> Snapshot: sau commit code `824643f`; đã chứa `origin/main` tại `0078c42`; chưa push các commit mới.
 
 ## 1. Bắt đầu session mới
 
@@ -25,13 +25,13 @@ Không stage, ghi đè hoặc xóa thay đổi chưa commit. Không push nếu c
 
 ## 2. Trạng thái Git
 
-- Năm checkpoint local cho Taste Board, backend/schema, network/security, Profile routes và spec đã được tạo.
+- Các checkpoint local cho Taste Board, backend/schema, network, Profile routes và spec đã được tạo.
 - Merge commit `708f888` đã tích hợp 16 commit từ `origin/main` bằng `--no-commit` rồi review trước khi commit.
-- Conflict tại capture giữ Spin handoff; conflict CORS giữ production allowlist và custom upload headers.
-- Auth bypass, anonymous menu access và fake persistence fallback từ incoming-main đã bị loại khỏi kết quả merge.
+- Commit hòa giải `0b9b4f7` đưa Auth, Menu, Preferences, personalization và UI ngoài ownership về đúng `origin/main`; PR không thay đổi contract các module này.
+- Conflict tại capture giữ Spin handoff; CORS giữ production allowlist và custom upload headers để upload từ Expo/LAN.
 - `backend/.env` vẫn còn trên máy nhưng đã ngừng track và được ignore. Credential từng tồn tại trong lịch sử Git cần được rotate nếu đã dùng ngoài local.
-- Hai thay đổi Expo-generated của người dùng vẫn chưa commit: `apps/mobile/.gitignore` và `apps/mobile/package-lock.json`.
-- Các tài liệu progress/handoff/run/walkthrough đang là thay đổi local chờ commit cuối.
+- Hai thay đổi Expo-generated của người dùng được giữ ngoài PR trong stash `user-expo-generated-changes-before-merge-cleanup`; phải khôi phục sau quality gate/push.
+- Seed development idempotent nằm ở commit `a60f244`; hỗ trợ `API_PORT` nằm ở commit `824643f`.
 
 ## 3. Contract Taste Board đã chốt
 
@@ -60,9 +60,10 @@ API mode yêu cầu `restaurantId` UUID; mock mode vẫn nhận fixture ID để
 - Transport failure được đổi sang hướng dẫn tiếng Việt thay vì hiển thị `Network Error` thô.
 - Development CORS nhận localhost/private LAN trên các port Expo đã biết.
 - Production CORS chỉ nhận `CLIENT_URLS` hoặc `CLIENT_URL`; cho phép `X-Device-ID` và `X-Captured-At`.
-- `run-app.sh` chỉ chấp nhận `/health` có đúng payload Food Roulette và dừng nếu port 3000 thuộc service khác.
-- Production bắt buộc `JWT_SECRET`; Google mock login bị từ chối trong production.
-- Profile routes `/profile/edit`, `/profile/settings` và `/locket/[id]` đã được khôi phục/đăng ký; route casts `as any` từ main đã được loại.
+- `run-app.sh` chỉ chấp nhận `/health` có đúng payload Food Roulette và dừng nếu cổng đã chọn thuộc service khác.
+- Có thể dùng `API_PORT=3001 ./scripts/run-app.sh simulator` khi cổng `3000` thuộc project khác.
+- Auth giữ nguyên theo `origin/main` vì ngoài ownership của Locket/Profile.
+- Profile routes `/profile/edit`, `/profile/settings` và `/locket/[id]` đã được khôi phục/đăng ký.
 
 ## 6. Verification gần nhất
 
@@ -75,12 +76,14 @@ API mode yêu cầu `restaurantId` UUID; mock mode vẫn nhận fixture ID để
 - Backend audit: 0 vulnerability.
 - Mobile audit: 25 advisory trong Expo SDK 52; chưa dùng `npm audit fix --force` vì fix tổng thể yêu cầu major upgrade.
 - API E2E sau merge: register 201 → create 201 → public media 200 → đổi private 200 → public proxy cũ 403 → delete 204; test user đã cleanup.
-- Production JWT fail-closed check: pass khi không cung cấp `JWT_SECRET`.
+- Seed chạy lặp hai lần thành công: đúng 2 user, 1 friendship và 3 restaurant; production guard từ chối trước khi ghi DB.
+- API health và đăng nhập tài khoản seed trên cổng `3001`: 200; iOS bundle thành công.
 
 ## 7. Còn lại
 
-- Manual E2E trên Simulator/thiết bị: capture, visibility, delete và Spin handoff.
-- Supabase staging smoke test: private bucket `lockets`, original/thumbnail, signed URL 1 giờ, public proxy, visibility transition, delete và rollback cleanup.
+- Manual E2E trên Simulator vẫn cần hoàn tất bằng session mới: capture, visibility, delete và Spin handoff. Không xử lý redirect `401` trong PR này.
+- Supabase staging smoke test là follow-up sau merge: private bucket `lockets`, original/thumbnail, signed URL 1 giờ, public proxy, visibility transition, delete và rollback cleanup; owner Thành Nam + Trường.
+- Test iPhone thật là follow-up do Expo SDK/Developer Mode; Simulator + API E2E là gate hiện tại.
 - Chưa có Supabase project/credential trong môi trường hiện tại. Không đưa service-role key vào mobile, Git, log hoặc tài liệu.
 - Review B2B owner authorization trước khi coi toàn repo production-ready.
 - Chưa push; phải xin xác nhận riêng trước khi push.
@@ -93,6 +96,7 @@ API mode yêu cầu `restaurantId` UUID; mock mode vẫn nhận fixture ID để
 
 ./scripts/setup-app.sh api
 ./scripts/run-app.sh simulator
+API_PORT=3001 ./scripts/run-app.sh simulator
 
 ./scripts/run-app.sh device <MAC_LAN_IPV4>
 ```

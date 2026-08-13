@@ -11,6 +11,7 @@ Tài liệu này mô tả ba chế độ chạy được hỗ trợ bởi các s
 | Test camera/GPS trên thiết bị thật | `./scripts/run-app.sh device <MAC_LAN_IPV4>` | Tự khởi động |
 
 Các script không tự tạo, sửa hoặc ghi đè file `.env`.
+Mặc định API dùng cổng `3000`. Có thể đặt `API_PORT` khi cổng này đang được ứng dụng khác sử dụng.
 
 ## 2. Yêu cầu chung
 
@@ -87,6 +88,15 @@ cd backend
 npm run seed
 ```
 
+Seed dùng `upsert`, có thể chạy lại mà không xóa dữ liệu đang có. Script tạo:
+
+- Tài khoản chính: `test@foodroulette.app` / `password123`.
+- Tài khoản bạn bè: `friend@foodroulette.app` / `password123`.
+- Quan hệ bạn bè đã chấp nhận để kiểm tra visibility `FRIENDS`.
+- Preference, Spin Wallet và ba nhà hàng demo cơ bản.
+
+Seed không tạo Locket giả vì ảnh Locket cần đi qua API upload và storage. Script sẽ từ chối chạy khi `NODE_ENV=production`.
+
 ## 4. Chạy bằng mock repositories
 
 ```bash
@@ -112,6 +122,14 @@ Phù hợp để kiểm tra layout, navigation và trạng thái UI. Chế độ
 ```bash
 ./scripts/run-app.sh simulator
 ```
+
+Nếu cổng `3000` đang bị service khác chiếm:
+
+```bash
+API_PORT=3001 ./scripts/run-app.sh simulator
+```
+
+Script dùng cùng `API_PORT` cho health check, backend và `EXPO_PUBLIC_API_URL`; không cần sửa `backend/.env`.
 
 Script sẽ:
 
@@ -149,6 +167,12 @@ Ví dụ kết quả là `192.168.1.20`:
 
 ```bash
 ./scripts/run-app.sh device 192.168.1.20
+```
+
+Nếu cần đổi cổng API:
+
+```bash
+API_PORT=3001 ./scripts/run-app.sh device 192.168.1.20
 ```
 
 Nếu không truyền IP, script sẽ thử tự phát hiện IPv4 của interface mạng mặc định, rồi fallback sang `en0`/`en1`:
