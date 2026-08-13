@@ -7,7 +7,7 @@ interface SpinState {
   customCandidates: Restaurant[];
   currentResult: Restaurant | null;
   setFilters: (filters: Partial<SpinFilters>) => void;
-  addCustomCandidate: (name: string) => void;
+  addCustomCandidate: (item: string | { name: string; category?: string; imageUrl?: string }) => void;
   removeCustomCandidate: (id: string) => void;
   setCurrentResult: (restaurant: Restaurant | null) => void;
   spin: (index?: number) => void;
@@ -55,16 +55,28 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     };
   }),
 
-  addCustomCandidate: (name) => set((state) => {
+  addCustomCandidate: (item) => set((state) => {
+    let candidateName = 'Món ăn';
+    let category = 'Tự chọn';
+    let imageUrl = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400';
+
+    if (typeof item === 'string') {
+      candidateName = item;
+    } else {
+      candidateName = item.name;
+      if (item.category) category = item.category;
+      if (item.imageUrl) imageUrl = item.imageUrl;
+    }
+
     const newCustom: Restaurant = {
-      id: `custom-${Date.now()}`,
-      name,
-      category: 'Tự chọn',
+      id: `custom-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      name: candidateName,
+      category,
       rating: 5.0,
       totalReviews: 1,
       distance: 0,
       priceLevel: 1,
-      imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400',
+      imageUrl,
     };
     const newCustoms = [...state.customCandidates, newCustom];
     return {

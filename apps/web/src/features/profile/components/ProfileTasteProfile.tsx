@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const ProfileTasteProfile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'locket' | 'achievements'>('locket');
-  
+
   // State for toggles
   const [allergies, setAllergies] = useState({
     seafood: false,
@@ -18,23 +19,32 @@ const ProfileTasteProfile: React.FC = () => {
 
   return (
     <main className="w-full max-w-lg mx-auto px-margin-mobile space-y-stack-lg pb-stack-lg">
-      
+
       {/* User Profile Section */}
       <section className="flex flex-col items-center mt-4">
         <div className="relative mb-stack-md">
           <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-surface-white shadow-md">
-            <img 
-              alt="Linh Nguyễn Avatar" 
-              className="w-full h-full object-cover" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzdpLQwbET5oIrmx2HMR1agserG2CL_KEaDkKAKrZQ4bwvgqQBRvGZWQtc_o8tuee-kgx95PW6wPPag1Zq2uwUVnVuw9JbCqz_A9wD7n0DHER6rpgUgj-Pl9SG3adVWE-IVhwikrN1xFki09DLu0ukA4J7ode5PTSdZuFBo1mmC6_NI_MLf8jzdD6d5jPN16hz0_7d6hEsT2aZ7i6PALsf8g1Mgrf9LuoAkEPA5awpT0WtUgOytqVycg" 
+            <img
+              alt="Avatar"
+              className="w-full h-full object-cover"
+              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200"
             />
           </div>
           <div className="absolute bottom-0 right-0 w-8 h-8 bg-surface-white rounded-full flex items-center justify-center shadow-sm border border-subtle-gray">
             <span className="material-symbols-outlined text-streak-gold text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
           </div>
         </div>
-        <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-background">Linh Nguyễn</h2>
-        <p className="font-body-md text-body-md text-on-surface-variant">@linh_foodie</p>
+        <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-background">Bạn Nhậu Demo</h2>
+        <p className="font-body-md text-body-md text-on-surface-variant">@testuser2026</p>
+
+        {/* Quick Link to Preference Settings */}
+        <Link
+          to="/preferences"
+          className="mt-3 px-4 py-2 rounded-xl bg-amber-100/80 hover:bg-amber-200/80 text-amber-800 font-bold text-xs flex items-center gap-1.5 transition-colors border border-amber-200/80 shadow-xs"
+        >
+          <span className="material-symbols-outlined text-sm">tune</span>
+          ⚙️ Tùy Chỉnh Khẩu Vị AI
+        </Link>
       </section>
 
       {/* Stats Bar */}

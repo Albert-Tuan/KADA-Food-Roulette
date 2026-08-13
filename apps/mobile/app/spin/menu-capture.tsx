@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, ActivityIndicator, Alert, SafeAreaView, ScrollView, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, TouchableOpacity, Image, ActivityIndicator, Alert, SafeAreaView, ScrollView } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { menuApi, MenuCaptureResponse } from '../../src/api/endpoints/menu';
 
-const { width } = Dimensions.get('window');
-
 export default function MenuCaptureScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [imageUris, setImageUris] = useState<string[]>([]);
-  const [restaurantId, setRestaurantId] = useState<string>('rest-1');
+  const restaurantId = 'rest-1';
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -50,14 +49,19 @@ export default function MenuCaptureScreen() {
 
       const res: MenuCaptureResponse = await menuApi.captureMenu(restaurantId, imageUris);
 
+      const paramsToPass: Record<string, string> = {
+        menuId: res.menuId,
+        initialItems: JSON.stringify(res.items),
+        confidence: res.confidence.toString(),
+        previewUrl: imageUris[0],
+      };
+      if (params.target && typeof params.target === 'string') {
+        paramsToPass.target = params.target;
+      }
+
       router.push({
-        pathname: '/spin/menu-review' as any,
-        params: {
-          menuId: res.menuId,
-          initialItems: JSON.stringify(res.items),
-          confidence: res.confidence.toString(),
-          previewUrl: imageUris[0],
-        },
+        pathname: '/spin/menu-review',
+        params: paramsToPass,
       });
     } catch (err: any) {
       console.error('Menu capture API error:', err);

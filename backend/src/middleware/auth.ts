@@ -3,6 +3,11 @@ import jwt from 'jsonwebtoken'
 import { JwtPayload } from '../types/index.js'
 import { AppError } from './errorHandler.js'
 
+const JWT_SECRET = process.env.JWT_SECRET
+  || (process.env.NODE_ENV === 'production'
+    ? (() => { throw new Error('JWT_SECRET is required in production') })()
+    : 'food-roulette-local-development-secret')
+
 declare global {
   namespace Express {
     interface Request {
@@ -29,10 +34,7 @@ export const authenticate = (
       throw new AppError('No token provided', 401)
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'fallback-secret'
-    ) as JwtPayload
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload
 
     req.user = decoded
     next()
@@ -60,10 +62,7 @@ export const optionalAuth = (
 
   try {
     const token = authHeader.split(' ')[1]
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'fallback-secret'
-    ) as JwtPayload
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload
     req.user = decoded
   } catch {
     // Token invalid, continue without auth

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import { useSpinStore } from '../../../stores/spinStore';
 import { FoodRoulette } from './FoodRoulette';
@@ -12,6 +13,7 @@ interface GroupLobbyProps {
 }
 
 export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
+  const router = useRouter();
   const { members } = useGroupSpinStore();
   const {
     candidates,
@@ -76,6 +78,25 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
           </View>
           <Text style={styles.title}>Phòng Chờ (Lobby)</Text>
           <Text style={styles.subtitle}>Góp món cùng nhau, chốt nhanh kèo nhậu!</Text>
+        </View>
+
+        {/* Quick AI Tools Bar */}
+        <View style={styles.aiToolsSection}>
+          <TouchableOpacity
+            style={styles.aiButton}
+            onPress={() => router.push({ pathname: '/spin/menu-capture', params: { target: 'group' } })}
+          >
+            <Text style={styles.aiButtonIcon}>📷</Text>
+            <Text style={styles.aiButtonText}>Quét Menu AI</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.aiButton, styles.aiVoiceButton]}
+            onPress={() => router.push({ pathname: '/spin/voice-pick', params: { target: 'group' } })}
+          >
+            <Text style={styles.aiButtonIcon}>🎤</Text>
+            <Text style={styles.aiVoiceButtonText}>Voice Pick Cá Nhân</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Custom Food Inputs */}
@@ -243,5 +264,45 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontSize: 13,
     color: '#292524',
+  },
+  aiToolsSection: {
+    flexDirection: 'row',
+    gap: 10,
+    marginHorizontal: 16,
+    marginTop: 16,
+  },
+  aiButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1.5,
+    borderColor: '#F59E0B',
+    paddingVertical: 12,
+    borderRadius: 14,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  aiVoiceButton: {
+    backgroundColor: '#FFF7ED',
+    borderColor: '#EA580C',
+  },
+  aiButtonIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  aiButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  aiVoiceButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#C2410C',
   },
 });
