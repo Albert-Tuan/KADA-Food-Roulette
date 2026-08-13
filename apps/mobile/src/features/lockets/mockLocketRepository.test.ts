@@ -6,11 +6,7 @@ test('supports the mobile create, feed, detail, and delete flow', async () => {
   const created = await mockLocketRepository.create({
     localImageUri: 'file:///camera/locket.jpg',
     mimeType: 'image/jpeg',
-    dishName: 'Bánh cuốn',
-    restaurantName: 'Quán Nhà',
     note: 'Vừa chụp xong',
-    rating: 5,
-    tags: ['bữa sáng'],
     visibility: 'PRIVATE',
     capturedAt: new Date().toISOString(),
     location: { latitude: 10.7769, longitude: 106.7009 },
@@ -19,7 +15,7 @@ test('supports the mobile create, feed, detail, and delete flow', async () => {
 
   const mine = await mockLocketRepository.getFeed('MINE');
   assert.equal(mine.some((locket) => locket.id === created.id), true);
-  assert.equal((await mockLocketRepository.getById(created.id)).dishName, 'Bánh cuốn');
+  assert.equal((await mockLocketRepository.getById(created.id)).note, 'Vừa chụp xong');
 
   const updated = await mockLocketRepository.update(created.id, {
     restaurantName: null,

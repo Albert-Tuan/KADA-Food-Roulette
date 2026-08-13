@@ -23,12 +23,12 @@ export interface Locket {
   ownerId: string;
   author: LocketAuthor;
   imageUrl: string;
-  dishName: string;
+  dishName?: string;
   restaurantId?: string;
   restaurantName?: string;
   note?: string;
-  rating: number;
-  tags: string[];
+  rating?: number;
+  tags?: string[];
   visibility: LocketVisibility;
   capturedAt: string;
   location?: LocketLocation;
@@ -40,12 +40,8 @@ export interface Locket {
 export interface CreateLocketInput {
   localImageUri: string;
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
-  dishName: string;
   restaurantId?: string;
-  restaurantName?: string;
   note?: string;
-  rating: number;
-  tags: string[];
   visibility: LocketVisibility;
   capturedAt: string;
   location: LocketLocation;

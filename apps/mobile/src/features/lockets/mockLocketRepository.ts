@@ -92,23 +92,13 @@ let lockets: Locket[] = [
   },
 ];
 
-function validateLocketInput(input: CreateLocketInput): string[] {
-  const normalizedTags = input.tags.map((tag) => tag.trim()).filter(Boolean);
+function validateLocketInput(input: CreateLocketInput): void {
   const capturedAt = new Date(input.capturedAt).getTime();
   const timestampDelta = Math.abs(Date.now() - capturedAt);
 
   if (!/^[a-f0-9]{64}$/.test(input.deviceHash)) throw new Error('Định danh thiết bị không hợp lệ.');
   if (!input.localImageUri || !['image/jpeg', 'image/png', 'image/webp'].includes(input.mimeType)) {
     throw new Error('Ảnh Taste Board không hợp lệ.');
-  }
-  if (!input.dishName.trim() || input.dishName.trim().length > 80) {
-    throw new Error('Tên món phải có từ 1 đến 80 ký tự.');
-  }
-  if ((input.restaurantName?.trim().length ?? 0) > 120) {
-    throw new Error('Tên nhà hàng tối đa 120 ký tự.');
-  }
-  if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) {
-    throw new Error('Rating phải từ 1 đến 5.');
   }
   if ((input.note?.length ?? 0) > MAX_CAPTION_LENGTH) {
     throw new Error(`Note tối đa ${MAX_CAPTION_LENGTH} ký tự.`);
@@ -118,13 +108,6 @@ function validateLocketInput(input: CreateLocketInput): string[] {
   }
   if (!Number.isFinite(capturedAt) || timestampDelta > LOCKET_TIMESTAMP_TOLERANCE_SECONDS * 1000) {
     throw new Error('Ảnh đã quá thời gian xác nhận. Bạn chụp lại nhé.');
-  }
-  if (
-    normalizedTags.length > 5
-    || normalizedTags.some((tag) => tag.length > 24)
-    || new Set(normalizedTags.map((tag) => tag.toLocaleLowerCase('vi'))).size !== normalizedTags.length
-  ) {
-    throw new Error('Tags không hợp lệ hoặc bị trùng.');
   }
   if (
     !Number.isFinite(input.location.latitude)
@@ -137,7 +120,6 @@ function validateLocketInput(input: CreateLocketInput): string[] {
     throw new Error('Vị trí không hợp lệ.');
   }
 
-  return normalizedTags;
 }
 
 function sortChronologically(items: Locket[]): Locket[] {
@@ -165,7 +147,7 @@ class MockLocketRepository implements LocketRepository {
   }
 
   async create(input: CreateLocketInput): Promise<Locket> {
-    const normalizedTags = validateLocketInput(input);
+    validateLocketInput(input);
     const locket: Locket = {
       id: `local-${Date.now()}`,
       ownerId: CURRENT_USER_ID,
@@ -176,12 +158,8 @@ class MockLocketRepository implements LocketRepository {
         avatarUrl: 'https://i.pravatar.cc/160?img=12',
       },
       imageUrl: input.localImageUri,
-      dishName: input.dishName.trim(),
       restaurantId: input.restaurantId,
-      restaurantName: input.restaurantName?.trim(),
       note: input.note?.trim(),
-      rating: input.rating,
-      tags: normalizedTags,
       visibility: input.visibility,
       capturedAt: input.capturedAt,
       location: input.location,

@@ -107,22 +107,12 @@ function LocketCard({ locket }: { locket: Locket }) {
             <Text className="font-bold text-secondary-900">{locket.author.displayNamePublic}</Text>
             <Text className="text-secondary-500 text-xs mt-1">{formatRelativeTime(locket.capturedAt)}</Text>
           </View>
-          <Text className="text-primary font-semibold">{'★'.repeat(locket.rating)}</Text>
         </View>
 
         <Image source={{ uri: locket.imageUrl }} className="w-full aspect-square bg-secondary-100" resizeMode="cover" />
 
         <View className="p-4">
-          <Text className="text-xl font-bold text-secondary-900">{locket.dishName}</Text>
-          {locket.restaurantName ? <Text className="text-primary-800 mt-1">{locket.restaurantName}</Text> : null}
           {locket.note ? <Text className="text-secondary-700 leading-5 mt-3">{locket.note}</Text> : null}
-          <View className="flex-row flex-wrap gap-2 mt-3">
-            {locket.tags.map((tag) => (
-              <View key={tag} className="rounded-full bg-primary-50 px-3 py-1.5">
-                <Text className="text-primary-800 text-xs">#{tag}</Text>
-              </View>
-            ))}
-          </View>
         </View>
       </TouchableOpacity>
     </Link>

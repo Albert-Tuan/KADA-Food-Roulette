@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,21 +6,17 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSpinStore } from '../../src/stores/spinStore';
 
 export default function PersonalCheckInScreen() {
   const router = useRouter();
+  const { tasteBoardId: tasteBoardIdParam } = useLocalSearchParams<{ tasteBoardId?: string | string[] }>();
   const { currentResult } = useSpinStore();
-
-  const [rating, setRating] = useState(5);
-  const [dishName, setDishName] = useState('');
-  const [reviewNote, setReviewNote] = useState('');
-  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const tasteBoardId = Array.isArray(tasteBoardIdParam) ? tasteBoardIdParam[0] : tasteBoardIdParam;
 
   const restaurantName = currentResult?.name || 'Nhà hàng đã chọn';
   const restaurantCategory = currentResult?.category || 'Ẩm thực';
@@ -28,14 +24,20 @@ export default function PersonalCheckInScreen() {
     currentResult?.imageUrl ||
     'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500';
 
-  const handleTakePhoto = () => {
-    // Simulated Locket photo capture with EXIF/GPS metadata strip simulation
-    setCapturedPhoto('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600');
-    Alert.alert('📸 Locket Photo Taken!', 'Ảnh đã gắn thẻ GPS & tự động ẩn EXIF cá nhân.');
+  const handleConfirmCheckIn = () => {
+    if (!tasteBoardId) return;
+    router.push('/spin/lucky-spin');
   };
 
-  const handleConfirmCheckIn = () => {
-    router.push('/spin/lucky-spin');
+  const handleCreateTasteBoard = () => {
+    if (!currentResult?.id) return;
+    router.push({
+      pathname: '/locket/capture',
+      params: {
+        restaurantId: currentResult.id,
+        returnTo: 'spin-check-in',
+      },
+    });
   };
 
   const handleSkip = () => {
@@ -65,73 +67,44 @@ export default function PersonalCheckInScreen() {
           </View>
         </View>
 
-        {/* Locket Photo Section */}
+        {/* Taste Board Section */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>📸 Chụp Locket (Bắt buộc)</Text>
+            <Text style={styles.sectionTitle}>📸 Tạo Taste Board (Bắt buộc)</Text>
             <Text style={styles.rewardTag}>+500🪙 & Spin</Text>
           </View>
           <Text style={styles.sectionSubtitle}>
             Chụp ảnh món ăn trực tiếp tại quán để xác thực review thật.
           </Text>
 
-          {capturedPhoto ? (
-            <View style={styles.previewContainer}>
-              <Image source={{ uri: capturedPhoto }} style={styles.previewImage} />
-              <TouchableOpacity style={styles.retakeBtn} onPress={handleTakePhoto}>
-                <Text style={styles.retakeBtnText}>🔄 Chụp lại</Text>
+          {tasteBoardId ? (
+            <View style={styles.completedCard}>
+              <Text style={styles.completedTitle}>Taste Board đã tạo</Text>
+              <Text style={styles.completedSubtitle}>Review đã được gửi qua LocketRepository.</Text>
+              <TouchableOpacity style={styles.secondaryActionBtn} onPress={handleCreateTasteBoard}>
+                <Text style={styles.secondaryActionText}>Tạo lại Taste Board</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity style={styles.cameraBtn} onPress={handleTakePhoto}>
+            <TouchableOpacity style={styles.cameraBtn} onPress={handleCreateTasteBoard} disabled={!currentResult?.id}>
               <Text style={styles.cameraIcon}>📷</Text>
-              <Text style={styles.cameraBtnText}>Mở Camera Chụp Locket</Text>
+              <Text style={styles.cameraBtnText}>Mở camera tạo Taste Board</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Review & Rating Section */}
+        {/* Review handoff */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>⭐ Đánh giá món ăn</Text>
-          <Text style={styles.sectionSubtitle}>Chia sẻ trải nghiệm ăn uống với cộng đồng</Text>
-
-          {/* Star Rating */}
-          <View style={styles.starRow}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                <Text style={[styles.starIcon, rating >= star ? styles.starSelected : styles.starUnselected]}>
-                  ★
-                </Text>
-              </TouchableOpacity>
-            ))}
-            <Text style={styles.ratingText}>{rating}/5 điểm</Text>
-          </View>
-
-          {/* Dish Name Input */}
-          <Text style={styles.inputLabel}>Tên món bạn ăn</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ví dụ: Phở Bò Tái Nạm, Trà Éch..."
-            placeholderTextColor="#A8A29E"
-            value={dishName}
-            onChangeText={setDishName}
-          />
-
-          {/* Review Note Input */}
-          <Text style={styles.inputLabel}>Cảm nhận / Review ngắn</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Nước dùng đậm đà, thịt bò mềm thơm..."
-            placeholderTextColor="#A8A29E"
-            multiline
-            numberOfLines={3}
-            value={reviewNote}
-            onChangeText={setReviewNote}
-          />
+          <Text style={styles.sectionTitle}>⭐ Review món ăn</Text>
+          <Text style={styles.sectionSubtitle}>
+            {tasteBoardId
+              ? 'Review đã được lưu. Bạn có thể hoàn tất check-in để nhận lượt quay.'
+              : 'Bạn có thể ghi review và chọn đối tượng xem trong Taste Board.'}
+          </Text>
         </View>
 
         {/* Action Buttons */}
-        <TouchableOpacity style={styles.primaryBtn} onPress={handleConfirmCheckIn}>
+        <TouchableOpacity style={styles.primaryBtn} onPress={handleConfirmCheckIn} disabled={!tasteBoardId}>
           <Text style={styles.primaryBtnText}>🎉 Hoàn Tất Check-in & Quay May Mắn</Text>
         </TouchableOpacity>
 
@@ -241,6 +214,37 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  completedCard: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: 12,
+    padding: 14,
+  },
+  completedTitle: {
+    color: '#047857',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  completedSubtitle: {
+    color: '#065F46',
+    fontSize: 13,
+    marginTop: 4,
+  },
+  secondaryActionBtn: {
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#059669',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  secondaryActionText: {
+    color: '#047857',
+    fontSize: 12,
+    fontWeight: '700',
   },
   cameraIcon: {
     fontSize: 32,

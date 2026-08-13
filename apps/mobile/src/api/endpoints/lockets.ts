@@ -10,12 +10,12 @@ export interface LocketDto {
     avatar_url?: string | null;
   };
   image_url: string;
-  dish_name: string;
+  dish_name?: string | null;
   restaurant_id?: string | null;
   restaurant_name?: string | null;
   note?: string | null;
   rating?: number | null;
-  tags: string[];
+  tags?: string[];
   visibility: 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
   captured_at: string;
   location?: { latitude: number; longitude: number } | null;
@@ -34,12 +34,8 @@ interface ApiResponse<T> {
 export interface UploadLocketRequest {
   localImageUri: string;
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
-  dishName: string;
   restaurantId?: string;
-  restaurantName?: string;
   note?: string;
-  rating: number;
-  tags: string[];
   visibility: 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
   latitude: number;
   longitude: number;
@@ -75,12 +71,8 @@ export const locketApi = {
       name: `locket.${input.mimeType === 'image/png' ? 'png' : 'jpg'}`,
       type: input.mimeType,
     } as unknown as Blob);
-    form.append('dish_name', input.dishName);
     if (input.restaurantId) form.append('restaurant_id', input.restaurantId);
-    if (input.restaurantName) form.append('restaurant_name', input.restaurantName);
     if (input.note) form.append('note', input.note);
-    form.append('rating', String(input.rating));
-    form.append('tags', JSON.stringify(input.tags));
     form.append('visibility', input.visibility);
     form.append('latitude', String(input.latitude));
     form.append('longitude', String(input.longitude));
