@@ -16,11 +16,11 @@ const DEMO_PASSWORD = 'password123';
 
 const demoUsers = [
   {
-    id: '11111111-1111-4111-8111-111111111111',
-    email: 'test@foodroulette.app',
+    id: '33333333-3333-4333-8333-333333333333',
+    email: 'locket-test@foodroulette.app',
     displayNamePrivate: 'Tài khoản kiểm thử',
     displayNamePublic: 'Food Roulette Tester',
-    publicId: 'demo_tester',
+    publicId: 'locket_tester',
     subscriptionTier: SubTier.PREMIUM,
   },
   {
