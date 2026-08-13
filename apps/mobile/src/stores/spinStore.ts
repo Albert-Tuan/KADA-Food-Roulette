@@ -11,6 +11,7 @@ interface SpinState {
   removeCustomCandidate: (id: string) => void;
   setCurrentResult: (restaurant: Restaurant | null) => void;
   spin: (index?: number) => void;
+  resetStore: () => void;
 }
 
 const MOCK_RESTAURANTS: Restaurant[] = [
@@ -101,4 +102,9 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     const winnerIndex = index !== undefined ? index : Math.floor(Math.random() * candidates.length);
     set({ currentResult: candidates[winnerIndex] });
   },
+
+  resetStore: () => set((state) => ({
+    customCandidates: [],
+    candidates: applyFilters(state.filters, []),
+  })),
 }));

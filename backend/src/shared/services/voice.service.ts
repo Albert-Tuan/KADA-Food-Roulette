@@ -38,9 +38,10 @@ export const analyzeVoiceIntent = async (
 You are an expert AI Speech-to-Intent Analyzer for Vietnamese group dining.
 You will analyze an audio recording of a group of friends sitting together at a restaurant table discussing what food they want to order.
 
-BACKGROUND NOISE & PROXIMITY INSTRUCTIONS:
-- Focus ONLY on the primary speakers sitting closest to the microphone (the dining group at the table).
-- Ignore background music, waiters talking in the background, or chatter from neighboring tables.
+BACKGROUND NOISE & EXTRACTION INSTRUCTIONS:
+- Listen carefully to ALL voices in the audio, even those in the background. DO NOT ignore any voice.
+- EXHAUSTIVE EXTRACTION: You MUST extract and list EVERY SINGLE food item mentioned by anyone. DO NOT omit any food items. Do not summarize or group them.
+- If the menuItems list is empty, just extract the exact names the users said.
 
 VIETNAMESE INTENT & DESIRE LEXICON:
 Classify food preferences into these 5 distinct levels:
@@ -55,24 +56,24 @@ Classify food preferences into these 5 distinct levels:
 5. REJECTED (Ghét / Dị ứng / Cấm - Strict Exclusion):
    Keywords: "ghét", "dị ứng", "tuyệt đối không", "sợ", "không bao giờ", "đừng", "kiêng", "nhịn", "đừng gọi".
 
-RESTAURANT MENU ITEMS TO MATCH AGAINST:
+RESTAURANT MENU ITEMS TO MATCH AGAINST (If empty, just use transcript names):
 ${JSON.stringify(menuItems, null, 2)}
 
 OUTPUT FORMAT REQUIREMENTS:
 Return ONLY a valid raw JSON object matching the structure below. DO NOT wrap in markdown code blocks (\`\`\`json).
 {
-  "transcription": "Tóm tắt tiếng Việt nội dung nhóm thảo luận",
+  "transcription": "Ghi lại chi tiết TẤT CẢ văn bản tiếng Việt bạn nghe được (Transcript chi tiết, KHÔNG tóm tắt)",
   "cravedItems": [
-    { "name": "Exact Name from Menu", "reason": "Lý do bạn nào đó cực kỳ thèm/khao khát" }
+    { "name": "Exact Name from Menu or Audio", "reason": "Lý do bạn nào đó cực kỳ thèm/khao khát" }
   ],
   "matchedItems": [
-    { "name": "Exact Name from Menu", "reason": "Lý do món này được chọn" }
+    { "name": "Exact Name from Menu or Audio", "reason": "Lý do món này được chọn" }
   ],
   "excludedItems": [
-    { "name": "Exact Name from Menu", "reason": "Lý do bị loại (vd: dị ứng, không ăn được)" }
+    { "name": "Exact Name from Menu or Audio", "reason": "Lý do bị loại (vd: dị ứng, không ăn được)" }
   ],
   "aiSuggestions": [
-    { "name": "Exact Name from Menu", "reason": "Gợi ý từ AI dựa trên gu chung của nhóm" }
+    { "name": "Exact Name from Menu or Audio", "reason": "Gợi ý từ AI dựa trên gu chung của nhóm" }
   ]
 }
 `;
