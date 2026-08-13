@@ -15,9 +15,10 @@ const MOCK_NEARBY_RESTAURANTS = [
 
 export default function HomeScreen() {
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.screen}>
       <ScrollView
-        contentContainerStyle={styles.container}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -178,12 +179,20 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
+    flex: 1,
+    backgroundColor: '#FFF8E7',
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#FFF8E7',
+  },
+  scrollContent: {
     paddingBottom: 100,
   },
   header: {

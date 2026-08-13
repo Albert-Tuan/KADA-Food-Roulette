@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import { useSpinStore } from '../../../stores/spinStore';
-import { FoodRoulette } from './FoodRoulette';
+import { FoodRoulette, type FoodRouletteRef } from './FoodRoulette';
 import { SpinFilterSheet } from './SpinFilterSheet';
 import { InviteMembersSheet } from './InviteMembersSheet';
 import type { Restaurant } from '../types';
@@ -15,6 +15,7 @@ interface GroupLobbyProps {
 
 export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
   const router = useRouter();
+  const rouletteRef = useRef<FoodRouletteRef>(null);
   const { members } = useGroupSpinStore();
   const {
     candidates,
@@ -29,6 +30,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
   const [customFoods, setCustomFoods] = useState<Record<string, string>>({});
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
 
   const customCandidates: Restaurant[] = Object.entries(customFoods)
     .filter(([_, food]) => food.trim() !== '')
@@ -47,6 +49,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
   const allReady = members.length > 0;
 
   const handleSpinEnd = (winner: Restaurant) => {
+    setIsSpinning(false);
     setCurrentResult(winner);
     onSpinEnd(winner);
   };
@@ -152,6 +155,8 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
 
         {/* Wheel */}
         <FoodRoulette
+          ref={rouletteRef}
+          showSpinButton={false}
           candidates={displayCandidates}
           onSpinEnd={(winner) => handleSpinEnd(winner)}
         />
@@ -160,12 +165,15 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
       {/* Start Button at bottom */}
       <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={[styles.startButton, !allReady && styles.startButtonDisabled]}
-          disabled={!allReady}
-          onPress={() => router.push('/group-spin/spinning' as any)}
+          style={[styles.startButton, (!allReady || isSpinning) && styles.startButtonDisabled]}
+          disabled={!allReady || isSpinning}
+          onPress={() => {
+            setIsSpinning(true);
+            rouletteRef.current?.spin();
+          }}
         >
           <Text style={styles.startButtonText}>
-            {allReady ? '🎉 QUAY NGAY!' : 'Đợi mọi người sẵn sàng...'}
+            {isSpinning ? '🔄 ĐANG QUAY...' : allReady ? '🎉 QUAY NGAY!' : 'Đợi mọi người sẵn sàng...'}
           </Text>
         </TouchableOpacity>
       </View>
