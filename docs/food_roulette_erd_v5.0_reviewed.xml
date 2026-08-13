@@ -384,13 +384,13 @@
         <mxCell id="lkt_location" value="lat: DECIMAL(10,8)&#xa;lng: DECIMAL(11,8)&#xa;(v5.0: Float → Decimal)" style="shape=text;align=left;spacingLeft=10;fontColor=#E65100;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
           <mxGeometry y="285" width="300" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="lkt_dish" value="dishName: VARCHAR(80) NOT NULL&#xa;restaurantName: VARCHAR(120) NULL" style="shape=text;align=left;spacingLeft=10;fontColor=#0277BD;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
+        <mxCell id="lkt_dish" value="dishName: VARCHAR(80) NULL (legacy)&#xa;restaurantName: VARCHAR(120) NULL (legacy)" style="shape=text;align=left;spacingLeft=10;fontColor=#0277BD;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
           <mxGeometry y="335" width="300" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="lkt_review" value="note: VARCHAR(280) NULL&#xa;rating: INT NULL CHECK 1..5" style="shape=text;align=left;spacingLeft=10;fontColor=#0277BD;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
+        <mxCell id="lkt_review" value="note: VARCHAR(280) NULL (free-form review)&#xa;rating: INT NULL (legacy)" style="shape=text;align=left;spacingLeft=10;fontColor=#0277BD;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
           <mxGeometry y="375" width="300" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="lkt_tags_visibility" value="tags: JSON DEFAULT []&#xa;visibility: ENUM(PRIVATE, FRIENDS, PUBLIC)" style="shape=text;align=left;spacingLeft=10;fontColor=#0277BD;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
+        <mxCell id="lkt_tags_visibility" value="tags: JSON DEFAULT [] (legacy)&#xa;visibility: ENUM(PRIVATE, FRIENDS, PUBLIC)" style="shape=text;align=left;spacingLeft=10;fontColor=#0277BD;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
           <mxGeometry y="415" width="300" height="40" as="geometry" />
         </mxCell>
         <mxCell id="lkt_timestamps" value="createdAt / updatedAt: DATETIME&#xa;deletedAt: DATETIME NULL (soft delete)" style="shape=text;align=left;spacingLeft=10;fontColor=#666;strokeColor=none;fillColor=none;fontStyle=2;" parent="locket_entity" vertex="1">
