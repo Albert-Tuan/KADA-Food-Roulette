@@ -53,10 +53,13 @@ export const VoicePickResultModal: React.FC<VoicePickResultModalProps> = ({
             {/* Audio Summary */}
             <View className="mb-4 p-3 bg-amber-50 rounded-2xl border border-amber-200">
               <Text className="text-xs font-bold text-amber-800 mb-1 flex-row items-center">
-                💬 Nội dung thu âm nhóm:
+                💬 Nội dung máy nghe được (Vui lòng kiểm tra lại):
               </Text>
               <Text className="text-sm text-stone-700 italic">
                 "{result.transcription}"
+              </Text>
+              <Text className="text-[10px] text-amber-600 mt-2 font-medium">
+                * Nếu máy nghe sót món do ồn, vui lòng bấm "Hủy / Thu âm lại".
               </Text>
             </View>
 
