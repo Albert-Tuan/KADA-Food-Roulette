@@ -9,7 +9,6 @@ import SpinResult from './features/roulette/components/SpinResult';
 import MysteryBoxReveal from './features/roulette/components/MysteryBoxReveal';
 
 // Features - Lockets
-import LocketFeed from './features/lockets/components/LocketFeed';
 import ShareYourHarvestSuccess from './features/lockets/components/ShareYourHarvestSuccess';
 
 // Features - Profile
@@ -41,6 +40,7 @@ import KhCCommitment from './features/restaurants/components/KhCCommitment';
 // Features - Menu & AI
 import MenuCaptureScreen from './features/menu/components/MenuCaptureScreen';
 import MenuReviewScreen from './features/menu/components/MenuReviewScreen';
+import MenuDishSpinWheel from './features/menu/components/MenuDishSpinWheel';
 import PreferencesScreen from './features/profile/components/PreferencesScreen';
 
 function App() {
@@ -54,12 +54,13 @@ function App() {
         {/* Main App Routes */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomeSpinRewards />} />
-          <Route path="/locket" element={<LocketFeed />} />
+          <Route path="/spin" element={<HomeSpinRewards />} />
           <Route path="/profile" element={<ProfileTasteProfile />} />
           <Route path="/preferences" element={<PreferencesScreen />} />
           <Route path="/spin/result" element={<SpinResult />} />
           <Route path="/spin/menu-capture" element={<MenuCaptureScreen />} />
           <Route path="/spin/menu-review" element={<MenuReviewScreen />} />
+          <Route path="/spin/menu-wheel" element={<MenuDishSpinWheel />} />
           <Route path="/mystery-box" element={<MysteryBoxReveal />} />
           <Route path="/check-in" element={<CheckInVerification />} />
           <Route path="/check-in/rewards" element={<CheckInCompleteRewards />} />

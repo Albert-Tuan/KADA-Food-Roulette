@@ -20,6 +20,8 @@ export default function HomeScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={true}
+        nestedScrollEnabled={true}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -35,12 +37,26 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* AI Menu Scanner Card - PROMINENT TOP PLACEMENT */}
+        <Link href="/spin/menu-capture" asChild>
+          <TouchableOpacity style={styles.menuScanCard} activeOpacity={0.85}>
+            <View style={styles.menuScanContent}>
+              <View style={styles.menuBadge}>
+                <Text style={styles.menuBadgeText}>AI VISION 3.5 🔥</Text>
+              </View>
+              <Text style={styles.menuScanTitle}>📷 Quét Menu AI Cho Món Tại Quán</Text>
+              <Text style={styles.menuScanSubtitle}>Chụp thực đơn quán ➔ AI tự bóc tách & chọn món nhậu cho nhóm</Text>
+            </View>
+            <Text style={styles.menuScanEmoji}>✨</Text>
+          </TouchableOpacity>
+        </Link>
+
         {/* Hero Card */}
         <Link href="/(tabs)/spin" asChild>
           <TouchableOpacity style={styles.heroCard} activeOpacity={0.9}>
             <View style={styles.heroContent}>
-              <Text style={styles.heroTitle}>🎡 Quay ngay!</Text>
-              <Text style={styles.heroSubtitle}>Để vòng quyết định giúp bạn</Text>
+              <Text style={styles.heroTitle}>🎡 Quay Quán Ngẫu Nhiên</Text>
+              <Text style={styles.heroSubtitle}>Để vòng xoay chọn 1 quán ăn giúp bạn</Text>
               <View style={styles.heroButton}>
                 <Text style={styles.heroButtonText}>Bắt đầu quay</Text>
                 <Text style={styles.heroButtonIcon}>→</Text>
@@ -193,7 +209,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF8E7',
   },
   scrollContent: {
-    paddingBottom: 100,
+    flexGrow: 1,
+    paddingBottom: 160,
   },
   header: {
     flexDirection: 'row',
@@ -539,5 +556,54 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'white',
     fontWeight: '600',
+  },
+  menuScanCard: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    backgroundColor: '#fff7ed',
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 2,
+    borderColor: '#f97316',
+    shadowColor: '#ea580c',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  menuScanContent: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  menuBadge: {
+    backgroundColor: '#ea580c',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+  },
+  menuBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#ffffff',
+    letterSpacing: 0.5,
+  },
+  menuScanTitle: {
+    fontSize: 17,
+    fontWeight: '900',
+    color: '#1c1917',
+    marginBottom: 3,
+  },
+  menuScanSubtitle: {
+    fontSize: 12,
+    color: '#57534e',
+    lineHeight: 16,
+  },
+  menuScanEmoji: {
+    fontSize: 36,
   },
 });

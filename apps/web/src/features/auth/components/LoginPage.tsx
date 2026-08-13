@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle, Zap } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ROUTES } from '@/lib';
 
@@ -23,6 +23,18 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  const handleQuickDemoLogin = async () => {
+    setError('');
+    try {
+      setEmail('test@foodroulette.app');
+      setPassword('password123');
+      await login({ email: 'test@foodroulette.app', password: 'password123' });
+      navigate(ROUTES.HOME);
+    } catch {
+      setError('Đăng nhập demo thất bại. Vui lòng thử lại.');
+    }
+  };
+
   const handleGoogleLogin = () => {
     // TODO: Implement Google OAuth
     setError('Đăng nhập Google đang được phát triển.');
@@ -41,6 +53,17 @@ export const LoginPage: React.FC = () => {
 
       {/* Form */}
       <div className="flex-1 px-6 pb-8">
+        {/* 1-Click Quick Demo Login Button */}
+        <button
+          type="button"
+          onClick={handleQuickDemoLogin}
+          disabled={isLoggingIn}
+          className="w-full py-3.5 mb-5 bg-gradient-to-r from-emerald-500 via-teal-600 to-emerald-600 text-white font-black text-sm rounded-xl shadow-lg shadow-teal-500/30 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+        >
+          <Zap className="w-5 h-5 text-amber-300 fill-amber-300 animate-bounce-short" />
+          <span>⚡ Đăng Nhập Nhanh Demo (1-Click)</span>
+        </button>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Error Message */}
           {error && (
