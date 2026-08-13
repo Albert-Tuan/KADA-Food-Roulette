@@ -760,9 +760,10 @@ Commit chính: `242e537 chore(backend): configure lint and secure dependencies`.
 ### 9.11. Làm sạch branch trước PR — 2026-08-13
 
 - Commit `0b9b4f7` khôi phục Auth, Menu, Preferences, personalization, Web và UI Spin/Menu ngoài phạm vi về đúng `origin/main`; PR Locket/Profile không đổi API các module này.
-- Commit `a60f244` bổ sung Prisma seed dùng transaction/upsert, bcrypt hash, production guard và dữ liệu demo tối thiểu; không tạo Locket giả.
+- Commit `a60f244` bổ sung Prisma seed dùng transaction/upsert, bcrypt hash, production guard và dữ liệu demo tối thiểu; không tạo Locket giả. Tài khoản chính dùng `locket-test@foodroulette.app` để không đụng demo-auth fallback `test@foodroulette.app` của main.
 - Commit `824643f` thêm `API_PORT` cho `run-app.sh`; health check, backend và Expo dùng cùng cổng. Workaround đã chốt: `API_PORT=3001 ./scripts/run-app.sh simulator`.
 - Hai diff Expo-generated `apps/mobile/.gitignore` và `apps/mobile/package-lock.json` được giữ ngoài PR trong stash có tên và phải khôi phục sau khi hoàn tất.
 - Auth-state/redirect khi gặp `401` không thuộc scope; manual E2E phải đăng nhập tài khoản seed bằng session mới.
 - Supabase staging và iPhone thật là follow-up sau merge, không chặn PR; owner Supabase là Thành Nam + Trường.
-- Quality gates code gần nhất: backend lint/typecheck/build/69 tests/Prisma validate pass; mobile lint 0 error và typecheck pass; web lint/build pass. Cần chạy lại toàn bộ sau commit docs và hoàn tất manual Simulator E2E trước khi xin push.
+- Quality gates code gần nhất: backend lint/typecheck/build/69 tests/Prisma validate pass; mobile lint 0 error/32 warning legacy và typecheck pass; web lint/build pass. Chín warning tăng thêm thuộc file main-owned được khôi phục và không nằm trong PR diff. Cần hoàn tất manual Simulator E2E trước khi xin push.
+- API E2E bằng tài khoản seed thật đã pass: login `200` → create `201` → get `200` → đổi `PRIVATE` `200` → delete `204`.

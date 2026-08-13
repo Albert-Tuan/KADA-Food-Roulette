@@ -90,12 +90,13 @@ npm run seed
 
 Seed dùng `upsert`, có thể chạy lại mà không xóa dữ liệu đang có. Script tạo:
 
-- Tài khoản chính: `test@foodroulette.app` / `password123`.
+- Tài khoản chính: `locket-test@foodroulette.app` / `password123`.
 - Tài khoản bạn bè: `friend@foodroulette.app` / `password123`.
 - Quan hệ bạn bè đã chấp nhận để kiểm tra visibility `FRIENDS`.
 - Preference, Spin Wallet và ba nhà hàng demo cơ bản.
 
 Seed không tạo Locket giả vì ảnh Locket cần đi qua API upload và storage. Script sẽ từ chối chạy khi `NODE_ENV=production`.
+Không dùng `test@foodroulette.app` cho Locket API E2E vì Auth hiện tại của `origin/main` dành email đó cho demo fallback không gắn với user MySQL.
 
 ## 4. Chạy bằng mock repositories
 

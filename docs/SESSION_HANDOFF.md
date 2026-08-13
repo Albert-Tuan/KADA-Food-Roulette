@@ -71,12 +71,12 @@ API mode yêu cầu `restaurantId` UUID; mock mode vẫn nhận fixture ID để
 - Backend unit/DB integration sau merge: 15 files, 69 tests pass.
 - Prisma validate: pass; MySQL có 5 migrations.
 - Mobile typecheck: pass.
-- Mobile lint: 0 error, 23 warning legacy.
+- Mobile lint: 0 error, 32 warning legacy; 9 warning tăng thêm nằm trong file main-owned vừa được khôi phục và không thuộc PR diff.
 - Web lint: 5 warning legacy; production build pass, có cảnh báo chunk >500 kB.
 - Backend audit: 0 vulnerability.
 - Mobile audit: 25 advisory trong Expo SDK 52; chưa dùng `npm audit fix --force` vì fix tổng thể yêu cầu major upgrade.
 - API E2E sau merge: register 201 → create 201 → public media 200 → đổi private 200 → public proxy cũ 403 → delete 204; test user đã cleanup.
-- Seed chạy lặp hai lần thành công: đúng 2 user, 1 friendship và 3 restaurant; production guard từ chối trước khi ghi DB.
+- Seed chạy lặp hai lần thành công: đúng 2 user, 1 friendship và 3 restaurant; production guard từ chối trước khi ghi DB. Dùng `locket-test@foodroulette.app`, không dùng email demo fallback `test@foodroulette.app` của main cho Locket E2E.
 - API health và đăng nhập tài khoản seed trên cổng `3001`: 200; iOS bundle thành công.
 
 ## 7. Còn lại
