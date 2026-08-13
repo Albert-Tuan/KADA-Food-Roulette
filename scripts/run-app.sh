@@ -5,6 +5,7 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 MODE="${1:-help}"
+API_PORT="${API_PORT:-3000}"
 BACKEND_PID=""
 BACKEND_STARTED_BY_SCRIPT=false
 
@@ -25,6 +26,7 @@ Modes:
 Examples:
   ./scripts/run-app.sh mock
   ./scripts/run-app.sh simulator
+  API_PORT=3001 ./scripts/run-app.sh simulator
   ./scripts/run-app.sh device 192.168.1.20
 EOF
 }
@@ -47,6 +49,13 @@ check_node_version() {
   fi
 }
 
+check_api_port() {
+  if [[ ! "${API_PORT}" =~ ^[0-9]+$ ]] || ((10#${API_PORT} < 1 || 10#${API_PORT} > 65535)); then
+    echo "API_PORT must be an integer between 1 and 65535. Current value: ${API_PORT}" >&2
+    exit 1
+  fi
+}
+
 cleanup() {
   if [[ "${BACKEND_STARTED_BY_SCRIPT}" == "true" ]] && [[ -n "${BACKEND_PID}" ]]; then
     echo
@@ -64,7 +73,7 @@ wait_for_backend() {
     fi
 
     if [[ "${attempt}" == "30" ]]; then
-      echo "Backend did not respond at http://localhost:3000/health within 30 seconds." >&2
+      echo "Backend did not respond at http://localhost:${API_PORT}/health within 30 seconds." >&2
       return 1
     fi
 
@@ -73,7 +82,7 @@ wait_for_backend() {
 }
 
 is_food_roulette_backend() {
-  curl --fail --silent --max-time 2 "http://localhost:3000/health" \
+  curl --fail --silent --max-time 2 "http://localhost:${API_PORT}/health" \
     | node -e '
       let body = "";
       process.stdin.setEncoding("utf8");
@@ -106,20 +115,20 @@ start_api_stack() {
   docker compose -f "${REPO_ROOT}/docker/docker-compose.yml" up -d mysql
 
   if is_food_roulette_backend; then
-    echo "Using the backend already running on port 3000."
+    echo "Using the backend already running on port ${API_PORT}."
     return 0
   fi
 
-  if curl --fail --silent --max-time 2 "http://localhost:3000/health" >/dev/null 2>&1 \
-    || lsof -nP -iTCP:3000 -sTCP:LISTEN >/dev/null 2>&1; then
-    echo "Port 3000 is occupied by a service that is not the Food Roulette API." >&2
+  if curl --fail --silent --max-time 2 "http://localhost:${API_PORT}/health" >/dev/null 2>&1 \
+    || lsof -nP -iTCP:"${API_PORT}" -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "Port ${API_PORT} is occupied by a service that is not the Food Roulette API." >&2
     echo "Stop that service or run it on another port, then retry." >&2
-    lsof -nP -iTCP:3000 -sTCP:LISTEN 2>/dev/null || true
+    lsof -nP -iTCP:"${API_PORT}" -sTCP:LISTEN 2>/dev/null || true
     return 1
   fi
 
-  echo "Starting backend on port 3000..."
-  (cd "${REPO_ROOT}/backend" && npm run dev) &
+  echo "Starting backend on port ${API_PORT}..."
+  (cd "${REPO_ROOT}/backend" && PORT="${API_PORT}" npm run dev) &
   BACKEND_PID=$!
   BACKEND_STARTED_BY_SCRIPT=true
   wait_for_backend
@@ -220,6 +229,7 @@ trap cleanup EXIT INT TERM
 require_command node
 require_command npm
 check_node_version
+check_api_port
 
 case "${MODE}" in
   mock)
@@ -227,17 +237,17 @@ case "${MODE}" in
       echo "Mobile dependencies are missing. Run: ./scripts/setup-app.sh mock" >&2
       exit 1
     fi
-    run_mobile "http://localhost:3000/api/v1" "true"
+    run_mobile "http://localhost:${API_PORT}/api/v1" "true"
     ;;
   simulator)
     start_api_stack
-    run_mobile "http://localhost:3000/api/v1" "false"
+    run_mobile "http://localhost:${API_PORT}/api/v1" "false"
     ;;
   device)
     DEVICE_HOST="$(resolve_device_host "${2:-}")"
     echo "Mac LAN IPv4: ${DEVICE_HOST}"
     start_api_stack
-    run_mobile "http://${DEVICE_HOST}:3000/api/v1" "false"
+    run_mobile "http://${DEVICE_HOST}:${API_PORT}/api/v1" "false"
     ;;
   help|-h|--help)
     usage
