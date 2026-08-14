@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, AppState, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { RewardCard, RewardCardEmpty } from '../../src/components/RewardCard';
@@ -25,9 +25,21 @@ const MOCK_REWARDS: Reward[] = [
 
 export default function SpinScreen() {
   const router = useRouter();
-  const { candidates, filters, customCandidates, setFilters, addCustomCandidate, removeCustomCandidate, setCurrentResult } = useSpinStore();
+  const { candidates, filters, customCandidates, setFilters, addCustomCandidate, removeCustomCandidate, setCurrentResult, resetStore } = useSpinStore();
   const [rewards] = useState<Reward[]>(MOCK_REWARDS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        resetStore();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [resetStore]);
 
   const handleFoodSpinEnd = useCallback((winner: Restaurant, index: number) => {
     setCurrentResult(winner);
@@ -35,80 +47,101 @@ export default function SpinScreen() {
   }, [setCurrentResult, router]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Food Roulette Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>Ăn gì hôm nay?</Text>
-              <Text style={styles.sectionSubtitle}>Chọn một quán ngẫu nhiên xung quanh bạn!</Text>
-            </View>
-            <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={styles.filterButton}>
-              <Text style={styles.filterIcon}>⚙️</Text>
-            </TouchableOpacity>
-          </View>
-
-          <FoodRoulette
-            candidates={candidates}
-            onSpinEnd={handleFoodSpinEnd}
-          />
-
-          {/* Candidates List */}
-          <Text style={styles.candidatesTitle}>
-            🍽️ Danh sách đề cử ({candidates.length})
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.candidatesScroll}>
-            {candidates.map(restaurant => (
-              <View key={restaurant.id} style={styles.candidateCard}>
-                <Image source={{ uri: restaurant.imageUrl }} style={styles.candidateImage} />
-                <Text style={styles.candidateName} numberOfLines={1}>{restaurant.name}</Text>
-                <Text style={styles.candidateInfo}>
-                  ⭐ {restaurant.rating} • {(restaurant.distance / 1000).toFixed(1)}km
-                </Text>
+    <>
+      <SafeAreaView style={styles.container}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Food Roulette Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Ăn gì hôm nay?</Text>
+                <Text style={styles.sectionSubtitle}>Chọn một quán ngẫu nhiên xung quanh bạn!</Text>
               </View>
-            ))}
-          </ScrollView>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                {customCandidates.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      Alert.alert(
+                        'Làm mới vòng quay',
+                        'Bạn có chắc chắn muốn xóa tất cả các món ăn tự chọn (do bạn thêm, AI thêm) khỏi vòng quay?',
+                        [
+                          { text: 'Hủy', style: 'cancel' },
+                          { text: 'Xóa', style: 'destructive', onPress: () => resetStore() },
+                        ]
+                      );
+                    }}
+                    style={[styles.filterButton, { marginRight: 8 }]}
+                  >
+                    <Text style={styles.filterIcon}>🔄</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={styles.filterButton}>
+                  <Text style={styles.filterIcon}>⚙️</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
-          {/* Quick Links */}
-          <View style={styles.quickLinks}>
-            <TouchableOpacity
-              onPress={() => router.push('/group-spin/lobby')}
-              style={styles.quickLink}
-            >
-              <Text style={styles.quickLinkText}>👥 Group Spin</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push('/(tabs)/lockets')}
-              style={styles.quickLink}
-            >
-              <Text style={styles.quickLinkText}>📸 Locket Feed</Text>
-            </TouchableOpacity>
+            <FoodRoulette
+              candidates={candidates}
+              onSpinEnd={handleFoodSpinEnd}
+            />
+
+            {/* Candidates List */}
+            <Text style={styles.candidatesTitle}>
+              🍽️ Danh sách đề cử ({candidates.length})
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.candidatesScroll}>
+              {candidates.map(restaurant => (
+                <View key={restaurant.id} style={styles.candidateCard}>
+                  <Image source={{ uri: restaurant.imageUrl }} style={styles.candidateImage} />
+                  <Text style={styles.candidateName} numberOfLines={1}>{restaurant.name}</Text>
+                  <Text style={styles.candidateInfo}>
+                    ⭐ {restaurant.rating} • {(restaurant.distance / 1000).toFixed(1)}km
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+
+            {/* Quick Links */}
+            <View style={styles.quickLinks}>
+              <TouchableOpacity
+                onPress={() => router.push('/group-spin/lobby')}
+                style={styles.quickLink}
+              >
+                <Text style={styles.quickLinkText}>👥 Group Spin</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.push('/(tabs)/lockets')}
+                style={styles.quickLink}
+              >
+                <Text style={styles.quickLinkText}>📸 Locket Feed</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
 
-        {/* Divider */}
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>Voucher của bạn</Text>
-          <View style={styles.dividerLine} />
-        </View>
+          {/* Divider */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>Voucher của bạn</Text>
+            <View style={styles.dividerLine} />
+          </View>
 
-        {/* Rewards List */}
-        <View style={styles.rewardsSection}>
-          {rewards.length > 0 ? (
-            rewards.map(reward => (
-              <RewardCard key={reward.id} data={reward} />
-            ))
-          ) : (
-            <RewardCardEmpty />
-          )}
-        </View>
-      </ScrollView>
+          {/* Rewards List */}
+          <View style={styles.rewardsSection}>
+            {rewards.length > 0 ? (
+              rewards.map(reward => (
+                <RewardCard key={reward.id} data={reward} />
+              ))
+            ) : (
+              <RewardCardEmpty />
+            )}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
 
       {/* Filter Sheet */}
       <SpinFilterSheet
@@ -120,7 +153,7 @@ export default function SpinScreen() {
         onAddCustom={addCustomCandidate}
         onRemoveCustom={removeCustomCandidate}
       />
-    </SafeAreaView>
+    </>
   );
 }
 

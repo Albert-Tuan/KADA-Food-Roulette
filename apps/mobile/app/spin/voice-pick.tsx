@@ -91,9 +91,15 @@ export default function VoicePickScreen() {
         playsInSilentModeIOS: true,
       });
 
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      const customRecordingOptions = {
+        ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+        android: {
+          ...Audio.RecordingOptionsPresets.HIGH_QUALITY.android,
+          audioSource: 6, // VOICE_RECOGNITION: Optimizes for speech and enables hardware noise suppression
+        },
+      };
+
+      const { recording: newRecording } = await Audio.Recording.createAsync(customRecordingOptions);
 
       setRecording(newRecording);
       setIsRecording(true);

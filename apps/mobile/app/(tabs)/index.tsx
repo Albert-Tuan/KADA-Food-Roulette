@@ -15,11 +15,11 @@ const MOCK_NEARBY_RESTAURANTS = [
 
 export default function HomeScreen() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFBEB' }}>
+    <View style={styles.screen}>
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 160 }}
-        showsVerticalScrollIndicator={true}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         scrollEnabled={true}
         nestedScrollEnabled={true}
       >
@@ -195,13 +195,22 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingBottom: 100,
+  screen: {
+    flex: 1,
+    backgroundColor: '#FFF8E7',
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#FFF8E7',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 160,
   },
   header: {
     flexDirection: 'row',

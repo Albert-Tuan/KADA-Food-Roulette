@@ -49,6 +49,8 @@ export function SpinFilterSheet({
     }
   }, [visible, filters]);
 
+  if (!visible) return null;
+
   const toggleCategory = (cat: string) => {
     setLocalCategories(prev =>
       prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
@@ -84,190 +86,194 @@ export function SpinFilterSheet({
   };
 
   const distanceSteps = [500, 1000, 2000, 3000, 5000, 7000, 10000];
-  const currentDistanceIdx = distanceSteps.findIndex(d => d >= localDistance);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}>
-        <View style={styles.sheet}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Bộ Lọc Vòng Quay</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeText}>✕</Text>
-            </TouchableOpacity>
-          </View>
+    <View style={styles.modalContainer}>
+      <Pressable style={styles.backdrop} onPress={onClose} />
+      <View style={styles.sheet}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Bộ Lọc Vòng Quay</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Text style={styles.closeText}>✕</Text>
+          </TouchableOpacity>
+        </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContent}>
-            {/* Distance */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionLabel}>Khoảng cách</Text>
-                <Text style={styles.sectionValue}>{(localDistance / 1000).toFixed(1)} km</Text>
-              </View>
-              <View style={styles.distanceRow}>
-                {distanceSteps.map((d, i) => (
-                  <TouchableOpacity
-                    key={d}
-                    onPress={() => setLocalDistance(d)}
-                    style={[
-                      styles.distanceChip,
-                      localDistance >= d && styles.distanceChipActive,
-                    ]}
-                  >
-                    <Text style={[
-                      styles.distanceChipText,
-                      localDistance >= d && styles.distanceChipTextActive,
-                    ]}>
-                      {d >= 1000 ? `${d / 1000}k` : `${d}m`}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContent}>
+          {/* Distance */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionLabel}>Khoảng cách</Text>
+              <Text style={styles.sectionValue}>{(localDistance / 1000).toFixed(1)} km</Text>
             </View>
-
-            {/* Price */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionLabel}>Mức giá</Text>
-                <Text style={styles.sectionValue}>{'$'.repeat(localPrice)}</Text>
-              </View>
-              <View style={styles.priceRow}>
-                {PRICE_LEVELS.map(level => (
-                  <TouchableOpacity
-                    key={level}
-                    onPress={() => setLocalPrice(level)}
-                    style={[
-                      styles.priceChip,
-                      localPrice >= level && styles.priceChipActive,
-                    ]}
-                  >
-                    <Text style={[
-                      styles.priceChipText,
-                      localPrice >= level && styles.priceChipTextActive,
-                    ]}>
-                      {'$'.repeat(level)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Cuisines */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Thể loại món ăn</Text>
-              <View style={styles.chipWrap}>
-                {CUISINES.map(cat => (
-                  <TouchableOpacity
-                    key={cat}
-                    onPress={() => toggleCategory(cat)}
-                    style={[
-                      styles.chip,
-                      localCategories.includes(cat) && styles.chipActive,
-                    ]}
-                  >
-                    <Text style={[
-                      styles.chipText,
-                      localCategories.includes(cat) && styles.chipTextActive,
-                    ]}>
-                      {cat}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Dietary */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Khẩu vị / Dị ứng</Text>
-              <View style={styles.chipWrap}>
-                {DIETARY_TAGS.map(tag => (
-                  <TouchableOpacity
-                    key={tag}
-                    onPress={() => toggleDietary(tag)}
-                    style={[
-                      styles.chip,
-                      localDietary.includes(tag) && styles.chipActive,
-                    ]}
-                  >
-                    <Text style={[
-                      styles.chipText,
-                      localDietary.includes(tag) && styles.chipTextActive,
-                    ]}>
-                      {localDietary.includes(tag) ? '✓ ' : ''}{tag}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Custom Food */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Thêm món ăn tự chọn</Text>
-              <View style={styles.customInputRow}>
-                <TextInput
-                  placeholder="Ví dụ: Cơm rang..."
-                  value={newCustomFood}
-                  onChangeText={setNewCustomFood}
-                  style={styles.customInput}
-                  placeholderTextColor="#A8A29E"
-                  onSubmitEditing={() => {
-                    if (newCustomFood.trim()) {
-                      onAddCustom(newCustomFood.trim());
-                      setNewCustomFood('');
-                    }
-                  }}
-                />
+            <View style={styles.distanceRow}>
+              {distanceSteps.map((d) => (
                 <TouchableOpacity
-                  onPress={() => {
-                    if (newCustomFood.trim()) {
-                      onAddCustom(newCustomFood.trim());
-                      setNewCustomFood('');
-                    }
-                  }}
-                  style={styles.addButton}
+                  key={d}
+                  onPress={() => setLocalDistance(d)}
+                  style={[
+                    styles.distanceChip,
+                    localDistance >= d && styles.distanceChipActive,
+                  ]}
                 >
-                  <Text style={styles.addButtonText}>Thêm</Text>
+                  <Text style={[
+                    styles.distanceChipText,
+                    localDistance >= d && styles.distanceChipTextActive,
+                  ]}>
+                    {d >= 1000 ? `${d / 1000}k` : `${d}m`}
+                  </Text>
                 </TouchableOpacity>
-              </View>
-              {customCandidates.length > 0 && (
-                <View style={styles.chipWrap}>
-                  {customCandidates.map(c => (
-                    <Pressable
-                      key={c.id}
-                      onPress={() => onRemoveCustom(c.id)}
-                      style={styles.customTag}
-                    >
-                      <Text style={styles.customTagText}>{c.name} ✕</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              )}
+              ))}
             </View>
-          </ScrollView>
-
-          {/* Actions */}
-          <View style={styles.actions}>
-            <TouchableOpacity onPress={handleReset} style={styles.resetButton}>
-              <Text style={styles.resetButtonText}>Đặt Lại</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleApply} style={styles.applyButton}>
-              <Text style={styles.applyButtonText}>Áp Dụng</Text>
-            </TouchableOpacity>
           </View>
+
+          {/* Price */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionLabel}>Mức giá</Text>
+              <Text style={styles.sectionValue}>{'$'.repeat(localPrice)}</Text>
+            </View>
+            <View style={styles.priceRow}>
+              {PRICE_LEVELS.map(level => (
+                <TouchableOpacity
+                  key={level}
+                  onPress={() => setLocalPrice(level)}
+                  style={[
+                    styles.priceChip,
+                    localPrice >= level && styles.priceChipActive,
+                  ]}
+                >
+                  <Text style={[
+                    styles.priceChipText,
+                    localPrice >= level && styles.priceChipTextActive,
+                  ]}>
+                    {'$'.repeat(level)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Cuisines */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Thể loại món ăn</Text>
+            <View style={styles.chipWrap}>
+              {CUISINES.map(cat => (
+                <TouchableOpacity
+                  key={cat}
+                  onPress={() => toggleCategory(cat)}
+                  style={[
+                    styles.chip,
+                    localCategories.includes(cat) && styles.chipActive,
+                  ]}
+                >
+                  <Text style={[
+                    styles.chipText,
+                    localCategories.includes(cat) && styles.chipTextActive,
+                  ]}>
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Dietary */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Khẩu vị / Dị ứng</Text>
+            <View style={styles.chipWrap}>
+              {DIETARY_TAGS.map(tag => (
+                <TouchableOpacity
+                  key={tag}
+                  onPress={() => toggleDietary(tag)}
+                  style={[
+                    styles.chip,
+                    localDietary.includes(tag) && styles.chipActive,
+                  ]}
+                >
+                  <Text style={[
+                    styles.chipText,
+                    localDietary.includes(tag) && styles.chipTextActive,
+                  ]}>
+                    {localDietary.includes(tag) ? '✓ ' : ''}{tag}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Custom Food */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Thêm món ăn tự chọn</Text>
+            <View style={styles.customInputRow}>
+              <TextInput
+                placeholder="Ví dụ: Cơm rang..."
+                value={newCustomFood}
+                onChangeText={setNewCustomFood}
+                style={styles.customInput}
+                placeholderTextColor="#A8A29E"
+                onSubmitEditing={() => {
+                  if (newCustomFood.trim()) {
+                    onAddCustom(newCustomFood.trim());
+                    setNewCustomFood('');
+                  }
+                }}
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  if (newCustomFood.trim()) {
+                    onAddCustom(newCustomFood.trim());
+                    setNewCustomFood('');
+                  }
+                }}
+                style={styles.addButton}
+              >
+                <Text style={styles.addButtonText}>Thêm</Text>
+              </TouchableOpacity>
+            </View>
+            {customCandidates.length > 0 && (
+              <View style={styles.chipWrap}>
+                {customCandidates.map(c => (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => onRemoveCustom(c.id)}
+                    style={styles.customTag}
+                  >
+                    <Text style={styles.customTagText}>{c.name} ✕</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        </ScrollView>
+
+        {/* Actions */}
+        <View style={styles.actions}>
+          <TouchableOpacity onPress={handleReset} style={styles.resetButton}>
+            <Text style={styles.resetButtonText}>Đặt Lại</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleApply} style={styles.applyButton}>
+            <Text style={styles.applyButtonText}>Áp Dụng</Text>
+          </TouchableOpacity>
         </View>
       </View>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  modalContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 9999,
+    elevation: 9999,
     justifyContent: 'flex-end',
   },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
   sheet: {
+    width: '100%',
     backgroundColor: '#FFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -326,13 +332,14 @@ const styles = StyleSheet.create({
   distanceRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
   },
   distanceChip: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
     backgroundColor: '#F5F5F4',
+    marginRight: 8,
+    marginBottom: 8,
   },
   distanceChipActive: {
     backgroundColor: '#B52330',
@@ -347,7 +354,6 @@ const styles = StyleSheet.create({
   },
   priceRow: {
     flexDirection: 'row',
-    gap: 8,
   },
   priceChip: {
     flex: 1,
@@ -355,6 +361,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#F5F5F4',
     alignItems: 'center',
+    marginHorizontal: 4,
   },
   priceChipActive: {
     backgroundColor: '#B52330',
@@ -370,7 +377,6 @@ const styles = StyleSheet.create({
   chipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
   },
   chip: {
     paddingHorizontal: 14,
@@ -379,6 +385,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E7E5E4',
     backgroundColor: '#FFF',
+    marginRight: 8,
+    marginBottom: 8,
   },
   chipActive: {
     backgroundColor: '#FFF1F2',
@@ -394,7 +402,6 @@ const styles = StyleSheet.create({
   },
   customInputRow: {
     flexDirection: 'row',
-    gap: 8,
     marginBottom: 10,
   },
   customInput: {
@@ -407,6 +414,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#292524',
     backgroundColor: '#FAFAF9',
+    marginRight: 8,
   },
   addButton: {
     backgroundColor: '#B52330',
@@ -425,6 +433,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
   },
   customTagText: {
     fontSize: 13,
@@ -435,7 +445,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingTop: 16,
-    gap: 12,
   },
   resetButton: {
     flex: 1,
@@ -443,6 +452,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#F5F5F4',
     alignItems: 'center',
+    marginRight: 6,
   },
   resetButtonText: {
     fontSize: 15,
@@ -455,6 +465,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#B52330',
     alignItems: 'center',
+    marginLeft: 6,
   },
   applyButtonText: {
     fontSize: 15,
