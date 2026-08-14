@@ -56,7 +56,7 @@ export function Button({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? 'white' : '#D97706'}
+          color={variant === 'primary' ? '#FDF5E6' : '#C68E17'}
           size="small"
         />
       ) : (
@@ -87,22 +87,28 @@ const styles = StyleSheet.create({
   text: {
     fontWeight: '600',
   },
-  // Variants
+  // Variants according to Stitch Soft Red spec
   primary: {
-    backgroundColor: '#D97706',
-    shadowColor: '#D97706',
+    backgroundColor: '#b52330', // Brand Primary Red
+    borderBottomWidth: 3,
+    borderBottomColor: '#61000e', // Darker red 3D game press effect
+    shadowColor: '#b52330',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
   },
   secondary: {
-    backgroundColor: '#F5F5F4',
+    backgroundColor: '#fbf3e4', // Cream surface container low
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    borderBottomWidth: 3,
+    borderBottomColor: '#8e706f',
   },
   outline: {
     borderWidth: 2,
-    borderColor: '#D97706',
-    backgroundColor: 'transparent',
+    borderColor: '#b52330', // Primary Red border
+    backgroundColor: '#fff8ef',
   },
   ghost: {
     backgroundColor: 'transparent',
@@ -111,27 +117,38 @@ const styles = StyleSheet.create({
   sm: {
     paddingHorizontal: 16,
     paddingVertical: 8,
+    borderRadius: 14,
   },
   md: {
     paddingHorizontal: 24,
     paddingVertical: 12,
+    borderRadius: 18,
   },
   lg: {
-    paddingHorizontal: 32,
+    paddingHorizontal: 30,
     paddingVertical: 16,
+    borderRadius: 22,
   },
   // Text colors
   textPrimary: {
-    color: 'white',
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 16,
   },
   textSecondary: {
-    color: '#44403C',
+    color: '#8e4e14',
+    fontWeight: '800',
+    fontSize: 15,
   },
   textOutline: {
-    color: '#D97706',
+    color: '#b52330',
+    fontWeight: '800',
+    fontSize: 15,
   },
   textGhost: {
-    color: '#D97706',
+    color: '#b52330',
+    fontWeight: '700',
+    fontSize: 15,
   },
   disabled: {
     opacity: 0.5,

@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
   runOnJS,
   Easing,
@@ -18,15 +17,17 @@ const CENTER_SIZE = 60;
 interface PrizeSegment {
   label: string;
   color: string;
+  textColor?: string;
   icon: string;
 }
 
 const SEGMENTS: PrizeSegment[] = [
-  { label: 'Voucher 10%', color: '#FF5A5F', icon: '🎟️' },
-  { label: 'Credit 5k', color: '#FFAB69', icon: '💰' },
-  { label: 'Món Tặng', color: '#55A37A', icon: '🍜' },
-  { label: 'Nước Free', color: '#FFC107', icon: '🥤' },
-  { label: '+1 Lượt', color: '#B52330', icon: '🎲' },
+  { label: 'Phở & Bún', color: '#b52330', icon: '🍜' },
+  { label: 'Cơm Tấm', color: '#8e4e14', icon: '🍚' },
+  { label: 'Lẩu Nướng', color: '#ff5a5f', icon: '🍲' },
+  { label: 'Trà Sữa', color: '#ffab69', textColor: '#1e1b13', icon: '🧋' },
+  { label: 'Bánh Mì', color: '#166b47', icon: '🥖' },
+  { label: 'Ăn Vặt', color: '#FFC107', textColor: '#1e1b13', icon: '🍢' },
 ];
 
 interface SpinWheelProps {
@@ -36,7 +37,6 @@ interface SpinWheelProps {
 
 export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
   const rotation = useSharedValue(0);
-  const isSpinning = useSharedValue(false);
   const [spinning, setSpinning] = React.useState(false);
   const [lastPrize, setLastPrize] = React.useState<PrizeSegment | null>(null);
 
@@ -123,20 +123,20 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
           <Path
             d={pathData}
             fill={segment.color}
-            stroke="#FFF"
-            strokeWidth={2}
+            stroke="#fff8ef"
+            strokeWidth={3}
           />
           <SvgText
             x={textX}
             y={textY}
-            fill="white"
-            fontSize={12}
+            fill={segment.textColor || '#ffffff'}
+            fontSize={13}
             fontWeight="bold"
             textAnchor="middle"
             alignmentBaseline="middle"
             transform={`rotate(${textAngle}, ${textX}, ${textY})`}
           >
-            {segment.icon}
+            {`${segment.icon} ${segment.label}`}
           </SvgText>
         </G>
       );
@@ -147,10 +147,12 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
     <View style={styles.container}>
       {/* Wheel Pointer */}
       <View style={styles.pointerContainer}>
-        <Svg width={24} height={32} viewBox="0 0 24 32">
+        <Svg width={28} height={36} viewBox="0 0 24 32">
           <Path
             d="M12 32 L0 8 L24 8 Z"
-            fill="#D97706"
+            fill="#b52330"
+            stroke="#ffffff"
+            strokeWidth={2}
           />
         </Svg>
       </View>
@@ -165,14 +167,14 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
 
         {/* Center circle */}
         <View style={styles.centerCircle}>
-          <Text style={styles.centerText}>🍜</Text>
+          <Text style={styles.centerText}>🎰</Text>
         </View>
       </Animated.View>
 
       {/* Spin Button */}
       <View style={styles.buttonContainer}>
         <Button
-          title={spinning ? 'Đang quay...' : 'QUAY NGAY!'}
+          title={spinning ? 'Đang chọn món...' : 'QUAY MÓN NGAY!'}
           onPress={spin}
           disabled={spinning || disabled}
           loading={spinning}
@@ -184,9 +186,9 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
       {/* Last Prize */}
       {lastPrize && (
         <View style={styles.prizeContainer}>
-          <Text style={styles.prizeLabel}>Bạn nhận được:</Text>
+          <Text style={styles.prizeLabel}>Gợi ý món thèm nhất hôm nay:</Text>
           <View style={[styles.prizeBadge, { backgroundColor: lastPrize.color }]}>
-            <Text style={styles.prizeText}>
+            <Text style={[styles.prizeText, { color: lastPrize.textColor || '#ffffff' }]}>
               {lastPrize.icon} {lastPrize.label}
             </Text>
           </View>
@@ -199,7 +201,7 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 16,
   },
   pointerContainer: {
     position: 'absolute',
@@ -219,19 +221,19 @@ const styles = StyleSheet.create({
     width: CENTER_SIZE,
     height: CENTER_SIZE,
     borderRadius: CENTER_SIZE / 2,
-    backgroundColor: '#FFF8E7',
+    backgroundColor: '#fff8ef',
     borderWidth: 4,
-    borderColor: '#D97706',
+    borderColor: '#b52330',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowRadius: 8,
+    elevation: 6,
   },
   centerText: {
-    fontSize: 24,
+    fontSize: 26,
   },
   buttonContainer: {
     marginTop: 24,
@@ -242,17 +244,25 @@ const styles = StyleSheet.create({
   },
   prizeLabel: {
     fontSize: 14,
-    color: '#78716C',
+    fontWeight: '700',
+    color: '#b52330',
     marginBottom: 8,
   },
   prizeBadge: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 26,
+    paddingVertical: 12,
     borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   prizeText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '800',
   },
 });

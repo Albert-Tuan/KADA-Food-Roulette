@@ -1,16 +1,17 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Image } from 'react-native';
-import { Link, router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 const MOCK_RECENT_LOCKETS = [
-  { id: '1', image: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=200', restaurant: 'Phở Thìn' },
-  { id: '2', image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=200', restaurant: 'Mì Cay' },
+  { id: '1', image: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=200', restaurant: 'Phở Thìn', rating: 4.8 },
+  { id: '2', image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=200', restaurant: 'Mì Cay Sasin', rating: 4.6 },
+  { id: '3', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200', restaurant: 'Cơm Tấm Ba Ghiền', rating: 4.9 },
 ];
 
 const MOCK_NEARBY_RESTAURANTS = [
-  { id: '1', name: 'Phở Bò Hai', rating: 4.5, distance: '0.5km', category: 'Phở' },
-  { id: '2', name: 'Bún Bò Huế', rating: 4.3, distance: '0.8km', category: 'Bún' },
+  { id: '1', name: 'Phở Bò Hai Cụ', rating: 4.8, distance: '0.5km', category: 'Phở Bò' },
+  { id: '2', name: 'Bún Bò Huế Chay', rating: 4.6, distance: '0.8km', category: 'Bún Bò' },
+  { id: '3', name: 'Gyu-Kaku Japanese BBQ', rating: 4.9, distance: '1.2km', category: 'Lẩu Nướng' },
 ];
 
 export default function HomeScreen() {
@@ -20,14 +21,12 @@ export default function HomeScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={true}
-        nestedScrollEnabled={true}
       >
-        {/* Header */}
+        {/* 1. Header */}
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Xin chào! 👋</Text>
-            <Text style={styles.subGreeting}>Hôm nay ăn gì nhỉ?</Text>
+            <Text style={styles.subGreeting}>Hôm nay bạn muốn ăn gì nhỉ?</Text>
           </View>
           <TouchableOpacity
             style={styles.notificationButton}
@@ -37,123 +36,140 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* AI Menu Scanner Card - PROMINENT TOP PLACEMENT */}
-        <Link href="/spin/menu-capture" asChild>
-          <TouchableOpacity style={styles.menuScanCard} activeOpacity={0.85}>
-            <View style={styles.menuScanContent}>
-              <View style={styles.menuBadge}>
-                <Text style={styles.menuBadgeText}>AI VISION 3.5 🔥</Text>
-              </View>
-              <Text style={styles.menuScanTitle}>📷 Quét Menu AI Cho Món Tại Quán</Text>
-              <Text style={styles.menuScanSubtitle}>Chụp thực đơn quán ➔ AI tự bóc tách & chọn món nhậu cho nhóm</Text>
+        {/* 2. CHỦ ĐẠO CHÍNH: Hero Card (Personal Spin) */}
+        <TouchableOpacity
+          style={styles.heroCard}
+          activeOpacity={0.9}
+          onPress={() => router.push('/(tabs)/spin')}
+        >
+          <View style={styles.heroContent}>
+            <View style={styles.heroTag}>
+              <Text style={styles.heroTagText}>⚡ CHỨC NĂNG CHÍNH</Text>
             </View>
-            <Text style={styles.menuScanEmoji}>✨</Text>
-          </TouchableOpacity>
-        </Link>
-
-        {/* Hero Card */}
-        <Link href="/(tabs)/spin" asChild>
-          <TouchableOpacity style={styles.heroCard} activeOpacity={0.9}>
-            <View style={styles.heroContent}>
-              <Text style={styles.heroTitle}>🎡 Quay Quán Ngẫu Nhiên</Text>
-              <Text style={styles.heroSubtitle}>Để vòng xoay chọn 1 quán ăn giúp bạn</Text>
-              <View style={styles.heroButton}>
-                <Text style={styles.heroButtonText}>Bắt đầu quay</Text>
-                <Text style={styles.heroButtonIcon}>→</Text>
-              </View>
+            <Text style={styles.heroTitle}>Quay Quán Ngẫu Nhiên</Text>
+            <Text style={styles.heroSubtitle}>Đỡ phải suy nghĩ! Để vòng xoay chọn 1 quán ngon giúp bạn.</Text>
+            <View style={styles.heroButton}>
+              <Text style={styles.heroButtonText}>BẮT ĐẦU QUAY 🎰</Text>
             </View>
-            <Text style={styles.heroEmoji}>🍜</Text>
-          </TouchableOpacity>
-        </Link>
+          </View>
+        </TouchableOpacity>
 
-        {/* Quick Filters */}
-        <View style={styles.quickFilters}>
-          <TouchableOpacity style={styles.filterChip}>
-            <Text style={styles.filterIcon}>📍</Text>
-            <Text style={styles.filterText}>Gần tôi</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterChip}>
-            <Text style={styles.filterIcon}>💰</Text>
-            <Text style={styles.filterText}>Dưới 100k</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterChip}>
-            <Text style={styles.filterIcon}>⭐</Text>
-            <Text style={styles.filterText}>4.5+ sao</Text>
-          </TouchableOpacity>
+        {/* 3. CHỨC NĂNG PHỤ: Clean 4 Quick Tools Row */}
+        <View style={styles.quickToolsContainer}>
+          <Text style={styles.sectionTitle}>Công cụ hỗ trợ</Text>
+          <View style={styles.quickToolsRow}>
+            {/* Tool 1: AI Menu */}
+            <TouchableOpacity
+              style={styles.toolCard}
+              onPress={() => router.push('/spin/menu-capture')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.toolIconBg, { backgroundColor: '#ffdad8', borderColor: '#ff5a5f' }]}>
+                <Text style={styles.toolIcon}>📷</Text>
+              </View>
+              <Text style={styles.toolTitle}>Quét Menu AI</Text>
+            </TouchableOpacity>
+
+            {/* Tool 2: Group Spin */}
+            <TouchableOpacity
+              style={styles.toolCard}
+              onPress={() => router.push('/group-spin/lobby')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.toolIconBg, { backgroundColor: '#ffdcc4', borderColor: '#ffab69' }]}>
+                <Text style={styles.toolIcon}>👥</Text>
+              </View>
+              <Text style={styles.toolTitle}>Quay Nhóm</Text>
+            </TouchableOpacity>
+
+            {/* Tool 3: AI Voice */}
+            <TouchableOpacity
+              style={styles.toolCard}
+              onPress={() => router.push('/(tabs)/spin')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.toolIconBg, { backgroundColor: '#fbf3e4', borderColor: '#166b47' }]}>
+                <Text style={styles.toolIcon}>🎙️</Text>
+              </View>
+              <Text style={styles.toolTitle}>AI Voice</Text>
+            </TouchableOpacity>
+
+            {/* Tool 4: Foodie Map */}
+            <TouchableOpacity
+              style={styles.toolCard}
+              onPress={() => router.push('/discover')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.toolIconBg, { backgroundColor: '#ffdcc4', borderColor: '#e2bebc' }]}>
+                <Text style={styles.toolIcon}>🗺️</Text>
+              </View>
+              <Text style={styles.toolTitle}>Bản Đồ</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Group Spin CTA */}
-        <Link href="/group-spin/lobby" asChild>
-          <TouchableOpacity style={styles.groupCard}>
-            <View style={styles.groupIcon}>
-              <Text style={styles.groupIconText}>👥</Text>
-            </View>
-            <View style={styles.groupContent}>
-              <Text style={styles.groupTitle}>Nhóm quay</Text>
-              <Text style={styles.groupSubtitle}>Quay cùng bạn bè, tối đa 20 người</Text>
-            </View>
-            <Text style={styles.groupArrow}>→</Text>
+        {/* 4. Quick Category Filter Chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filtersScroll}
+          contentContainerStyle={styles.filtersContent}
+        >
+          <TouchableOpacity style={styles.filterChipActive}>
+            <Text style={styles.filterTextActive}>📍 Gần tôi (&lt;2km)</Text>
           </TouchableOpacity>
-        </Link>
-
-        {/* Menu Scanner CTA */}
-        <Link href="/spin/menu-capture" asChild>
-          <TouchableOpacity style={styles.scannerCard}>
-            <View style={styles.scannerIcon}>
-              <Text style={styles.groupIconText}>📷</Text>
-            </View>
-            <View style={styles.groupContent}>
-              <Text style={styles.groupTitle}>Quét Menu bằng AI</Text>
-              <Text style={styles.groupSubtitle}>Chụp ảnh menu, AI sẽ tự động tạo vòng quay</Text>
-            </View>
-            <Text style={styles.groupArrow}>→</Text>
+          <TouchableOpacity style={styles.filterChip}>
+            <Text style={styles.filterText}>💰 Dưới 100k</Text>
           </TouchableOpacity>
-        </Link>
+          <TouchableOpacity style={styles.filterChip}>
+            <Text style={styles.filterText}>⭐ 4.5+ sao</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.filterChip}>
+            <Text style={styles.filterText}>🍜 Phở & Bún</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.filterChip}>
+            <Text style={styles.filterText}>🧋 Trà Sữa</Text>
+          </TouchableOpacity>
+        </ScrollView>
 
-        {/* Recent Taste Boards */}
+        {/* 5. Taste Board Live Carousel */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>📸 Taste Board gần đây</Text>
-            <Link href="/(tabs)/lockets">
-              <Text style={styles.sectionLink}>Xem tất cả</Text>
-            </Link>
+            <Text style={styles.sectionTitle}>📸 Taste Board Bạn Bè</Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/lockets')}>
+              <Text style={styles.sectionLink}>Xem tất cả ➔</Text>
+            </TouchableOpacity>
           </View>
 
-          {MOCK_RECENT_LOCKETS.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.locketList}
-            >
-              {MOCK_RECENT_LOCKETS.map((locket) => (
-                <TouchableOpacity key={locket.id} style={styles.locketItem}>
-                  <Image source={{ uri: locket.image }} style={styles.locketImage} />
-                  <Text style={styles.locketRestaurant} numberOfLines={1}>
-                    {locket.restaurant}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>📷</Text>
-              <Text style={styles.emptyText}>Chưa có Taste Board nào</Text>
-              <Link href="/locket/capture" asChild>
-                <TouchableOpacity style={styles.emptyButton}>
-                  <Text style={styles.emptyButtonText}>Chụp Taste Board</Text>
-                </TouchableOpacity>
-              </Link>
-            </View>
-          )}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.locketList}
+          >
+            {MOCK_RECENT_LOCKETS.map((locket) => (
+              <TouchableOpacity
+                key={locket.id}
+                style={styles.locketCard}
+                onPress={() => router.push('/(tabs)/lockets')}
+                activeOpacity={0.88}
+              >
+                <Image source={{ uri: locket.image }} style={styles.locketImage} />
+                <View style={styles.locketRatingBadge}>
+                  <Text style={styles.locketRatingText}>⭐ {locket.rating}</Text>
+                </View>
+                <Text style={styles.locketName} numberOfLines={1}>{locket.restaurant}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
-        {/* Nearby Restaurants */}
+        {/* 6. Nearby Foodie Hotspots */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>📍 Quán gần bạn</Text>
-            <Link href={'/restaurants' as any}>
-              <Text style={styles.sectionLink}>Xem tất cả</Text>
-            </Link>
+            <Text style={styles.sectionTitle}>📍 Quán Ngon Gần Bạn</Text>
+            <TouchableOpacity onPress={() => router.push('/restaurants' as any)}>
+              <Text style={styles.sectionLink}>Xem tất cả ➔</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.restaurantList}>
@@ -162,6 +178,7 @@ export default function HomeScreen() {
                 key={restaurant.id}
                 style={styles.restaurantCard}
                 onPress={() => router.push(`/restaurant/${restaurant.id}`)}
+                activeOpacity={0.88}
               >
                 <View style={styles.restaurantInfo}>
                   <Text style={styles.restaurantName}>{restaurant.name}</Text>
@@ -173,27 +190,16 @@ export default function HomeScreen() {
                     <Text style={styles.restaurantCategory}>{restaurant.category}</Text>
                   </View>
                 </View>
-                <TouchableOpacity style={styles.spinButton}>
-                  <Text style={styles.spinButtonText}>🎲</Text>
+                <TouchableOpacity
+                  style={styles.spinIconBadge}
+                  onPress={() => router.push('/(tabs)/spin')}
+                >
+                  <Text style={styles.spinIconText}>🎲</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
             ))}
           </View>
         </View>
-
-        {/* Rewards Banner */}
-        <TouchableOpacity style={styles.rewardsBanner}>
-          <View style={styles.rewardsContent}>
-            <Text style={styles.rewardsTitle}>🏆 Season Rewards</Text>
-            <Text style={styles.rewardsSubtitle}>Đạt streak 7 ngày để nhận voucher!</Text>
-          </View>
-          <View style={styles.rewardsProgress}>
-            <View style={styles.rewardsProgressBar}>
-              <View style={[styles.rewardsProgressFill, { width: '60%' }]} />
-            </View>
-            <Text style={styles.rewardsProgressText}>4/7 ngày</Text>
-          </View>
-        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -202,285 +208,293 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#FFF8E7',
+    backgroundColor: '#fff8ef',
   },
   scrollView: {
     flex: 1,
-    backgroundColor: '#FFF8E7',
+    backgroundColor: '#fff8ef',
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 160,
+    paddingBottom: 24,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
   },
   greeting: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#292524',
+    fontSize: 25,
+    fontWeight: '900',
+    color: '#b52330',
   },
   subGreeting: {
-    fontSize: 14,
-    color: '#78716C',
-    marginTop: 4,
+    fontSize: 13,
+    color: '#8e4e14',
+    marginTop: 3,
+    fontWeight: '700',
   },
   notificationButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'white',
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
   notificationIcon: {
-    fontSize: 20,
+    fontSize: 19,
   },
+
+  // Hero Card (CHỦ ĐẠO CHÍNH)
   heroCard: {
     marginHorizontal: 20,
-    backgroundColor: '#D97706',
-    borderRadius: 20,
-    padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#D97706',
+    marginTop: 8,
+    backgroundColor: '#b52330',
+    borderRadius: 24,
+    padding: 22,
+    borderBottomWidth: 4,
+    borderBottomColor: '#61000e',
+    shadowColor: '#b52330',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   heroContent: {
-    flex: 1,
+    alignItems: 'flex-start',
+  },
+  heroTag: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  heroTagText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#ffffff',
+    letterSpacing: 0.5,
   },
   heroTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: 'white',
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#ffffff',
+    marginBottom: 4,
   },
   heroSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 4,
+    fontSize: 13,
+    color: '#ffdcc4',
+    lineHeight: 18,
+    fontWeight: '600',
+    marginBottom: 16,
   },
   heroButton: {
-    flexDirection: 'row',
+    width: '100%',
+    backgroundColor: '#ff5a5f',
+    paddingVertical: 14,
+    borderRadius: 18,
     alignItems: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 12,
-    alignSelf: 'flex-start',
+    justifyContent: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: '#61000e',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
   heroButtonText: {
-    color: '#D97706',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  heroButtonIcon: {
-    color: '#D97706',
-    fontWeight: '700',
-    marginLeft: 8,
+    color: '#ffffff',
+    fontWeight: '900',
+    fontSize: 15,
+    letterSpacing: 0.5,
   },
   heroEmoji: {
-    fontSize: 56,
-    marginLeft: 12,
+    fontSize: 48,
   },
-  quickFilters: {
-    flexDirection: 'row',
+
+  // Quick Tools Row (CHỨC NĂNG PHỤ - CLEAN & FOCUSED)
+  quickToolsContainer: {
     paddingHorizontal: 20,
+    marginTop: 22,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#b52330',
+    marginBottom: 12,
+  },
+  quickToolsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  toolCard: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  toolIconBg: {
+    width: 60,
+    height: 60,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    marginBottom: 6,
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  toolIcon: {
+    fontSize: 26,
+  },
+  toolTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#b52330',
+    textAlign: 'center',
+  },
+
+  // Category Filters
+  filtersScroll: {
     marginTop: 20,
+    marginBottom: 6,
+  },
+  filtersContent: {
+    paddingHorizontal: 20,
     gap: 10,
   },
   filterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: 14,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 15,
     paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
   },
-  filterIcon: {
-    fontSize: 14,
-    marginRight: 6,
+  filterChipActive: {
+    backgroundColor: '#b52330',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#b52330',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   filterText: {
     fontSize: 13,
-    color: '#57534E',
-    fontWeight: '500',
+    color: '#b52330',
+    fontWeight: '800',
   },
-  groupCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 20,
-    marginTop: 16,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: '#FEF3C7',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  groupIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FEF3C7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  groupIconText: {
-    fontSize: 24,
-  },
-  scannerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 20,
-    marginTop: 12,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: '#FDE68A',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  scannerIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FDE68A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  groupContent: {
-    flex: 1,
-  },
-  groupTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#292524',
-  },
-  groupSubtitle: {
+  filterTextActive: {
     fontSize: 13,
-    color: '#78716C',
-    marginTop: 2,
+    color: '#ffffff',
+    fontWeight: '900',
   },
-  groupArrow: {
-    fontSize: 20,
-    color: '#D97706',
-    fontWeight: '600',
-  },
+
+  // Exploratory Sections
   section: {
-    marginTop: 24,
+    marginTop: 22,
     paddingHorizontal: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#292524',
+    marginBottom: 12,
   },
   sectionLink: {
-    fontSize: 14,
-    color: '#D97706',
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#8e4e14',
+    fontWeight: '800',
   },
+
+  // Lockets Carousel
   locketList: {
     paddingRight: 20,
+    gap: 12,
   },
-  locketItem: {
-    width: 120,
-    marginRight: 12,
+  locketCard: {
+    width: 128,
+    position: 'relative',
   },
   locketImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 12,
-    backgroundColor: '#E7E5E4',
+    width: 128,
+    height: 128,
+    borderRadius: 18,
+    backgroundColor: '#ffdcc4',
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
   },
-  locketRestaurant: {
+  locketRatingBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(255,220,196,0.92)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ffab69',
+  },
+  locketRatingText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#8e4e14',
+  },
+  locketName: {
     fontSize: 13,
-    color: '#57534E',
+    color: '#b52330',
     marginTop: 6,
-    fontWeight: '500',
+    fontWeight: '800',
   },
-  emptyState: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#E7E5E4',
-    borderStyle: 'dashed',
-  },
-  emptyIcon: {
-    fontSize: 40,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#78716C',
-  },
-  emptyButton: {
-    marginTop: 12,
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  emptyButtonText: {
-    color: '#D97706',
-    fontWeight: '600',
-    fontSize: 14,
-  },
+
+  // Restaurants List
   restaurantList: {
     gap: 12,
   },
   restaurantCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
     padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   },
   restaurantInfo: {
     flex: 1,
   },
   restaurantName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#292524',
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#b52330',
   },
   restaurantMeta: {
     flexDirection: 'row',
@@ -489,121 +503,34 @@ const styles = StyleSheet.create({
   },
   restaurantRating: {
     fontSize: 13,
-    color: '#292524',
-    fontWeight: '500',
+    color: '#FFC107',
+    fontWeight: '800',
   },
   restaurantDot: {
     fontSize: 13,
-    color: '#A8A29E',
+    color: '#5a403f',
     marginHorizontal: 6,
   },
   restaurantDistance: {
     fontSize: 13,
-    color: '#78716C',
+    color: '#8e4e14',
+    fontWeight: '700',
   },
   restaurantCategory: {
     fontSize: 13,
-    color: '#78716C',
+    color: '#5a403f',
   },
-  spinButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FEF3C7',
+  spinIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#ffdcc4',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#ffab69',
   },
-  spinButtonText: {
-    fontSize: 18,
-  },
-  rewardsBanner: {
-    marginHorizontal: 20,
-    marginTop: 24,
-    backgroundColor: '#059669',
-    borderRadius: 16,
-    padding: 16,
-  },
-  rewardsContent: {
-    marginBottom: 12,
-  },
-  rewardsTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: 'white',
-  },
-  rewardsSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 4,
-  },
-  rewardsProgress: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  rewardsProgressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    borderRadius: 4,
-  },
-  rewardsProgressFill: {
-    height: '100%',
-    backgroundColor: 'white',
-    borderRadius: 4,
-  },
-  rewardsProgressText: {
-    fontSize: 13,
-    color: 'white',
-    fontWeight: '600',
-  },
-  menuScanCard: {
-    marginHorizontal: 20,
-    marginTop: 16,
-    backgroundColor: '#fff7ed',
-    borderRadius: 20,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 2,
-    borderColor: '#f97316',
-    shadowColor: '#ea580c',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  menuScanContent: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  menuBadge: {
-    backgroundColor: '#ea580c',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginBottom: 6,
-  },
-  menuBadgeText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#ffffff',
-    letterSpacing: 0.5,
-  },
-  menuScanTitle: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#1c1917',
-    marginBottom: 3,
-  },
-  menuScanSubtitle: {
-    fontSize: 12,
-    color: '#57534e',
-    lineHeight: 16,
-  },
-  menuScanEmoji: {
-    fontSize: 36,
+  spinIconText: {
+    fontSize: 20,
   },
 });

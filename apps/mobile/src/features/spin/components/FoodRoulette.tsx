@@ -1,5 +1,5 @@
 import React, { useCallback, useImperativeHandle, forwardRef } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,13 +7,40 @@ import Animated, {
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Path, G, Text as SvgText } from 'react-native-svg';
+import Svg, { Path, G, Text as SvgText, Circle } from 'react-native-svg';
 import type { Restaurant } from '../types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const WHEEL_SIZE = Math.min(SCREEN_WIDTH - 64, 320);
+const WHEEL_SIZE = Math.min(SCREEN_WIDTH - 48, 330);
+const CENTER = WHEEL_SIZE / 2;
+const RADIUS = CENTER - 18;
 
-const SEGMENT_COLORS = ['#FF5A5F', '#FFAB69', '#55A37A', '#FFC107', '#B52330', '#88D7AA'];
+const SEGMENT_COLORS = [
+  '#b52330', // Deep Crimson Red
+  '#ffab69', // Warm Apricot
+  '#166b47', // Garden Green
+  '#FFC107', // Gold
+  '#ff5a5f', // Coral Red
+  '#55a37a', // Mint Green
+  '#8e4e14', // Harvest Orange
+  '#93000a', // Ruby Red
+];
+
+function getFoodEmoji(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.includes('phở') || lower.includes('bún') || lower.includes('mì') || lower.includes('ramen')) return '🍜';
+  if (lower.includes('cơm')) return '🍚';
+  if (lower.includes('lẩu') || lower.includes('nướng') || lower.includes('bbq') || lower.includes('gyu')) return '🥩';
+  if (lower.includes('pizza') || lower.includes('4p')) return '🍕';
+  if (lower.includes('bánh mì') || lower.includes('huỳnh')) return '🥖';
+  if (lower.includes('trà sữa') || lower.includes('gong') || lower.includes('koi')) return '🧋';
+  if (lower.includes('gà') || lower.includes('kfc') || lower.includes('lotteria')) return '🍗';
+  if (lower.includes('sushi') || lower.includes('nhật')) return '🍣';
+  if (lower.includes('burger')) return '🍔';
+  if (lower.includes('ốc') || lower.includes('hải sản')) return '🦪';
+  if (lower.includes('chè') || lower.includes('kem') || lower.includes('bánh')) return '🍰';
+  return '🍽️';
+}
 
 export interface FoodRouletteRef {
   spin: () => void;
@@ -47,15 +74,15 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
 
       setSpinning(true);
 
-      const extraSpins = (Math.floor(Math.random() * 4) + 3) * 360;
+      const extraSpins = (Math.floor(Math.random() * 4) + 4) * 360;
       const randomSegment = Math.floor(Math.random() * 360);
       const newRotation = rotation.value + extraSpins + randomSegment;
 
       rotation.value = withTiming(
         newRotation,
         {
-          duration: 3500,
-          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          duration: 3800,
+          easing: Easing.bezier(0.15, 0.85, 0.35, 1.05), // Smooth casino decelerate bounce
         },
         (finished) => {
           if (finished) {
@@ -77,8 +104,36 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
       transform: [{ rotate: `${rotation.value}deg` }],
     }));
 
+    // Outer lights (16 lights around circumference)
+    const renderOuterLights = () => {
+      const lightsCount = 16;
+      const lights = [];
+      const lightRadius = RADIUS + 10;
+      for (let i = 0; i < lightsCount; i++) {
+        const angle = (i * 360) / lightsCount;
+        const rad = (angle - 90) * (Math.PI / 180);
+        const lx = CENTER + lightRadius * Math.cos(rad);
+        const ly = CENTER + lightRadius * Math.sin(rad);
+        lights.push(
+          <Circle
+            key={`light-${i}`}
+            cx={lx}
+            cy={ly}
+            r={3.5}
+            fill={i % 2 === 0 ? '#ffffff' : '#fff8ef'}
+            stroke="#FFC107"
+            strokeWidth={1}
+          />
+        );
+      }
+      return lights;
+    };
+
     const renderSegments = () => {
       if (candidates.length === 0) return null;
+
+      const sliceCount = candidates.length;
+      const fontSize = sliceCount > 10 ? 9 : sliceCount > 7 ? 10 : sliceCount > 4 ? 11 : 12;
 
       return candidates.map((candidate, index) => {
         const startAngle = index * segmentAngle;
@@ -87,45 +142,63 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
         const startRad = (startAngle - 90) * (Math.PI / 180);
         const endRad = (endAngle - 90) * (Math.PI / 180);
 
-        const center = WHEEL_SIZE / 2;
-        const radius = center - 8;
-
-        const x1 = center + radius * Math.cos(startRad);
-        const y1 = center + radius * Math.sin(startRad);
-        const x2 = center + radius * Math.cos(endRad);
-        const y2 = center + radius * Math.sin(endRad);
+        const x1 = CENTER + RADIUS * Math.cos(startRad);
+        const y1 = CENTER + RADIUS * Math.sin(startRad);
+        const x2 = CENTER + RADIUS * Math.cos(endRad);
+        const y2 = CENTER + RADIUS * Math.sin(endRad);
 
         const largeArcFlag = segmentAngle > 180 ? 1 : 0;
 
         const pathData = [
-          `M ${center} ${center}`,
+          `M ${CENTER} ${CENTER}`,
           `L ${x1} ${y1}`,
-          `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+          `A ${RADIUS} ${RADIUS} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
           'Z',
         ].join(' ');
 
         const textAngle = startAngle + segmentAngle / 2;
         const textRad = (textAngle - 90) * (Math.PI / 180);
-        const textRadius = radius * 0.6;
-        const textX = center + textRadius * Math.cos(textRad);
-        const textY = center + textRadius * Math.sin(textRad);
 
+        // Position Emoji near outer edge, and text further in
+        const emojiRadius = RADIUS * 0.78;
+        const emojiX = CENTER + emojiRadius * Math.cos(textRad);
+        const emojiY = CENTER + emojiRadius * Math.sin(textRad);
+
+        const textRadius = RADIUS * 0.48;
+        const textX = CENTER + textRadius * Math.cos(textRad);
+        const textY = CENTER + textRadius * Math.sin(textRad);
+
+        const foodEmoji = getFoodEmoji(candidate.name);
+        const maxLen = sliceCount > 8 ? 8 : 11;
         const displayName =
-          candidate.name.length > 12 ? candidate.name.substring(0, 11) + '…' : candidate.name;
+          candidate.name.length > maxLen ? candidate.name.substring(0, maxLen - 1) + '…' : candidate.name;
 
         return (
           <G key={candidate.id}>
             <Path
               d={pathData}
               fill={SEGMENT_COLORS[index % SEGMENT_COLORS.length]}
-              stroke="#FFF"
-              strokeWidth={2}
+              stroke="#ffffff"
+              strokeWidth={2.5}
             />
+            {/* Food Emoji Icon */}
+            <SvgText
+              x={emojiX}
+              y={emojiY}
+              fontSize={sliceCount > 8 ? 12 : 14}
+              textAnchor="middle"
+              alignmentBaseline="middle"
+              transform={`rotate(${textAngle}, ${emojiX}, ${emojiY})`}
+            >
+              {foodEmoji}
+            </SvgText>
+
+            {/* Dish/Restaurant Name */}
             <SvgText
               x={textX}
               y={textY}
-              fill="white"
-              fontSize={10}
+              fill="#ffffff"
+              fontSize={fontSize}
               fontWeight="bold"
               textAnchor="middle"
               alignmentBaseline="middle"
@@ -140,103 +213,157 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
 
     return (
       <View style={styles.container}>
-        {/* Pointer */}
+        {/* 3D Pointer Badge */}
         <View style={styles.pointerContainer}>
-          <Svg width={24} height={32} viewBox="0 0 24 32">
-            <Path d="M12 32 L0 8 L24 8 Z" fill="#B52330" />
+          <Svg width={32} height={40} viewBox="0 0 28 36">
+            <Path
+              d="M14 36 L2 10 A12 12 0 1 1 26 10 Z"
+              fill="#b52330"
+              stroke="#FFC107"
+              strokeWidth={2.5}
+            />
+            <Circle cx={14} cy={12} r={4} fill="#ffffff" />
           </Svg>
         </View>
 
-        {/* Wheel */}
-        <Animated.View style={[styles.wheelContainer, animatedStyle]}>
-          <Svg width={WHEEL_SIZE} height={WHEEL_SIZE} viewBox={`0 0 ${WHEEL_SIZE} ${WHEEL_SIZE}`}>
-            <G>{renderSegments()}</G>
-          </Svg>
+        {/* Wheel Assembly */}
+        <View style={styles.wheelOuterFrame}>
+          <Animated.View style={[styles.wheelContainer, animatedStyle]}>
+            <Svg width={WHEEL_SIZE} height={WHEEL_SIZE} viewBox={`0 0 ${WHEEL_SIZE} ${WHEEL_SIZE}`}>
+              {/* Outer Metallic Ring */}
+              <Circle
+                cx={CENTER}
+                cy={CENTER}
+                r={RADIUS + 9}
+                fill="#b52330"
+                stroke="#FFC107"
+                strokeWidth={7}
+              />
 
-          {/* Center circle */}
-          <View style={styles.centerCircle}>
-            <Text style={styles.centerEmoji}>🍜</Text>
-          </View>
-        </Animated.View>
+              {/* Slices */}
+              <G>{renderSegments()}</G>
 
-        {/* Spin Button (optional) */}
+              {/* Circumference Lights */}
+              <G>{renderOuterLights()}</G>
+            </Svg>
+
+            {/* 3D Tactile Center Bullseye Hub */}
+            <View style={styles.centerCircle}>
+              <View style={styles.centerInnerCircle}>
+                <Text style={styles.centerEmoji}>{spinning ? '🎲' : '🍜'}</Text>
+              </View>
+            </View>
+          </Animated.View>
+        </View>
+
+        {/* Spin Action Button */}
         {showSpinButton && (
-          <View style={styles.buttonWrapper}>
-            <Text
-              style={[
-                styles.spinButton,
-                (spinning || disabled || candidates.length === 0) && styles.spinButtonDisabled,
-              ]}
-              onPress={spin}
-            >
-              {spinning ? '🔄 ĐANG QUAY...' : '🎉 QUAY NGAY!'}
+          <TouchableOpacity
+            onPress={spin}
+            disabled={spinning || disabled || candidates.length === 0}
+            activeOpacity={0.85}
+            style={[
+              styles.spinButton,
+              (spinning || disabled || candidates.length === 0) && styles.spinButtonDisabled,
+            ]}
+          >
+            <Text style={styles.spinButtonText}>
+              {spinning ? '🔄 ĐANG CHỌN MÓN...' : '🎰 QUAY MÓN NGAY!'}
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
       </View>
     );
   }
 );
 
-
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 12,
   },
   pointerContainer: {
     position: 'absolute',
-    top: 0,
-    zIndex: 10,
+    top: 2,
+    zIndex: 20,
     alignItems: 'center',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  wheelOuterFrame: {
+    width: WHEEL_SIZE,
+    height: WHEEL_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 18,
+    borderRadius: WHEEL_SIZE / 2,
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    elevation: 8,
   },
   wheelContainer: {
     width: WHEEL_SIZE,
     height: WHEEL_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 16,
   },
   centerCircle: {
     position: 'absolute',
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#FFF',
-    borderWidth: 4,
-    borderColor: '#E5E7EB',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFC107',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  centerEmoji: {
-    fontSize: 22,
-  },
-  buttonWrapper: {
-    marginTop: 20,
-    width: '100%',
-    paddingHorizontal: 40,
-  },
-  spinButton: {
-    backgroundColor: '#B52330',
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '700',
-    textAlign: 'center',
-    paddingVertical: 16,
-    borderRadius: 28,
-    overflow: 'hidden',
-    shadowColor: '#B52330',
+    borderWidth: 3,
+    borderColor: '#ffffff',
+    shadowColor: '#b52330',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  centerInnerCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#fff8ef',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+  },
+  centerEmoji: {
+    fontSize: 24,
+  },
+  spinButton: {
+    marginTop: 24,
+    width: SCREEN_WIDTH - 64,
+    backgroundColor: '#b52330',
+    paddingVertical: 15,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 4,
+    borderBottomColor: '#61000e',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
     elevation: 6,
   },
+  spinButtonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
   spinButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.6,
   },
 });

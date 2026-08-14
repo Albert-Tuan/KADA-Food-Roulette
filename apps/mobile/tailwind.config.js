@@ -5,42 +5,77 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Food Roulette brand colors (Earthy/warm-light-first)
+        // Stitch Soft Red Gamified System / Vibrant Hearth Design Tokens
         primary: {
-          DEFAULT: '#D97706', // Warm amber
-          50: '#FEF3C7',
-          100: '#FDE68A',
-          200: '#FCD34D',
-          300: '#FBBF24',
-          400: '#F59E0B',
-          500: '#D97706',
-          600: '#B45309',
-          700: '#92400E',
-          800: '#78350F',
-          900: '#451A03',
+          DEFAULT: '#b52330',          // Primary Red
+          container: '#ff5a5f',        // Appetizing Warm Coral Red
+          dim: '#ffb3b0',
+          dark: '#61000e',
         },
         secondary: {
-          DEFAULT: '#78716C', // Warm stone
-          50: '#F5F5F4',
-          100: '#E7E5E4',
-          200: '#D6D3D1',
-          300: '#A8A29E',
-          400: '#78716C',
-          500: '#57534E',
-          600: '#44403C',
-          700: '#292524',
-          800: '#1C1917',
-          900: '#0C0A09',
+          DEFAULT: '#8e4e14',          // Secondary Harvest Orange
+          container: '#ffab69',        // Secondary Container Orange
+          dark: '#783d01',
         },
-        accent: {
-          DEFAULT: '#059669', // Emerald for success/votes
-          light: '#10B981',
+        tertiary: {
+          DEFAULT: '#166b47',          // Garden Green
+          container: '#55a37a',        // Garden Container
+          dark: '#00341f',
         },
-        background: '#FFF8E7', // Warm cream
-        surface: '#FFFFFF',
+        surface: {
+          DEFAULT: '#fff8ef',          // Hearth Cream Surface
+          dim: '#e1d9cb',
+          bright: '#fff8ef',
+          low: '#fbf3e4',
+          container: '#f5edde',
+          high: '#efe7d9',
+          highest: '#e9e2d3',
+          white: '#ffffff',
+        },
+        'on-surface': {
+          DEFAULT: '#1e1b13',          // Warm dark text
+          variant: '#5a403f',          // Muted text
+        },
+        outline: {
+          DEFAULT: '#8e706f',
+          variant: '#e2bebc',
+        },
+        streak: {
+          gold: '#FFC107',             // Streak / XP Gold
+        },
+        status: {
+          open: '#16A34A',
+          closed: '#DC2626',
+        },
+        background: '#fff8ef',
+        cream: {
+          DEFAULT: '#fff8ef',
+          low: '#fbf3e4',
+          container: '#f5edde',
+          white: '#ffffff',
+          linen: '#fbf3e4',
+          beige: '#ffffff',
+        },
+        flamered: '#b52330',
+        flameorange: '#8e4e14',
+        espresso: '#b52330',
+        borderflame: '#e2bebc',
+        gold: {
+          DEFAULT: '#FFC107',
+          soft: '#ffdcc4',
+          light: '#ffab69',
+        },
+        warmgray: '#5a403f',
+        borderbrown: '#e2bebc',
+      },
+      borderRadius: {
+        '2xl': '16px',
+        '3xl': '24px',
+        '4xl': '32px',
       },
       fontFamily: {
-        sans: ['System', 'sans-serif'],
+        heading: ['Plus Jakarta Sans', 'System', 'sans-serif'],
+        sans: ['Inter', 'System', 'sans-serif'],
       },
     },
   },
