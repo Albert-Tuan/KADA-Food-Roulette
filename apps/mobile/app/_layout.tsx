@@ -39,6 +39,8 @@ export default function RootLayout() {
           <Stack.Screen name="spin/menu-wheel" options={{ headerShown: false }} />
           <Stack.Screen name="spin/voice-pick" options={{ headerShown: false }} />
           <Stack.Screen name="spin/result" options={{ headerShown: false }} />
+          <Stack.Screen name="spin/check-in" options={{ headerShown: false }} />
+          <Stack.Screen name="spin/lucky-spin" options={{ headerShown: false }} />
           <Stack.Screen name="group-spin/lobby" options={{ headerShown: false }} />
           <Stack.Screen name="u/[public_id]" options={{ title: 'Profile công khai' }} />
         </Stack>

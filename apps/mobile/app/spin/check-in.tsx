@@ -15,7 +15,7 @@ import { useSpinStore } from '../../src/stores/spinStore';
 
 export default function PersonalCheckInScreen() {
   const router = useRouter();
-  const { currentResult } = useSpinStore();
+  const { currentResult, grantLuckySpin } = useSpinStore();
 
   const [rating, setRating] = useState(5);
   const [dishName, setDishName] = useState('');
@@ -35,6 +35,8 @@ export default function PersonalCheckInScreen() {
   };
 
   const handleConfirmCheckIn = () => {
+    grantLuckySpin();
+    Alert.alert('🎉 Check-in Thành Công!', 'Bạn đã tích lũy thêm 1 lượt quay Vòng Quay May Mắn!');
     router.push('/spin/lucky-spin');
   };
 
