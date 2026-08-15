@@ -56,7 +56,7 @@
 | **Onboarding Flow** | 🟡 | ❌ | ❌ | 🟡 Partial | `plans/feature-v1.1-onboarding.md` |
 | **Discover Map** | 🟡 | ❌ | ❌ | ❌ Not Started | `plans/feature-v1.1-discover-map.md` |
 | **Steward Dashboard** | ✅ | ❌ | ✅ | 🟡 Partial | `plans/feature-v1.1-steward.md` |
-| **Review UI** | ✅ | 🟡 | ✅ | 🟡 Partial | `plans/feature-v1.1-review-ui.md` |
+| **Review UI** | ✅ | ✅ | ✅ | ✅ Done | `plans/feature-v1.1-review-ui.md` |
 
 ---
 
@@ -194,7 +194,7 @@
 
 ### Còn lại ⬜
 - [ ] Onboarding screens (4-5 screens)
-- [ ] Review writing UI (full)
+- [x] ✅ Review writing UI (full)
 - [ ] Push notification setup
 - [ ] Spin Shop UI
 - [ ] Spin Wallet UI
@@ -301,8 +301,8 @@
 - [x] Review API pipeline (backend)
 
 ### Còn lại ⬜
-- [ ] EAS Submit (store submission)
-- [ ] Automated testing workflow
+- [x] ✅ EAS Submit (store submission)
+- [x] ✅ Automated testing workflow
 - [ ] Preview deployments
 
 ---
@@ -470,5 +470,5 @@ KADA-Food-Roulette/
 
 ---
 
-*Updated: 2026-08-11 · Last update by: Cursor AI (sync from git commits)*
+*Updated: 2026-08-15 · Last update by: Thành Nam (DevOps & Review Lead)*
 *Based on: `brand/FOOD-ROULETTE-SITEMAP.md` v2.4*
