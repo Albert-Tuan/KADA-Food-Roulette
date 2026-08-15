@@ -214,12 +214,13 @@ export default function CaptureLocketScreen() {
   };
 
   if (!cameraPermission) {
-    return <CenteredState message="Đang kiểm tra camera..." loading />;
+    return <CenteredState testID="locket-camera-permission-loading" message="Đang kiểm tra camera..." loading />;
   }
 
   if (!cameraPermission.granted) {
     return (
       <CenteredState
+        testID="locket-camera-permission-required"
         title="Cần quyền camera"
         message="Không thể tạo Taste Board nếu không bật camera."
         actionLabel={cameraPermission.canAskAgain ? 'Cho phép camera' : 'Mở cài đặt'}
@@ -231,6 +232,7 @@ export default function CaptureLocketScreen() {
   if (locationPermission === 'denied') {
     return (
       <CenteredState
+        testID="locket-location-permission-required"
         title="Cần quyền vị trí"
         message="Taste Board cần GPS để xác nhận nơi và thời điểm chụp."
         actionLabel="Mở cài đặt"
@@ -243,11 +245,11 @@ export default function CaptureLocketScreen() {
 
   if (draft) {
     return (
-      <SafeAreaView className="flex-1 bg-background">
+      <SafeAreaView testID="locket-preview-screen" className="flex-1 bg-background">
         <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView contentContainerStyle={styles.formContent} keyboardShouldPersistTaps="handled">
             <View className="flex-row items-center justify-between mb-4">
-              <TouchableOpacity onPress={() => setDraft(null)} className="px-3 py-2">
+              <TouchableOpacity testID="locket-retake-button" onPress={() => setDraft(null)} className="px-3 py-2">
                 <Text className="text-secondary-700">Chụp lại</Text>
               </TouchableOpacity>
               <Text className="text-xl font-bold text-secondary-900">Taste Board mới</Text>
@@ -258,6 +260,7 @@ export default function CaptureLocketScreen() {
 
             <Field label={`Review · ${note.length}/${MAX_CAPTION_LENGTH}`}>
               <TextInput
+                testID="locket-note-input"
                 value={note}
                 onChangeText={setNote}
                 placeholder="Chia sẻ khoảnh khắc này với bạn bè nhé."
@@ -273,6 +276,7 @@ export default function CaptureLocketScreen() {
               <View className="gap-2">
                 {VISIBILITY_OPTIONS.map((option) => (
                   <TouchableOpacity
+                    testID={`locket-visibility-${option.value.toLowerCase()}`}
                     key={option.value}
                     onPress={() => setVisibility(option.value)}
                     className={`rounded-xl border p-4 ${
@@ -294,6 +298,7 @@ export default function CaptureLocketScreen() {
             {formError ? <Text className="text-red-700 text-sm">{formError}</Text> : null}
 
             <TouchableOpacity
+              testID="locket-submit-button"
               onPress={handleSubmit}
               disabled={createLocket.isPending}
               className="bg-primary rounded-xl py-4 items-center disabled:opacity-50"
@@ -311,14 +316,14 @@ export default function CaptureLocketScreen() {
   }
 
   return (
-    <View className="flex-1 bg-black">
+    <View testID="locket-camera-screen" className="flex-1 bg-black">
       <CameraView ref={cameraRef} style={styles.camera} facing={cameraFacing}>
         <SafeAreaView className="flex-1">
           <View className="flex-row justify-between items-center p-4">
-            <TouchableOpacity className="rounded-full bg-black/60 px-4 py-3" onPress={() => router.back()}>
+            <TouchableOpacity testID="locket-close-button" className="rounded-full bg-black/60 px-4 py-3" onPress={() => router.back()}>
               <Text className="text-white font-semibold">Đóng</Text>
             </TouchableOpacity>
-            <View className="rounded-full bg-black/60 px-4 py-3">
+            <View testID="locket-location-status" className="rounded-full bg-black/60 px-4 py-3">
               <Text className="text-white text-sm">{getLocationStatusLabel(isLocating, location)}</Text>
             </View>
           </View>
@@ -336,6 +341,7 @@ export default function CaptureLocketScreen() {
             <View className="flex-row items-center gap-10">
               <View className="w-14" />
               <TouchableOpacity
+                testID="locket-capture-button"
                 accessibilityLabel="Chụp ảnh"
                 className="w-20 h-20 rounded-full bg-white border-4 border-primary items-center justify-center disabled:opacity-50"
                 onPress={handleCapture}
@@ -344,6 +350,7 @@ export default function CaptureLocketScreen() {
                 {isCapturing ? <ActivityIndicator color="#C68E17" /> : <View className="w-14 h-14 rounded-full bg-primary" />}
               </TouchableOpacity>
               <TouchableOpacity
+                testID="locket-flip-camera-button"
                 accessibilityLabel="Đổi camera"
                 className="w-14 h-14 rounded-full bg-black/60 items-center justify-center"
                 onPress={() => setCameraFacing((current) => (current === 'back' ? 'front' : 'back'))}
@@ -369,6 +376,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function CenteredState({
+  testID,
   title,
   message,
   loading,
@@ -377,6 +385,7 @@ function CenteredState({
   secondaryLabel,
   onSecondaryAction,
 }: {
+  testID: string;
   title?: string;
   message: string;
   loading?: boolean;
@@ -386,7 +395,7 @@ function CenteredState({
   onSecondaryAction?: () => void | Promise<void>;
 }) {
   return (
-    <SafeAreaView className="flex-1 bg-background items-center justify-center px-8">
+    <SafeAreaView testID={testID} className="flex-1 bg-background items-center justify-center px-8">
       {loading ? <ActivityIndicator color="#C68E17" size="large" /> : null}
       {title ? <Text className="text-2xl font-bold text-secondary-900 text-center">{title}</Text> : null}
       <Text className="text-secondary-600 text-center mt-3">{message}</Text>

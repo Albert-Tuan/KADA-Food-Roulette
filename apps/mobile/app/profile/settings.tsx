@@ -7,7 +7,7 @@ export default function ProfileSettingsScreen() {
   const [groupNotifications, setGroupNotifications] = useState(true);
 
   return (
-    <SafeAreaView className="flex-1 bg-background p-5" edges={['bottom']}>
+    <SafeAreaView testID="profile-settings-screen" className="flex-1 bg-background p-5" edges={['bottom']}>
       <Text className="text-secondary-500 mb-5">Cài đặt trên thiết bị này.</Text>
       <SettingRow label="Taste Board mới" value={newTasteBoardNotifications} onChange={setNewTasteBoardNotifications} />
       <SettingRow label="Hoạt động nhóm" value={groupNotifications} onChange={setGroupNotifications} />

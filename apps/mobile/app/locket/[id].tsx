@@ -50,7 +50,7 @@ export default function LocketDetailScreen() {
 
   const locket: Locket = locketQuery.data;
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['bottom']}>
+    <SafeAreaView testID="locket-detail-screen" className="flex-1 bg-background" edges={['bottom']}>
       <ScrollView contentContainerStyle={{ paddingBottom: 36 }}>
         <Image source={{ uri: locket.imageUrl }} className="w-full aspect-square bg-secondary-100" />
         <View className="p-5">
@@ -63,7 +63,7 @@ export default function LocketDetailScreen() {
               <Text className="text-secondary-500 text-sm">@{locket.author.publicId}</Text>
             </View>
             <View className="rounded-full bg-secondary-50 px-3 py-2">
-              <Text className="text-secondary-700 text-xs">{VISIBILITY_LABELS[locket.visibility]}</Text>
+              <Text testID="locket-detail-visibility" className="text-secondary-700 text-xs">{VISIBILITY_LABELS[locket.visibility]}</Text>
             </View>
           </View>
 
@@ -82,6 +82,7 @@ export default function LocketDetailScreen() {
 
           {locket.permissions.canDelete ? (
             <TouchableOpacity
+              testID="locket-delete-button"
               onPress={handleDelete}
               disabled={deleteLocket.isPending}
               className="border border-red-300 rounded-xl py-4 items-center mt-8 disabled:opacity-50"

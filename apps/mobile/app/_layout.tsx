@@ -37,7 +37,10 @@ export default function RootLayout() {
           <Stack.Screen name="locket/[id]" options={{ title: 'Taste Board' }} />
           <Stack.Screen name="profile/edit" options={{ title: 'Chỉnh sửa hồ sơ' }} />
           <Stack.Screen name="profile/settings" options={{ title: 'Cài đặt' }} />
-          <Stack.Screen name="u/[public_id]" options={{ title: 'Profile công khai' }} />
+          <Stack.Screen
+            name="u/[public_id]"
+            options={{ title: 'Profile công khai', headerBackButtonDisplayMode: 'minimal' }}
+          />
         </Stack>
       </SafeAreaProvider>
     </QueryClientProvider>

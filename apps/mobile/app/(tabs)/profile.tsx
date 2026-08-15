@@ -34,7 +34,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <SafeAreaView testID="profile-private-screen" className="flex-1 bg-background" edges={['top']}>
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View className="items-center px-5 pt-8 pb-6">
           {data.avatarUrl ? (
@@ -44,8 +44,8 @@ export default function ProfileScreen() {
               <Text className="text-4xl font-bold text-primary">{data.displayNamePublic.slice(0, 1)}</Text>
             </View>
           )}
-          <Text className="text-2xl font-bold text-secondary-900 mt-4">{data.displayNamePrivate}</Text>
-          <Text className="text-secondary-500 mt-1">Hiển thị công khai: {data.displayNamePublic}</Text>
+          <Text testID="profile-private-display-name" className="text-2xl font-bold text-secondary-900 mt-4">{data.displayNamePrivate}</Text>
+          <Text testID="profile-public-display-name-summary" className="text-secondary-500 mt-1">Hiển thị công khai: {data.displayNamePublic}</Text>
           <Text className="text-secondary-500">@{data.publicId}</Text>
           {data.bio ? <Text className="text-secondary-700 text-center leading-5 mt-4">{data.bio}</Text> : null}
 
@@ -57,10 +57,10 @@ export default function ProfileScreen() {
         </View>
 
         <View className="px-4 gap-3">
-          <MenuLink href="/profile/edit" title="Chỉnh sửa hồ sơ" />
+          <MenuLink testID="profile-edit-link" href="/profile/edit" title="Chỉnh sửa hồ sơ" />
           <MenuLink href="/profile/taste-preferences" title="Thiết lập khẩu vị" />
-          <MenuLink href={`/u/${data.publicId}`} title="Xem profile công khai" />
-          <MenuLink href="/profile/settings" title="Cài đặt" />
+          <MenuLink testID="profile-public-link" href={`/u/${data.publicId}`} title="Xem profile công khai" />
+          <MenuLink testID="profile-settings-link" href="/profile/settings" title="Cài đặt" />
           <TouchableOpacity onPress={handleLogout} className="bg-white border border-red-100 rounded-2xl p-4 mt-3">
             <Text className="text-red-700 font-semibold">Đăng xuất</Text>
           </TouchableOpacity>
@@ -79,10 +79,10 @@ function Stat({ value, label }: { value: number; label: string }) {
   );
 }
 
-function MenuLink({ href, title }: { href: '/profile/edit' | '/profile/taste-preferences' | '/profile/settings' | `/u/${string}`; title: string }) {
+function MenuLink({ testID, href, title }: { testID?: string; href: '/profile/edit' | '/profile/taste-preferences' | '/profile/settings' | `/u/${string}`; title: string }) {
   return (
     <Link href={href} asChild>
-      <TouchableOpacity className="bg-white border border-secondary-100 rounded-2xl p-4 flex-row items-center">
+      <TouchableOpacity testID={testID} className="bg-white border border-secondary-100 rounded-2xl p-4 flex-row items-center">
         <Text className="flex-1 text-secondary-900 font-semibold">{title}</Text>
         <Text className="text-secondary-400">›</Text>
       </TouchableOpacity>

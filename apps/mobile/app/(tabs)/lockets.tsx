@@ -24,8 +24,9 @@ export default function LocketsScreen() {
   const feed = useLocketFeed(filter);
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <SafeAreaView testID="locket-feed-screen" className="flex-1 bg-background" edges={['top']}>
       <FlatList
+        testID="locket-feed-list"
         data={feed.data ?? []}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <LocketCard locket={item} />}
@@ -46,6 +47,7 @@ export default function LocketsScreen() {
               contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8 }}
               renderItem={({ item }) => (
                 <TouchableOpacity
+                  testID={`locket-filter-${item.value.toLowerCase()}`}
                   onPress={() => setFilter(item.value)}
                   className={`rounded-full border px-4 py-2 ${
                     filter === item.value ? 'bg-primary border-primary' : 'bg-white border-secondary-200'
@@ -83,7 +85,7 @@ export default function LocketsScreen() {
       />
 
       <Link href="/locket/capture" asChild>
-        <TouchableOpacity className="absolute bottom-7 right-5 bg-primary rounded-full px-5 py-4 shadow-lg">
+        <TouchableOpacity testID="locket-create-button" className="absolute bottom-7 right-5 bg-primary rounded-full px-5 py-4 shadow-lg">
           <Text className="text-white font-bold">Tạo Taste Board</Text>
         </TouchableOpacity>
       </Link>
@@ -94,7 +96,7 @@ export default function LocketsScreen() {
 function LocketCard({ locket }: { locket: Locket }) {
   return (
     <Link href={`/locket/${locket.id}`} asChild>
-      <TouchableOpacity className="mx-4 mb-4 overflow-hidden rounded-3xl border border-secondary-100 bg-white">
+      <TouchableOpacity testID={`locket-feed-card-${locket.id}`} className="mx-4 mb-4 overflow-hidden rounded-3xl border border-secondary-100 bg-white">
         <View className="flex-row items-center p-4">
           {locket.author.avatarUrl ? (
             <Image source={{ uri: locket.author.avatarUrl }} className="w-11 h-11 rounded-full bg-secondary-100" />

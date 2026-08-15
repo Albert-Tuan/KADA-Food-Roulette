@@ -92,7 +92,7 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['bottom']}>
+    <SafeAreaView testID="profile-edit-screen" className="flex-1 bg-background" edges={['bottom']}>
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <View className="items-center">
@@ -107,15 +107,16 @@ export default function EditProfileScreen() {
           </View>
 
           <ProfileField label="Tên trong nhóm">
-            <TextInput value={privateName} onChangeText={setPrivateName} maxLength={50} className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900" />
+            <TextInput testID="profile-private-name-input" value={privateName} onChangeText={setPrivateName} maxLength={50} className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900" />
             <Text className="text-secondary-500 text-xs mt-2">Chỉ dùng trong nhóm bạn.</Text>
           </ProfileField>
           <ProfileField label="Tên công khai">
-            <TextInput value={publicName} onChangeText={setPublicName} maxLength={50} className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900" />
+            <TextInput testID="profile-public-name-input" value={publicName} onChangeText={setPublicName} maxLength={50} className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900" />
             <Text className="text-secondary-500 text-xs mt-2">Tên này xuất hiện trên profile công khai.</Text>
           </ProfileField>
           <ProfileField label={`Bio · ${bio.length}/${MAX_BIO_LENGTH}`}>
             <TextInput
+              testID="profile-bio-input"
               value={bio}
               onChangeText={setBio}
               maxLength={MAX_BIO_LENGTH}
@@ -127,6 +128,7 @@ export default function EditProfileScreen() {
 
           {error ? <Text className="text-red-700 mt-4">{error}</Text> : null}
           <TouchableOpacity
+            testID="profile-save-button"
             onPress={save}
             disabled={updateProfile.isPending}
             className="bg-primary rounded-xl py-4 items-center mt-7 disabled:opacity-50"
