@@ -50,6 +50,22 @@
 
 ## Changelog
 
+### 2026-08-15
+
+### Added
+- **Automated Testing & EAS Submit Workflow**
+  - By: Thành Nam - DevOps
+  - Via: Gemini 3.1 Pro
+  - Spec: `AGENTS.md` §10.4 (DevOps coverage)
+  - Files affected: 
+    - `.github/workflows/mobile-ci-ios.yml` (added test step and eas-ios-submit job)
+    - `.github/workflows/mobile-ci.yml` (added test step and eas-android-submit job)
+    - `apps/mobile/eas.json` (new config for EAS Submit)
+    - `apps/mobile/package.json` (added test script, installed Jest)
+  - Reason: Đóng gói pipeline CI/CD để chuẩn bị đẩy bản TestFlight/Play Console (MVP Priority 2).
+
+---
+
 ### 2026-08-12
 
 ### Added

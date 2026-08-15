@@ -1,4 +1,4 @@
-﻿name: Mobile iOS CI
+name: Mobile iOS CI
 
 on:
   push:
@@ -39,6 +39,9 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      - name: Run tests
+        run: npm run test
+
   eas-ios-build:
     name: EAS iOS Build (Preview)
     runs-on: ubuntu-latest
@@ -68,3 +71,36 @@ jobs:
           eas-build: true
           platform: ios
           profile: preview
+
+  eas-ios-submit:
+    name: EAS Submit (Production TestFlight)
+    runs-on: ubuntu-latest
+    needs: lint-typecheck
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: EAS Build & Submit (iOS)
+        uses: expo/expo-github-action@v8
+        with:
+          eas-build: true
+          platform: ios
+          profile: production
+          args: --auto-submit
+        env:
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
