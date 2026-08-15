@@ -171,6 +171,34 @@ export default function RestaurantDetailScreen() {
             </Text>
           </View>
 
+          {/* Review Section */}
+          <View style={styles.reviewSection}>
+            <Text style={styles.sectionTitle}>Đánh giá</Text>
+            <TouchableOpacity 
+              style={styles.reviewActionCard} 
+              onPress={() => router.push(`/restaurant/${id}/reviews`)}
+            >
+              <Text style={styles.reviewActionIcon}>⭐</Text>
+              <View style={styles.reviewActionContent}>
+                <Text style={styles.reviewActionTitle}>Xem các đánh giá</Text>
+                <Text style={styles.reviewActionSub}>Đọc chia sẻ từ cộng đồng</Text>
+              </View>
+              <Text style={styles.arrowIcon}>→</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.reviewActionCard} 
+              onPress={() => router.push(`/restaurant/${id}/review`)}
+            >
+              <Text style={styles.reviewActionIcon}>✍️</Text>
+              <View style={styles.reviewActionContent}>
+                <Text style={styles.reviewActionTitle}>Viết đánh giá</Text>
+                <Text style={styles.reviewActionSub}>Chia sẻ trải nghiệm của bạn</Text>
+              </View>
+              <Text style={styles.arrowIcon}>→</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Action Buttons */}
           <View style={styles.actions}>
             <TouchableOpacity style={styles.primaryButton} onPress={openMaps}>
@@ -384,4 +412,44 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
+  reviewSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#292524',
+    marginBottom: 12,
+  },
+  reviewActionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E7E5E4',
+  },
+  reviewActionIcon: {
+    fontSize: 24,
+    marginRight: 16,
+  },
+  reviewActionContent: {
+    flex: 1,
+  },
+  reviewActionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#292524',
+  },
+  reviewActionSub: {
+    fontSize: 13,
+    color: '#78716C',
+    marginTop: 4,
+  },
+  arrowIcon: {
+    fontSize: 20,
+    color: '#D97706',
+  }
 });
