@@ -27,7 +27,9 @@ Tagline: "Không biết ăn gì? Để vòng quyết định."
 - Frontend: React Native + Expo + TypeScript + NativeWind
 - Animation: Reanimated 3 + Moti
 - State: Zustand + TanStack Query
-- Backend: Supabase (Postgres + Auth + Storage + Realtime)
+- Backend: Express.js + Prisma + MySQL (Docker)
+- Auth: JWT + bcrypt (Express)
+- Storage: Supabase Storage
 - Design: Earthy/warm-light-first
 
 ## Spec Files (READ FIRST)
@@ -77,7 +79,7 @@ Files to read:
 
 ```
 Focus: Auth, JWT, Onboarding flow
-Stack: Supabase Auth + Express.js + Prisma + JWT
+Stack: Express.js + Prisma + MySQL + JWT
 Files to read:
 - docs/food_roulette_erd.drawio.xml (User table)
 - brand/FOOD-ROULETTE-SITEMAP.md §19 (Auth + Onboarding)
@@ -97,7 +99,7 @@ Files to read:
 
 ```
 Focus: Review, Map, Steward dashboard, CI/CD
-Stack: Supabase + GitHub Actions + EAS Build
+Stack: Express + Prisma + MySQL + GitHub Actions + EAS Build
 Files to read:
 - docs/food_roulette_erd.drawio.xml (Restaurant, Review tables)
 - brand/FOOD-ROULETTE-SITEMAP.md §19 (Review + Discover)

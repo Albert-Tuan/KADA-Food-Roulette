@@ -50,6 +50,16 @@
 
 ## Changelog
 
+### 2026-08-14
+
+### Changed
+- **Backend database and authentication spec aligned with current implementation**
+  - By: User-approved spec change
+  - Via: Codex
+  - Spec: `brand/prompts.md` §0, `brand/FOOD-ROULETTE-SITEMAP.md` §14 and §19
+  - Reason: Đồng bộ tài liệu với Express.js + Prisma + MySQL 8.0 chạy bằng Docker và JWT + bcrypt; Supabase tiếp tục chỉ phụ trách Storage.
+  - Files affected: `brand/prompts.md`, `brand/FOOD-ROULETTE-SITEMAP.md`, `CLAUDE.md`, `AGENTS.md`, `VIBE_RULES.md`, `.cursorrules`, `PROMPT_TEMPLATES/cursor-system-prompt.md`, `PROMPT_TEMPLATES/chatgpt-context.md`, `PROMPT_TEMPLATES/claude-context.md`, `PROMPT_TEMPLATES/gemini-context.md`
+
 ### 2026-08-12
 
 ### Added

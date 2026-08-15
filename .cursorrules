@@ -44,8 +44,9 @@ Cursor tự động đọc các files sau khi mở project:
 Frontend: React Native + Expo + TypeScript + NativeWind
 Animation: Reanimated 3 + Moti
 State: Zustand + TanStack Query
-Backend: Supabase (Postgres + Auth + Storage + Realtime)
-DB Extension: PostGIS
+Backend: Express.js + Prisma + MySQL (Docker)
+Auth: JWT + bcrypt (Express)
+Storage: Supabase Storage
 Design: Earthy/warm-light-first
 ```
 

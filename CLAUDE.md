@@ -168,7 +168,7 @@ brand/prompts.md  >  brand/brand.md  >  brand/FOOD-ROULETTE-SITEMAP.md  >  conte
 | Container | Docker + Docker Compose |
 | Backend Hosting | Railway / Render (free tier) |
 | Web Hosting | Vercel / Netlify (free tier) |
-| DB Cloud | PlanetScale / Supabase (free tier) |
+| DB Cloud | MySQL (Docker local) / PlanetScale |
 | CI/CD | GitHub Actions |
 
 ## 6. Phạm vi v1.0 (MVP)
@@ -287,9 +287,9 @@ Chi tiết hơn → `brand/FOOD-ROULETTE-SITEMAP.md` §19.
 | Role | Feature | Người | Stack |
 |------|---------|-------|-------|
 | **SPIN Lead** | Personal Spin + Group Spin | Hoàng Hiếu | React Native + Expo + NativeWind + Reanimated |
-| **AUTH Lead** | Auth + Onboarding | Trường | Supabase Auth + Express + Prisma |
+| **AUTH Lead** | Auth + Onboarding | Trường | Express + Prisma + MySQL + JWT |
 | **LOCKET + PROFILE Lead** | Locket + Profile | Gia Bình | React Native + Expo + Supabase Storage |
-| **REVIEW + DISCOVER Lead** | Review + Discover + DevOps | Thành Nam | Supabase + GitHub Actions + EAS Build |
+| **REVIEW + DISCOVER Lead** | Review + Discover + DevOps | Thành Nam | Express + Prisma + MySQL + GitHub Actions + EAS Build |
 | **PM + B2B Lead** | Project Management + B2B | Tuấn Anh | Architecture + Scope Control |
 
 Chi tiết: `VIBE_RULES.md` §8 và `AGENTS.md` §10
