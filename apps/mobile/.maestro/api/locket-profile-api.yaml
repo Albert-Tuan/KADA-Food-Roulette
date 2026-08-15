@@ -1,0 +1,193 @@
+appId: ${EXPO_APP_ID}
+name: Taste Board and Profile against local API
+---
+- stopApp
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - setPermissions:
+          appId: ${EXPO_APP_ID}
+          permissions:
+            camera: allow
+            location: inuse
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - setPermissions:
+          appId: ${EXPO_APP_ID}
+          permissions:
+            camera: allow
+            location: allow
+- setLocation:
+    latitude: 10.7769
+    longitude: 106.7009
+- openLink: ${EXPO_URL}/--/auth/login
+- extendedWaitUntil:
+    visible: "Chào mừng!|Xin chào!.*"
+    timeout: 30000
+- runFlow:
+    when:
+      visible:
+        id: auth-login-screen
+    commands:
+      - tapOn:
+          id: auth-login-email
+      - eraseText
+      - inputText: ${TEST_EMAIL}
+      - tapOn:
+          id: auth-login-password
+      - eraseText
+      - inputText: ${TEST_PASSWORD}
+      - tapOn:
+          id: auth-login-submit
+- tapOn:
+    text: Not Now
+    optional: true
+- extendedWaitUntil:
+    visible: "Xin chào!.*"
+    timeout: 30000
+- openLink: ${EXPO_URL}/--/locket/capture
+- runFlow: ../subflows/allow-expo-experience-location.yaml
+- runFlow: ../subflows/grant-expo-camera-permission.yaml
+- extendedWaitUntil:
+    visible:
+      id: locket-capture-button
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "GPS .*"
+    timeout: 30000
+- tapOn: Chụp ảnh
+- extendedWaitUntil:
+    visible:
+      id: locket-preview-screen
+    timeout: 30000
+- tapOn:
+    id: locket-note-input
+- inputText: Maestro API private
+- hideKeyboard
+- tapOn:
+    id: locket-visibility-private
+- scrollUntilVisible:
+    element:
+      id: locket-submit-button
+    direction: DOWN
+- tapOn:
+    id: locket-submit-button
+- extendedWaitUntil:
+    visible:
+      id: locket-detail-screen
+    timeout: 30000
+- assertVisible: Riêng tư
+- openLink: ${EXPO_URL}/--/locket/capture
+- runFlow: ../subflows/allow-expo-experience-location.yaml
+- runFlow: ../subflows/grant-expo-camera-permission.yaml
+- extendedWaitUntil:
+    visible:
+      id: locket-capture-button
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "GPS .*"
+    timeout: 30000
+- tapOn: Chụp ảnh
+- extendedWaitUntil:
+    visible:
+      id: locket-preview-screen
+    timeout: 30000
+- tapOn:
+    id: locket-note-input
+- inputText: Maestro API friends
+- hideKeyboard
+- tapOn:
+    id: locket-visibility-friends
+- scrollUntilVisible:
+    element:
+      id: locket-submit-button
+    direction: DOWN
+- tapOn:
+    id: locket-submit-button
+- extendedWaitUntil:
+    visible:
+      id: locket-detail-screen
+    timeout: 30000
+- assertVisible: Bạn bè
+- openLink: ${EXPO_URL}/--/locket/capture
+- runFlow: ../subflows/allow-expo-experience-location.yaml
+- runFlow: ../subflows/grant-expo-camera-permission.yaml
+- extendedWaitUntil:
+    visible:
+      id: locket-capture-button
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "GPS .*"
+    timeout: 30000
+- tapOn: Chụp ảnh
+- extendedWaitUntil:
+    visible:
+      id: locket-preview-screen
+    timeout: 30000
+- tapOn:
+    id: locket-note-input
+- inputText: Maestro API public
+- hideKeyboard
+- tapOn:
+    id: locket-visibility-public
+- scrollUntilVisible:
+    element:
+      id: locket-submit-button
+    direction: DOWN
+- tapOn:
+    id: locket-submit-button
+- extendedWaitUntil:
+    visible:
+      id: locket-detail-screen
+    timeout: 30000
+- assertVisible: Công khai
+- openLink: ${EXPO_URL}/--/u/locket_tester
+- extendedWaitUntil:
+    visible:
+      id: profile-public-screen
+    timeout: 30000
+- assertVisible: Food Roulette Tester
+- assertNotVisible: Tài khoản kiểm thử
+- openLink: ${EXPO_URL}/--/lockets
+- extendedWaitUntil:
+    visible:
+      id: locket-feed-screen
+    timeout: 30000
+- tapOn:
+    id: locket-filter-mine
+- tapOn:
+    id: "locket-feed-card-.*"
+    index: 0
+- tapOn:
+    id: locket-delete-button
+- tapOn: Xóa
+- extendedWaitUntil:
+    visible:
+      id: locket-feed-screen
+    timeout: 30000
+- tapOn:
+    id: "locket-feed-card-.*"
+    index: 0
+- tapOn:
+    id: locket-delete-button
+- tapOn: Xóa
+- extendedWaitUntil:
+    visible:
+      id: locket-feed-screen
+    timeout: 30000
+- tapOn:
+    id: "locket-feed-card-.*"
+    index: 0
+- tapOn:
+    id: locket-delete-button
+- tapOn: Xóa
+- extendedWaitUntil:
+    visible:
+      id: locket-feed-screen
+    timeout: 30000
+- assertNotVisible: Maestro API private
+- assertNotVisible: Maestro API friends
+- assertNotVisible: Maestro API public

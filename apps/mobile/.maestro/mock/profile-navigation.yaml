@@ -1,0 +1,22 @@
+appId: ${EXPO_APP_ID}
+name: Private to public Profile navigation
+---
+- stopApp
+- openLink: ${EXPO_URL}/--/profile
+- extendedWaitUntil:
+    visible:
+      id: profile-private-screen
+    timeout: 30000
+- assertVisible:
+    id: profile-private-display-name
+- assertVisible:
+    id: profile-public-link
+- tapOn: "Xem profile công khai.*"
+- extendedWaitUntil:
+    visible:
+      id: profile-public-screen
+    timeout: 30000
+- assertVisible:
+    id: profile-public-display-name
+- assertNotVisible:
+    id: profile-private-display-name
