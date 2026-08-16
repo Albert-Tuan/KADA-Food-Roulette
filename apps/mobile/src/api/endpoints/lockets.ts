@@ -103,6 +103,9 @@ export const locketApi = {
       } as unknown as Blob);
     }
 
+    if (input.localImageUri.startsWith('data:')) {
+      form.append('image_base64', input.localImageUri);
+    }
     form.append('dish_name', input.dishName);
     if (input.restaurantId) form.append('restaurant_id', input.restaurantId);
     if (input.restaurantName) form.append('restaurant_name', input.restaurantName);
@@ -115,7 +118,6 @@ export const locketApi = {
 
     const response = await apiClient.post<ApiResponse<LocketDto>>('/lockets', form, {
       headers: {
-        'Content-Type': 'multipart/form-data',
         'X-Device-ID': input.deviceHash || 'a'.repeat(64),
         'X-Captured-At': input.capturedAt || new Date().toISOString(),
       },

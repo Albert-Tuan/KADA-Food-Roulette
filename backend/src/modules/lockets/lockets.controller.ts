@@ -62,12 +62,35 @@ export const locketsController = {
   create: async (req: AuthRequest, res: Response) => {
     const startedAt = Date.now();
     try {
-      validateImageFile(req.file);
+      let file = req.file;
+      if (!file && req.body) {
+        const rawBase64 = (typeof req.body.image_base64 === 'string' ? req.body.image_base64 : undefined)
+          || (typeof req.body.image === 'string' && req.body.image.startsWith('data:') ? req.body.image : undefined);
+        if (rawBase64) {
+          const mimeType = rawBase64.includes('image/png') ? 'image/png' : 'image/jpeg';
+          const base64Data = rawBase64.includes(',') ? rawBase64.split(',')[1] : rawBase64;
+          const buffer = Buffer.from(base64Data, 'base64');
+          file = {
+            fieldname: 'image',
+            originalname: `locket.${mimeType === 'image/png' ? 'png' : 'jpg'}`,
+            encoding: '7bit',
+            mimetype: mimeType,
+            buffer,
+            size: buffer.length,
+            destination: '',
+            filename: '',
+            path: '',
+            stream: null as any,
+          };
+        }
+      }
+
+      validateImageFile(file);
       const input = parseCreateLocket(req.body as Record<string, unknown>, {
         deviceHash: req.header('x-device-id'),
         capturedAt: req.header('x-captured-at'),
       });
-      const record = await locketsService.create(req.user!.id, input, req.file);
+      const record = await locketsService.create(req.user!.id, input, file);
       logger.info('locket_created', {
         requestId: req.requestId,
         locketId: record.id,
