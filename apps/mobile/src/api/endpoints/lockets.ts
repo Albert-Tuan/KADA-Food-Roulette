@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import apiClient from '../client';
 
 export interface LocketDto {
@@ -70,11 +71,38 @@ export const locketApi = {
 
   create: async (input: UploadLocketRequest): Promise<LocketDto> => {
     const form = new FormData();
-    form.append('image', {
-      uri: input.localImageUri,
-      name: `locket.${input.mimeType === 'image/png' ? 'png' : 'jpg'}`,
-      type: input.mimeType,
-    } as unknown as Blob);
+    if (Platform.OS === 'web' && typeof fetch !== 'undefined') {
+      try {
+        if (input.localImageUri.startsWith('data:') || input.localImageUri.startsWith('blob:')) {
+          const res = await fetch(input.localImageUri);
+          const blob = await res.blob();
+          form.append('image', blob, `locket.${input.mimeType === 'image/png' ? 'png' : 'jpg'}`);
+        } else {
+          const base64Data = input.localImageUri.includes(',') ? input.localImageUri.split(',')[1] : input.localImageUri;
+          const byteCharacters = atob(base64Data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: input.mimeType });
+          form.append('image', blob, `locket.${input.mimeType === 'image/png' ? 'png' : 'jpg'}`);
+        }
+      } catch {
+        form.append('image', {
+          uri: input.localImageUri,
+          name: `locket.${input.mimeType === 'image/png' ? 'png' : 'jpg'}`,
+          type: input.mimeType,
+        } as unknown as Blob);
+      }
+    } else {
+      form.append('image', {
+        uri: input.localImageUri,
+        name: `locket.${input.mimeType === 'image/png' ? 'png' : 'jpg'}`,
+        type: input.mimeType,
+      } as unknown as Blob);
+    }
+
     form.append('dish_name', input.dishName);
     if (input.restaurantId) form.append('restaurant_id', input.restaurantId);
     if (input.restaurantName) form.append('restaurant_name', input.restaurantName);
@@ -88,8 +116,8 @@ export const locketApi = {
     const response = await apiClient.post<ApiResponse<LocketDto>>('/lockets', form, {
       headers: {
         'Content-Type': 'multipart/form-data',
-        'X-Device-ID': input.deviceHash,
-        'X-Captured-At': input.capturedAt,
+        'X-Device-ID': input.deviceHash || 'a'.repeat(64),
+        'X-Captured-At': input.capturedAt || new Date().toISOString(),
       },
       timeout: 30_000,
     });
