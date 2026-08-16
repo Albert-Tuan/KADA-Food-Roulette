@@ -337,6 +337,25 @@ class LocketsService {
     });
   }
 
+  async getPublicForUser(userId: string) {
+    const memoryLockets = Array.from(inMemoryLocketStore.values()).filter(
+      (l) => l.userId === userId && (l.visibility === LocketVisibility.PUBLIC || l.visibility === LocketVisibility.FRIENDS)
+    );
+    let records: LocketRecord[] = [];
+    try {
+      records = await prisma.locket.findMany({
+        where: { userId, visibility: LocketVisibility.PUBLIC, deletedAt: null },
+        include: locketInclude,
+        orderBy: [{ capturedAt: 'desc' }, { id: 'desc' }],
+        take: 20,
+      });
+    } catch {
+      console.log('[Lockets] DB getPublicForUser notice');
+    }
+    const combined = [...memoryLockets, ...records];
+    return Promise.all(combined.map((record) => serializeLocket(record, undefined, this.storage)));
+  }
+
   async delete(id: string, userId: string): Promise<void> {
     const existing = await prisma.locket.findFirst({ where: { id, deletedAt: null } });
     if (!existing) throw new LocketApiError('LOCKET_NOT_FOUND', 'Không tìm thấy locket.', 404);
