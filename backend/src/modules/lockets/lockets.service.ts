@@ -98,18 +98,24 @@ export async function serializeLocket(
   };
 }
 
-async function acceptedFriendIds(userId: string): Promise<Set<string>> {
-  const friendships = await prisma.friendship.findMany({
-    where: {
-      status: 'ACCEPTED',
-      OR: [{ requesterId: userId }, { addresseeId: userId }],
-    },
-    select: { requesterId: true, addresseeId: true },
-  });
+const inMemoryLocketStore = new Map<string, LocketRecord>();
 
-  return new Set(friendships.map((friendship) => (
-    friendship.requesterId === userId ? friendship.addresseeId : friendship.requesterId
-  )));
+async function acceptedFriendIds(userId: string): Promise<Set<string>> {
+  try {
+    const friendships = await prisma.friendship.findMany({
+      where: {
+        status: 'ACCEPTED',
+        OR: [{ requesterId: userId }, { addresseeId: userId }],
+      },
+      select: { requesterId: true, addresseeId: true },
+    });
+
+    return new Set(friendships.map((friendship) => (
+      friendship.requesterId === userId ? friendship.addresseeId : friendship.requesterId
+    )));
+  } catch {
+    return new Set<string>();
+  }
 }
 
 class LocketsService {
@@ -153,17 +159,51 @@ class LocketsService {
         take: 50,
       });
     } catch {
-      console.log('[Lockets] DB feed notice, using in-memory demo feed');
-      records = [];
+      console.log('[Lockets] DB feed notice, querying in-memory store');
     }
-    return Promise.all(records.map((record) => serializeLocket(record, userId, this.storage)));
+
+    // Combine with inMemoryLocketStore
+    const memoryLockets = Array.from(inMemoryLocketStore.values()).filter((locket) => {
+      if (type === 'MINE') return locket.userId === userId;
+      if (type === 'DISCOVER') return locket.visibility === LocketVisibility.PUBLIC;
+      if (type === 'FRIENDS') {
+        return (
+          (locket.visibility === LocketVisibility.FRIENDS || locket.visibility === LocketVisibility.PUBLIC) &&
+          (friendIds.has(locket.userId) || locket.userId === userId)
+        );
+      }
+      return (
+        locket.userId === userId ||
+        locket.visibility === LocketVisibility.PUBLIC ||
+        (locket.visibility === LocketVisibility.FRIENDS && friendIds.has(locket.userId))
+      );
+    });
+
+    const combinedMap = new Map<string, LocketRecord>();
+    for (const r of memoryLockets) combinedMap.set(r.id, r);
+    for (const r of records) combinedMap.set(r.id, r);
+
+    const finalRecords = Array.from(combinedMap.values()).sort(
+      (a, b) => new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime()
+    );
+
+    return Promise.all(finalRecords.map((record) => serializeLocket(record, userId, this.storage)));
   }
 
   async getById(id: string, viewerId?: string): Promise<LocketRecord> {
-    const record = await prisma.locket.findFirst({
-      where: { id, deletedAt: null },
-      include: locketInclude,
-    });
+    let record: LocketRecord | null = inMemoryLocketStore.get(id) ?? null;
+
+    if (!record) {
+      try {
+        record = await prisma.locket.findFirst({
+          where: { id, deletedAt: null },
+          include: locketInclude,
+        });
+      } catch {
+        console.log('[Lockets] DB getById notice');
+      }
+    }
+
     if (!record) throw new LocketApiError('LOCKET_NOT_FOUND', 'Không tìm thấy locket.', 404);
 
     const friendIds = viewerId ? await acceptedFriendIds(viewerId) : new Set<string>();
@@ -197,8 +237,10 @@ class LocketsService {
     const locketId = randomUUID();
     const images = await this.imageProcessor(file.buffer);
     const stored = await this.storage.upload({ userId, locketId, images });
+
+    let createdRecord: LocketRecord;
     try {
-      return await prisma.locket.create({
+      createdRecord = await prisma.locket.create({
         data: {
           id: locketId,
           userId,
@@ -227,7 +269,7 @@ class LocketsService {
       if (error instanceof LocketApiError) throw error;
       console.log('[Lockets] DB write notice, fallback to in-memory response with Supabase storage upload preserved');
       const now = new Date();
-      return {
+      createdRecord = {
         id: locketId,
         userId,
         restaurantId: input.restaurantId ?? null,
@@ -262,6 +304,9 @@ class LocketsService {
         restaurant: input.restaurantId ? { id: input.restaurantId, name: input.restaurantName || 'Quán ăn' } : null,
       } as unknown as LocketRecord;
     }
+
+    inMemoryLocketStore.set(locketId, createdRecord);
+    return createdRecord;
   }
 
   async update(id: string, userId: string, input: UpdateLocketData): Promise<LocketRecord> {
