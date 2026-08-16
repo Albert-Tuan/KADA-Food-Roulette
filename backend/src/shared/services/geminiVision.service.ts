@@ -175,12 +175,12 @@ Quy tắc quan trọng:
       }
 
       // Map user friendly names to real API model names if needed
-      let userModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+      let userModel = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
       if (userModel === 'Gemini 3.1 Pro' || userModel === 'gemini-3.1-pro') {
-          userModel = 'gemini-3.1-pro-preview';
+          userModel = 'gemini-1.5-pro';
       }
 
-      const modelsToTry = [userModel, 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-3.7-flash'];
+      const modelsToTry = [userModel, 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
       let response: Response | null = null;
 
       for (const modelName of modelsToTry) {

@@ -86,7 +86,7 @@ Return raw JSON array only.`
       })
     }];
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
     
     const apiResponse = await fetch(url, {
       method: 'POST',
