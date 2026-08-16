@@ -94,7 +94,8 @@ Return ONLY a valid raw JSON object matching the structure below. DO NOT wrap in
 
   console.log(`[VoiceService] Sending ${audioBuffer.length} bytes of audio to Gemini AI...`);
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
+  const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
   const apiResponse = await fetch(url, {
     method: 'POST',
