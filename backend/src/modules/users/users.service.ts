@@ -2,6 +2,7 @@ import prisma from '../../shared/utils/prisma.js';
 import { locketsService } from '../lockets/lockets.service.js';
 import { UserApiError } from './users.errors.js';
 import type { UpdateProfileData } from './users.validation.js';
+import { inMemoryUserStore } from './userStore.js';
 
 const profileSelect = {
   id: true,
@@ -50,16 +51,30 @@ class UsersService {
     }
 
     if (!user) {
-      user = {
-        id: userId,
-        email: 'user@example.com',
-        displayNamePrivate: 'Bạn Nhậu Demo',
-        displayNamePublic: 'testuser2026',
-        publicId: `u_${userId.substring(0, 8)}`,
-        avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
-        bio: 'Yêu thích ẩm thực đường phố và khám phá món mới!',
-        createdAt: new Date(),
-      };
+      const memUser = inMemoryUserStore.get(userId);
+      if (memUser) {
+        user = {
+          id: memUser.id,
+          email: memUser.email,
+          displayNamePrivate: memUser.displayNamePrivate,
+          displayNamePublic: memUser.displayNamePublic,
+          publicId: memUser.publicId,
+          avatarUrl: memUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+          bio: memUser.bio || 'Yêu thích ẩm thực đường phố và khám phá món mới!',
+          createdAt: typeof memUser.createdAt === 'string' ? new Date(memUser.createdAt) : memUser.createdAt,
+        };
+      } else {
+        user = {
+          id: userId,
+          email: 'saucode@gmail.com',
+          displayNamePrivate: 'sau code',
+          displayNamePublic: 'sau code',
+          publicId: `u_${userId.substring(0, 8)}`,
+          avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+          bio: 'Yêu thích ẩm thực đường phố và khám phá món mới!',
+          createdAt: new Date(),
+        };
+      }
     }
 
     let publicLockets: any[] = [];

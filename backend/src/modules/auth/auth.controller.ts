@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../shared/utils/prisma';
 import { AuthRequest } from '../../shared/middleware/auth.middleware';
+import { inMemoryUserStore, inMemoryUserStoreByEmail } from '../users/userStore.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'food-roulette-super-secret-jwt-key-2026';
 
@@ -96,6 +97,11 @@ export const authController = {
         };
       }
 
+      if (user) {
+        inMemoryUserStore.set(user.id, user as any);
+        inMemoryUserStoreByEmail.set(user.email, user as any);
+      }
+
       const { token, refreshToken } = generateTokens(user.id, user.email, user.role || 'USER');
       const userProfile = formatUserProfile(user);
 
@@ -126,6 +132,21 @@ export const authController = {
         return res.status(400).json({
           success: false,
           error: 'Vui lòng điền email và mật khẩu.'
+        });
+      }
+
+      // Check registered memory users first
+      if (inMemoryUserStoreByEmail.has(email)) {
+        const memUser = inMemoryUserStoreByEmail.get(email)!;
+        const { token, refreshToken } = generateTokens(memUser.id, memUser.email, memUser.role || 'USER');
+        return res.json({
+          success: true,
+          data: {
+            user: formatUserProfile(memUser),
+            access_token: token,
+            refresh_token: refreshToken,
+            expires_in: 604800
+          }
         });
       }
 
@@ -169,7 +190,7 @@ export const authController = {
           id: `user_${Date.now()}`,
           email,
           displayNamePrivate: email.split('@')[0],
-          displayNamePublic: `user_${email.split('@')[0]}`,
+          displayNamePublic: email.split('@')[0],
           publicId: `u_${Math.random().toString(36).substring(2, 9)}`,
           avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
           xp: 100,
@@ -178,6 +199,8 @@ export const authController = {
           role: 'USER',
           createdAt: new Date().toISOString(),
         };
+        inMemoryUserStore.set(demoUser.id, demoUser as any);
+        inMemoryUserStoreByEmail.set(demoUser.email, demoUser as any);
         const { token, refreshToken } = generateTokens(demoUser.id, demoUser.email, demoUser.role);
         return res.json({
           success: true,

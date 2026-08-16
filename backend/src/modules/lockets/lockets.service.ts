@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { LocketVisibility, Prisma } from '@prisma/client';
 import prisma from '../../shared/utils/prisma.js';
+import { inMemoryUserStore } from '../users/userStore.js';
 import { LocketApiError } from './lockets.errors.js';
 import { processLocketImage, type ProcessedLocketImages } from './lockets.imageProcessor.js';
 import type { CreateLocketData, UpdateLocketData } from './lockets.validation.js';
@@ -297,9 +298,9 @@ class LocketsService {
         updatedAt: now,
         user: {
           id: userId,
-          publicId: `u_${userId.substring(0, 8)}`,
-          displayNamePublic: 'Thành viên Food Roulette',
-          avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+          publicId: inMemoryUserStore.get(userId)?.publicId || `u_${userId.substring(0, 8)}`,
+          displayNamePublic: inMemoryUserStore.get(userId)?.displayNamePublic || 'sau code',
+          avatarUrl: inMemoryUserStore.get(userId)?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
         },
         restaurant: input.restaurantId ? { id: input.restaurantId, name: input.restaurantName || 'Quán ăn' } : null,
       } as unknown as LocketRecord;
