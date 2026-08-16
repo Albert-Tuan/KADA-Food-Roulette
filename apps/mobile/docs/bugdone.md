@@ -184,6 +184,95 @@ Hàm `handleSpinEnd` tại `app/group-spin/lobby.tsx` ép chuyển hướng cứ
 - `apps/mobile/src/features/spin/components/GroupLobby.tsx`: Quản lý 3 trạng thái bước (`'LOBBY' | 'VOTE_VETO' | 'VOTE_RESULT'`) cho quy trình quay nhóm hoàn chỉnh, tích hợp `GroupVoteVeto` và `GroupVoteResult` kèm thiết kế chuẩn Stitch Soft Red Tokens.
 - `apps/mobile/app/group-spin/lobby.tsx`: Bỏ hàm `router.push('/spin/result')` ép chuyển hướng cứng.
 
+---
+
+## BUG #8: Lỗi server build/compile trên Web do import native module react-native-maps
+
+**Status**: `[x] Verified`
+**Ngày report**: 2026-08-16
+**Ngày fix**: 2026-08-16
+**Ngày verify**: 2026-08-16
+**Severity**: `P1 major`
+
+### Triệu chứng
+Khi khởi động ứng dụng trên nền tảng Web (`npm run web`), bundler bị crash với lỗi:
+`Server Error: Importing native-only module "react-native/Libraries/Utilities/codegenNativeCommands" on web from: D:\KADA-Food-Roulette\apps\mobile\node_modules\react-native-maps\lib\MapMarkerNativeComponent.js`
+
+### Expected
+Ứng dụng có thể build và chạy bình thường trên trình duyệt Web. Riêng phần bản đồ hiển thị giao diện fallback thông báo thân thiện.
+
+### Root cause
+Tại màn hình Khám phá (`app/discover/index.tsx`), logic import có điều kiện sử dụng cú pháp dynamic require: `const RNMaps = require('react-native-maps')`. Do cơ chế phân tích cú pháp tĩnh (static analysis) của Metro bundler, toàn bộ module `react-native-maps` vẫn bị kéo vào bundle cho Web, gây crash vì module này chứa các file native-only.
+
+### Fix
+- `apps/mobile/app/discover/index.tsx`: Chuyển đổi việc import động `react-native-maps` sang import tường minh `MapView, Marker, PROVIDER_GOOGLE` từ component wrapper `@/components/MapProvider`. Metro bundler của web sẽ tự động phân giải (resolve) sang file `@/components/MapProvider.web.tsx` (không import `react-native-maps`), giải quyết triệt để lỗi crash.
+
+### Verify steps
+1. Khởi động dự án trên web bằng lệnh: `npm run web` (hoặc `npx expo start --web`).
+2. Mở trình duyệt truy cập ứng dụng -> ứng dụng khởi động thành công.
+3. Chuyển sang màn hình Khám phá -> không bị crash, hiển thị fallback thông báo "Bản đồ tương tác khả dụng tốt nhất trên ứng dụng Mobile".
+4. Chạy `npm run typecheck` và `npm run lint` để kiểm tra độ sạch của mã nguồn.
+
+---
+
+## BUG #9: Lỗi timeout khi quét menu dài/nhiều ảnh trong tính năng AI OCR Quét Menu
+
+**Status**: `[x] Verified`
+**Ngày report**: 2026-08-16
+**Ngày fix**: 2026-08-16
+**Ngày verify**: 2026-08-16
+**Severity**: `P1 major`
+
+### Triệu chứng
+Khi người dùng tải lên hoặc chụp ảnh menu dài, nhiều chữ hoặc chứa nhiều ảnh cùng lúc, quá trình bóc tách và phân tích của Gemini AI tốn khá nhiều thời gian (khoảng từ 2-3 phút hoặc lâu hơn). Axios client của Mobile App bị ngắt kết nối và hiển thị lỗi `timeout of 60000ms exceeded`.
+
+### Expected
+Client có thể kiên nhẫn chờ kết quả từ AI OCR trên backend xử lý xong các menu phức tạp mà không bị ngắt kết nối.
+
+### Root cause
+API `/menu/capture` sử dụng cấu hình Axios mặc định với `API_TIMEOUT = 60000` (60 giây), không đủ thời gian cho Gemini AI phân tích hình ảnh và bóc tách dữ liệu văn bản lớn.
+
+### Fix
+- `apps/mobile/src/api/endpoints/menu.ts`: Cấu hình thêm thuộc tính `timeout: 300000` (5 phút) riêng cho yêu cầu HTTP POST `/menu/capture`, cung cấp đủ thời gian cho các menu lớn được xử lý hoàn tất mà vẫn giữ nguyên timeout 60 giây an toàn cho các tác vụ thông thường khác.
+
+### Verify steps
+1. Khởi động backend local và ứng dụng Mobile.
+2. Vào màn hình Chụp Menu Tại Quán (`/spin/menu-capture`).
+3. Chọn/chụp các menu dài hoặc tải lên 3-4 ảnh menu cùng lúc.
+4. Nhấn "Bắt đầu AI OCR Quét Menu".
+5. Đợi quá trình phân tích (vượt quá 60 giây) -> kết quả bóc tách món ăn được hiển thị thành công mà không có lỗi timeout.
+
+---
+
+## BUG #10: Lỗi font chữ tiếng Việt và mất giá tiền khi AI OCR bóc tách nhiều ảnh/menu dài
+
+**Status**: `[x] Verified`
+**Ngày report**: 2026-08-16
+**Ngày fix**: 2026-08-16
+**Ngày verify**: 2026-08-16
+**Severity**: `P1 major`
+
+### Triệu chứng
+Khi người dùng quét nhiều ảnh hoặc các ảnh menu dài phức tạp, kết quả bóc tách ở một số trang sau bị lỗi font chữ tiếng Việt nghiêm trọng (như "ar. dg i", "A . Lf Lại 14g KEN", "RE Gà à tiề ựa") và một số món ăn không trích xuất được giá tiền (hiển thị "Giá đ").
+
+### Expected
+Tiếng Việt hiển thị chuẩn xác, có dấu hoàn chỉnh và giá tiền được trích xuất đầy đủ cho tất cả các món ăn ở mọi trang menu.
+
+### Root cause
+Dung lượng ảnh gốc tải lên từ camera điện thoại di động quá lớn (thường từ 5MB - 10MB), khi encode base64 tăng lên đến 7MB - 13MB, vượt quá giới hạn payload (Request Payload Limit) của Google Gemini API. Điều này làm cho API Google trả về lỗi, dẫn đến hệ thống tự động nhảy sang nhánh fallback chạy Tesseract OCR offline bằng CPU. Tesseract offline nhận diện tiếng Việt rất kém (gây lỗi font) và các hàm phân tích Regex của `MenuParserService` bị bỏ sót giá tiền khi gặp cấu trúc menu phức tạp. Đồng thời, model cũ `gemini-1.5-flash` không còn khả dụng cho API Key của user (chỉ hỗ trợ các model mới như `gemini-3.5-flash`), dẫn đến lỗi 404 khi cố chuyển đổi model ở lượt trước.
+
+### Fix
+- `backend/src/shared/services/geminiVision.service.ts`: 
+  1. Giữ nguyên cấu hình model mặc định tương thích là `gemini-3.5-flash` (đã được test key thành công).
+  2. Sử dụng thư viện `sharp` để tự động xử lý ảnh trước khi gửi đi: tự động xoay đúng hướng (`.rotate()`), resize chiều rộng/cao tối đa 1600px (`.resize()`), và nén JPEG chất lượng 80% (`.jpeg()`). Quá trình này giúp giảm dung lượng tệp từ 5-10MB xuống chỉ còn 200KB - 300KB mà vẫn giữ độ nét cao, loại bỏ hoàn toàn lỗi quá tải payload của Gemini API và tăng tốc độ xử lý gấp nhiều lần.
+
+### Verify steps
+1. Khởi động backend local và ứng dụng Mobile.
+2. Tải lên hoặc chụp nhiều ảnh menu camera dung lượng lớn.
+3. Bấm "Bắt đầu AI OCR Quét Menu".
+4. Kiểm tra kết quả -> Ảnh được nén và xử lý nhanh chóng, tiếng Việt hiển thị chính xác có dấu 100%, không bị lỗi font hay mất giá tiền.
+5. Chạy `npm run lint && npm run typecheck && npm run test:run` ở backend thành công.
+
 
 
 

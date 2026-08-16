@@ -13,21 +13,8 @@ import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { restaurantApi, Restaurant, placesApi } from '@/api';
 
-// Conditionally import react-native-maps only on native platforms
-let MapView: any = null;
-let Marker: any = null;
-let PROVIDER_GOOGLE: any = null;
-
-if (Platform.OS !== 'web') {
-  try {
-    const RNMaps = require('react-native-maps');
-    MapView = RNMaps.default;
-    Marker = RNMaps.Marker;
-    PROVIDER_GOOGLE = RNMaps.PROVIDER_GOOGLE;
-  } catch (e) {
-    // react-native-maps fallback
-  }
-}
+// Import Map components from MapProvider which resolves platform-specific files (.web.tsx vs .tsx)
+import { MapView, Marker, PROVIDER_GOOGLE } from '@/components/MapProvider';
 
 // Color scheme per brand/brand.md
 // Region type for map

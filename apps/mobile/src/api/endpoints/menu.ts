@@ -65,6 +65,7 @@ export const menuApi = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 300000, // 5 minutes timeout for AI processing of long menus
     });
     return response.data;
   },
