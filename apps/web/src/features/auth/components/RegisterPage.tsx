@@ -41,7 +41,7 @@ export const RegisterPage: React.FC = () => {
         displayNamePrivate: formData.displayNamePrivate,
         displayNamePublic: formData.displayNamePublic,
       });
-      navigate(ROUTES.HOME);
+      navigate('/onboarding');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Đăng ký thất bại. Vui lòng thử lại.');
     }

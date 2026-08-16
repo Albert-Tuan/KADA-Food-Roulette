@@ -70,5 +70,65 @@ export const profileController = {
       console.error('Lỗi khi cập nhật hồ sơ:', error);
       return responseHelper.error(res, 'Lỗi máy chủ.', 500);
     }
+  },
+
+  getPreferences: async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return responseHelper.error(res, 'Chưa đăng nhập.', 401);
+      }
+
+      const pref = await profileService.getPreferences(userId);
+      return responseHelper.success(res, pref);
+    } catch (error) {
+      console.error('Lỗi khi lấy sở thích ẩm thực:', error);
+      return responseHelper.error(res, 'Lỗi máy chủ.', 500);
+    }
+  },
+
+  updatePreferences: async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return responseHelper.error(res, 'Chưa đăng nhập.', 401);
+      }
+
+      const { cuisineScores, priceRange, dietaryRestrictions, spiceTolerance, dislikedIngredients } = req.body;
+      const pref = await profileService.updatePreferences(userId, {
+        cuisineScores,
+        priceRange,
+        dietaryRestrictions,
+        spiceTolerance,
+        dislikedIngredients
+      });
+      return responseHelper.success(res, pref);
+    } catch (error) {
+      console.error('Lỗi khi cập nhật sở thích ẩm thực:', error);
+      return responseHelper.error(res, 'Lỗi máy chủ.', 500);
+    }
+  },
+
+  completeOnboarding: async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return responseHelper.error(res, 'Chưa đăng nhập.', 401);
+      }
+
+      const { displayNamePrivate, displayNamePublic, avatarUrl, bio, preferences } = req.body;
+      const result = await profileService.completeOnboarding(userId, {
+        displayNamePrivate,
+        displayNamePublic,
+        avatarUrl,
+        bio,
+        preferences
+      });
+
+      return responseHelper.success(res, result);
+    } catch (error) {
+      console.error('Lỗi khi hoàn tất onboarding:', error);
+      return responseHelper.error(res, 'Lỗi máy chủ.', 500);
+    }
   }
 };

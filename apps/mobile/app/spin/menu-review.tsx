@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, SafeAreaView, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { menuApi, MenuItem } from '../../src/api/endpoints/menu';
+import { menuApi, MenuItem, getLatestCapturedMenu } from '../../src/api/endpoints/menu';
 import { Href } from 'expo-router';
 import { preferencesApi, UserPreference } from '../../src/api/endpoints/preferences';
 import { useSpinStore } from '../../src/stores/spinStore';
@@ -37,7 +37,12 @@ export default function MenuReviewScreen() {
 
   useEffect(() => {
     try {
-      if (params.initialItems && typeof params.initialItems === 'string') {
+      const cached = getLatestCapturedMenu();
+      if (cached && cached.items && cached.items.length > 0) {
+        setItems(cached.items);
+        setConfidence(cached.confidence);
+        setMenuId(cached.menuId);
+      } else if (params.initialItems && typeof params.initialItems === 'string') {
         setItems(JSON.parse(params.initialItems));
       }
       if (params.confidence && typeof params.confidence === 'string') {

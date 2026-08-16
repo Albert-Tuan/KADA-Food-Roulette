@@ -125,7 +125,7 @@ export default function CaptureLocketScreen() {
       const capturedAt = new Date().toISOString();
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.85,
-        base64: false,
+        base64: true,
         skipProcessing: false,
         exif: false,
       });
@@ -134,11 +134,16 @@ export default function CaptureLocketScreen() {
       const sanitizedPhoto = await ImageManipulator.manipulateAsync(photo.uri, [], {
         compress: 0.85,
         format: ImageManipulator.SaveFormat.JPEG,
+        base64: true,
       });
+
+      const finalUri = sanitizedPhoto.base64
+        ? `data:image/jpeg;base64,${sanitizedPhoto.base64}`
+        : (photo.base64 ? `data:image/jpeg;base64,${photo.base64}` : sanitizedPhoto.uri);
 
       const deviceHash = await getInstallationDeviceHash();
       setDraft({
-        uri: sanitizedPhoto.uri,
+        uri: finalUri,
         capturedAt,
         deviceHash,
         latitude: currentLocation.coords.latitude,
@@ -212,7 +217,7 @@ export default function CaptureLocketScreen() {
         location: { latitude: draft.latitude, longitude: draft.longitude },
         deviceHash: draft.deviceHash,
       });
-      router.replace(`/locket/${created.id}` as any);
+      router.replace('/(tabs)/lockets' as any);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Không thể đăng Taste Board. Bạn thử lại nhé.');
     }

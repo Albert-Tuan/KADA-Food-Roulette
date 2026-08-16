@@ -24,17 +24,23 @@ const removeStorageItem = async (key: string) => {
 export const apiClient = axios.create({
   baseURL: API_URL,
   timeout: API_TIMEOUT,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
-// Request interceptor - add auth token
+// Request interceptor - add auth token & handle FormData boundary
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const token = await getStorageItem('token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (config.data instanceof FormData) {
+      if (config.headers?.delete) {
+        config.headers.delete('Content-Type');
+        config.headers.delete('content-type');
+      } else if (config.headers) {
+        delete config.headers['Content-Type'];
+        delete config.headers['content-type'];
+      }
     }
     return config;
   },
@@ -48,9 +54,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Clear token and redirect to login
       removeStorageItem('token');
-      // In a real app we'd dispatch a logout event or clear Zustand state directly
     }
     return Promise.reject(error);
   }

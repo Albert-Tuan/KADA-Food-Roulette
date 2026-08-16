@@ -1,3 +1,4 @@
+import { test, expect } from '@jest/globals';
 import type { PublicProfileDto } from '../../api/endpoints/users';
 import { mapPublicProfile } from './profileMapper';
 

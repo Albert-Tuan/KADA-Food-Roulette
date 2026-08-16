@@ -180,7 +180,7 @@ Quy tắc quan trọng:
           userModel = 'gemini-3.1-pro-preview';
       }
 
-      const modelsToTry = [userModel, 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-3.7-flash'];
+      const modelsToTry = [userModel, 'gemini-3.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
       let response: Response | null = null;
 
       for (const modelName of modelsToTry) {

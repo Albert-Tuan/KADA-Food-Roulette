@@ -9,7 +9,8 @@ export default function MenuWheelScreen() {
   const [dishes, setDishes] = useState<any[]>([]);
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedDishes, setSelectedDishes] = useState<any[]>([]);
-  const [lastWonDish, setLastWonDish] = useState<any | null>(null);
+  const [lastWonDishes, setLastWonDishes] = useState<any[]>([]);
+  const [spinMode, setSpinMode] = useState<1 | 2 | 3>(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [peopleCount, setPeopleCount] = useState(4);
   const [toastText, setToastText] = useState<string | null>(null);
@@ -49,33 +50,67 @@ export default function MenuWheelScreen() {
   }, [params.menuItems]);
 
   const wheelDishes = dishes.length > 0 ? dishes : [
-    { name: 'Món 1' }, { name: 'Món 2' }, { name: 'Món 3' }
+    { name: 'Phở Bò Đặc Biệt', priceVND: 65000, category: 'món chính' },
+    { name: 'Cơm Tấm Sườn Bì', priceVND: 55000, category: 'món chính' },
+    { name: 'Bún Chả Hà Nội', priceVND: 60000, category: 'món chính' },
+    { name: 'Gỏi Cuốn Tôm Thịt', priceVND: 40000, category: 'món phụ' },
+    { name: 'Trà Đào Cam Sả', priceVND: 35000, category: 'đồ uống' },
+    { name: 'Bánh Flan Tráng Miệng', priceVND: 25000, category: 'tráng miệng' },
   ];
 
   const handleSpin = () => {
     if (isSpinning || wheelDishes.length === 0) return;
     setIsSpinning(true);
-    setLastWonDish(null);
-
-    const winnerIndex = Math.floor(Math.random() * wheelDishes.length);
-    const winner = wheelDishes[winnerIndex];
+    setLastWonDishes([]);
 
     const sliceAngle = 360 / wheelDishes.length;
-    const targetSliceAngle = 360 - (winnerIndex * sliceAngle + sliceAngle / 2);
     const extraRounds = (Math.floor(Math.random() * 3) + 4) * 360;
-    const finalTargetDegree = currentRotation.current + extraRounds + (targetSliceAngle - (currentRotation.current % 360));
+    const randomOffset = Math.floor(Math.random() * 360);
+    const finalTargetDegree = currentRotation.current + extraRounds + randomOffset;
 
     currentRotation.current = finalTargetDegree;
 
     Animated.timing(spinValue, {
       toValue: finalTargetDegree,
-      duration: 3000,
-      easing: Easing.out(Easing.cubic),
+      duration: 3200,
+      easing: Easing.bezier(0.15, 0.85, 0.35, 1.05),
       useNativeDriver: false,
     }).start(() => {
       setIsSpinning(false);
-      setLastWonDish(winner);
-      setSelectedDishes((prev) => [...prev, winner]);
+      
+      const normalizedRot = (finalTargetDegree % 360);
+      const won: any[] = [];
+      const usedIndices = new Set<number>();
+
+      // Pointer offsets in degrees based on spinMode
+      let pointerOffsets = [0]; // Top pointer at 0°
+      if (spinMode === 2) {
+        pointerOffsets = [0, 180]; // Top (0°) and Bottom (180°)
+      } else if (spinMode === 3) {
+        pointerOffsets = [0, 120, 240]; // 3 equidistant pointers
+      }
+
+      pointerOffsets.forEach((offset) => {
+        const pointerAngle = (360 - ((normalizedRot + offset) % 360)) % 360;
+        let index = Math.floor(pointerAngle / sliceAngle) % wheelDishes.length;
+        
+        // If duplicate in multi-pick mode, shift to next available if possible
+        if (usedIndices.has(index) && wheelDishes.length >= pointerOffsets.length) {
+          for (let step = 1; step < wheelDishes.length; step++) {
+            const nextIdx = (index + step) % wheelDishes.length;
+            if (!usedIndices.has(nextIdx)) {
+              index = nextIdx;
+              break;
+            }
+          }
+        }
+        
+        usedIndices.add(index);
+        won.push(wheelDishes[index]);
+      });
+
+      setLastWonDishes(won);
+      setSelectedDishes((prev) => [...prev, ...won]);
     });
   };
 
@@ -93,7 +128,7 @@ export default function MenuWheelScreen() {
   const perPersonPrice = Math.round(totalBill / (peopleCount || 1));
 
   const formatSummaryText = () => {
-    let text = `🍻 DANH SÁCH MÓN ĂN ĐÃ CHỐT QUA AI FOOD ROULETTE:\n----------------------------------------\n`;
+    let text = `🍻 DANH SÁCH MÓN ĂN ĐÃ CHỐT QUA AI FOOD ROULETTE 3D:\n----------------------------------------\n`;
     selectedDishes.forEach((item, i) => {
       const priceStr = item.priceVND ? `${item.priceVND.toLocaleString('vi-VN')}đ` : 'Theo giá menu';
       text += `${i + 1}. ${item.name} - ${priceStr}\n`;
@@ -144,31 +179,126 @@ export default function MenuWheelScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-            <Text style={styles.backText}>← Trang trước</Text>
+            <Text style={styles.backText}>← Quay lại</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>🍻 Vòng Quay Chọn Món Tại Quán</Text>
-          <Text style={styles.subtitle}>Quay chọn món ăn cho chầu nhậu / tiệc nhóm ({dishes.length} món)</Text>
+          <Text style={styles.title}>🎰 Vòng Quay 3D Chọn Món Menu</Text>
+          <Text style={styles.subtitle}>Quay chọn ngẫu nhiên 1 đến 3 món cùng lúc ({wheelDishes.length} món sẵn sàng)</Text>
         </View>
 
-        {/* Winner Banner */}
-        {lastWonDish && (
+        {/* Multi-Dish Spin Mode Selector (1, 2, 3 món cùng quay) */}
+        <View style={styles.modeSelectorCard}>
+          <Text style={styles.modeSelectorTitle}>⚡ CHỌN SỐ MÓN QUAY CÙNG LÚC:</Text>
+          <View style={styles.modeButtonsRow}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => !isSpinning && setSpinMode(1)}
+              style={[styles.modeButton, spinMode === 1 && styles.modeButtonActive]}
+            >
+              <Text style={[styles.modeButtonText, spinMode === 1 && styles.modeButtonTextActive]}>
+                🎯 1 Món
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => !isSpinning && setSpinMode(2)}
+              style={[styles.modeButton, spinMode === 2 && styles.modeButtonActive]}
+            >
+              <Text style={[styles.modeButtonText, spinMode === 2 && styles.modeButtonTextActive]}>
+                ✌️ 2 Món (Đôi)
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => !isSpinning && setSpinMode(3)}
+              style={[styles.modeButton, spinMode === 3 && styles.modeButtonActive]}
+            >
+              <Text style={[styles.modeButtonText, spinMode === 3 && styles.modeButtonTextActive]}>
+                👑 3 Món (Mâm)
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Winner Banner (Combo 1-3 Món Vừa Trúng) */}
+        {lastWonDishes.length > 0 && (
           <View style={styles.winnerBanner}>
-            <Text style={styles.winnerTag}>🎉 VỪA QUAY TRÚNG:</Text>
-            <Text style={styles.winnerName}>{lastWonDish.name}</Text>
-            <Text style={styles.winnerPrice}>
-              {lastWonDish.priceVND ? `${lastWonDish.priceVND.toLocaleString('vi-VN')}đ` : 'Theo giá menu'}
-            </Text>
+            <View style={styles.winnerBannerHeader}>
+              <Text style={styles.winnerTag}>
+                {lastWonDishes.length === 1 ? '🎉 VỪA QUAY TRÚNG 1 MÓN:' : `🎉 VỪA QUAY TRÚNG COMBO ${lastWonDishes.length} MÓN CÙNG LÚC:`}
+              </Text>
+              <Text style={styles.winnerCountBadge}>+{lastWonDishes.length} món</Text>
+            </View>
+
+            <View style={styles.winnerItemsList}>
+              {lastWonDishes.map((wonItem, idx) => (
+                <View key={idx} style={styles.winnerItemRow}>
+                  <View style={styles.winnerItemBadge}>
+                    <Text style={styles.winnerItemBadgeText}>{idx + 1}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.winnerName}>{wonItem.name}</Text>
+                    <Text style={styles.winnerPrice}>
+                      {wonItem.priceVND ? `${wonItem.priceVND.toLocaleString('vi-VN')}đ` : 'Theo giá menu'}
+                    </Text>
+                  </View>
+                  <Text style={styles.winnerItemCategory}>{wonItem.category || 'món ngon'}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
 
-        {/* Interactive SVG Roulette Wheel */}
+        {/* 3D Interactive SVG Roulette Wheel with Dynamic Multi-Pointers */}
         <View style={styles.wheelSection}>
-          <View style={styles.pointerWrapper}>
-            <Svg width={30} height={36} viewBox="0 0 30 36">
-              <Path d="M15 36 L0 0 L30 0 Z" fill="#ea580c" stroke="#ffffff" strokeWidth={2} />
+          {/* Top Pointer (0°) */}
+          <View style={styles.pointerTopWrapper}>
+            <Svg width={32} height={38} viewBox="0 0 30 36">
+              <Path d="M15 36 L0 0 L30 0 Z" fill="#b52330" stroke="#FFC107" strokeWidth={3} />
             </Svg>
+            <View style={styles.pointerBadge}>
+              <Text style={styles.pointerBadgeText}>1</Text>
+            </View>
           </View>
 
+          {/* Pointer 2 (180° for Mode 2, or 120° for Mode 3) */}
+          {spinMode === 2 && (
+            <View style={styles.pointerBottomWrapper}>
+              <View style={styles.pointerBadge}>
+                <Text style={styles.pointerBadgeText}>2</Text>
+              </View>
+              <Svg width={32} height={38} viewBox="0 0 30 36">
+                <Path d="M15 0 L0 36 L30 36 Z" fill="#166b47" stroke="#FFC107" strokeWidth={3} />
+              </Svg>
+            </View>
+          )}
+
+          {spinMode === 3 && (
+            <>
+              {/* Pointer 2 at 120° (Bottom Right) */}
+              <View style={styles.pointer120Wrapper}>
+                <Svg width={32} height={38} viewBox="0 0 30 36" style={{ transform: [{ rotate: '120deg' }] }}>
+                  <Path d="M15 36 L0 0 L30 0 Z" fill="#166b47" stroke="#FFC107" strokeWidth={3} />
+                </Svg>
+                <View style={styles.pointerBadge}>
+                  <Text style={styles.pointerBadgeText}>2</Text>
+                </View>
+              </View>
+
+              {/* Pointer 3 at 240° (Bottom Left) */}
+              <View style={styles.pointer240Wrapper}>
+                <Svg width={32} height={38} viewBox="0 0 30 36" style={{ transform: [{ rotate: '240deg' }] }}>
+                  <Path d="M15 36 L0 0 L30 0 Z" fill="#8e4e14" stroke="#FFC107" strokeWidth={3} />
+                </Svg>
+                <View style={styles.pointerBadge}>
+                  <Text style={styles.pointerBadgeText}>3</Text>
+                </View>
+              </View>
+            </>
+          )}
+
+          {/* 3D Wheel Disc */}
           <Animated.View
             style={[
               styles.svgWheelContainer,
@@ -184,7 +314,15 @@ export default function MenuWheelScreen() {
               },
             ]}
           >
-            <Svg width={300} height={300} viewBox="0 0 300 300">
+            <Svg width={310} height={310} viewBox="0 0 310 310">
+              {/* Outer 3D Metallic Ring */}
+              <Path
+                d="M 155, 155 m -150, 0 a 150,150 0 1,0 300,0 a 150,150 0 1,0 -300,0"
+                fill="#800000"
+                stroke="#FFC107"
+                strokeWidth={8}
+              />
+
               <G>
                 {wheelDishes.map((dish: any, idx: number) => {
                   const sliceAngle = 360 / wheelDishes.length;
@@ -194,8 +332,8 @@ export default function MenuWheelScreen() {
                   const startRad = ((startAngle - 90) * Math.PI) / 180;
                   const endRad = ((endAngle - 90) * Math.PI) / 180;
 
-                  const center = 150;
-                  const radius = 140;
+                  const center = 155;
+                  const radius = 142;
 
                   const x1 = center + radius * Math.cos(startRad);
                   const y1 = center + radius * Math.sin(startRad);
@@ -217,16 +355,16 @@ export default function MenuWheelScreen() {
                   const textY = center + textRadius * Math.sin(midRad);
 
                   const colors = [
-                    '#f97316', '#ea580c', '#84cc16', '#06b6d4',
-                    '#8b5cf6', '#ec4899', '#f59e0b', '#10b981',
-                    '#3b82f6', '#d97706', '#ef4444', '#14b8a6'
+                    '#b52330', '#ffab69', '#166b47', '#FFC107',
+                    '#ff5a5f', '#55a37a', '#8e4e14', '#93000a',
+                    '#2563eb', '#d97706', '#059669', '#7c3aed'
                   ];
                   const sliceColor = colors[idx % colors.length];
-                  const shortName = dish.name.length > 14 ? dish.name.substring(0, 12) + '..' : dish.name;
+                  const shortName = dish.name.length > 12 ? dish.name.substring(0, 10) + '..' : dish.name;
 
                   return (
                     <G key={idx}>
-                      <Path d={pathData} fill={sliceColor} stroke="#ffffff" strokeWidth={2} />
+                      <Path d={pathData} fill={sliceColor} stroke="#ffffff" strokeWidth={2.5} />
                       <SvgText
                         x={textX}
                         y={textY}
@@ -245,8 +383,11 @@ export default function MenuWheelScreen() {
               </G>
             </Svg>
 
+            {/* 3D Center Hub */}
             <View style={styles.centerHub}>
-              <Text style={styles.centerHubEmoji}>🎲</Text>
+              <View style={styles.centerHubInner}>
+                <Text style={styles.centerHubEmoji}>🎲</Text>
+              </View>
             </View>
           </Animated.View>
 
@@ -254,9 +395,12 @@ export default function MenuWheelScreen() {
             style={[styles.spinButton, isSpinning && styles.disabledButton]}
             onPress={handleSpin}
             disabled={isSpinning || wheelDishes.length === 0}
+            activeOpacity={0.85}
           >
             <Text style={styles.spinButtonText}>
-              {isSpinning ? '⏳ ĐANG QUAY CHỌN MÓN...' : '🎯 QUAY CHỌN MÓN TIẾP THEO!'}
+              {isSpinning 
+                ? '⏳ ĐANG QUAY CHỌN MÓN...' 
+                : `🎰 QUAY NGAY (${spinMode} MÓN CÙNG LÚC)!`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -455,70 +599,226 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#78716c',
   },
-  winnerBanner: {
-    backgroundColor: '#10b981',
-    padding: 16,
+  modeSelectorCard: {
+    backgroundColor: '#ffffff',
     borderRadius: 20,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#fde68a',
+    shadowColor: '#d97706',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  modeSelectorTitle: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#92400e',
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  modeButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  modeButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: '#fffbeb',
+    borderWidth: 1.5,
+    borderColor: '#fcd34d',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeButtonActive: {
+    backgroundColor: '#ea580c',
+    borderColor: '#c2410c',
+    shadowColor: '#ea580c',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  modeButtonText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#78350f',
+  },
+  modeButtonTextActive: {
+    color: '#ffffff',
+    fontWeight: '900',
+  },
+  winnerBanner: {
+    backgroundColor: '#059669',
+    padding: 16,
+    borderRadius: 22,
     marginBottom: 20,
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 1.5,
+    borderColor: '#34d399',
+  },
+  winnerBannerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   winnerTag: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '900',
     color: '#ffffff',
-    marginBottom: 2,
+    letterSpacing: 0.5,
+  },
+  winnerCountBadge: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#065f46',
+    backgroundColor: '#a7f3d0',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  winnerItemsList: {
+    gap: 8,
+  },
+  winnerItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    padding: 10,
+    borderRadius: 14,
+    gap: 8,
+  },
+  winnerItemBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  winnerItemBadgeText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#059669',
   },
   winnerName: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '900',
     color: '#ffffff',
   },
   winnerPrice: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: '#d1fae5',
   },
+  winnerItemCategory: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#ecfdf5',
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    textTransform: 'uppercase',
+  },
   wheelSection: {
     backgroundColor: '#ffffff',
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 28,
+    padding: 20,
     alignItems: 'center',
     marginBottom: 20,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#fde68a',
     position: 'relative',
+    shadowColor: '#d97706',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 3,
   },
-  pointerWrapper: {
+  pointerTopWrapper: {
     position: 'absolute',
-    top: 10,
-    zIndex: 20,
+    top: 8,
+    zIndex: 30,
     alignItems: 'center',
   },
-  svgWheelContainer: {
-    width: 300,
-    height: 300,
+  pointerBottomWrapper: {
+    position: 'absolute',
+    bottom: 84,
+    zIndex: 30,
+    alignItems: 'center',
+  },
+  pointer120Wrapper: {
+    position: 'absolute',
+    bottom: 120,
+    right: 28,
+    zIndex: 30,
+    alignItems: 'center',
+  },
+  pointer240Wrapper: {
+    position: 'absolute',
+    bottom: 120,
+    left: 28,
+    zIndex: 30,
+    alignItems: 'center',
+  },
+  pointerBadge: {
+    position: 'absolute',
+    top: 3,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 16,
+  },
+  pointerBadgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#b52330',
+  },
+  svgWheelContainer: {
+    width: 310,
+    height: 310,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 14,
     position: 'relative',
   },
   centerHub: {
     position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#ffffff',
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#b52330',
     borderWidth: 4,
-    borderColor: '#f97316',
+    borderColor: '#FFC107',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  centerHubInner: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   centerHubEmoji: {
-    fontSize: 24,
+    fontSize: 22,
   },
   spinButton: {
     backgroundColor: '#f97316',
