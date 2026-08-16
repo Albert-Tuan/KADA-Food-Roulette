@@ -32,6 +32,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="auth/login" options={{ title: 'Đăng nhập' }} />
           <Stack.Screen name="auth/register" options={{ title: 'Đăng ký' }} />
+          <Stack.Screen name="onboarding/index" options={{ headerShown: false }} />
           <Stack.Screen name="restaurant/[id]" options={{ title: 'Chi tiết nhà hàng' }} />
           <Stack.Screen name="locket/capture" options={{ headerShown: false }} />
           <Stack.Screen name="locket/[id]" options={{ headerShown: false }} />

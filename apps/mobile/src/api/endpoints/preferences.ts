@@ -31,4 +31,21 @@ export const preferencesApi = {
     const response = await apiClient.post<UserPreference>('/preferences/reset');
     return response.data;
   },
+
+  completeOnboarding: async (data: {
+    displayNamePrivate?: string;
+    displayNamePublic?: string;
+    avatarUrl?: string;
+    bio?: string;
+    preferences?: {
+      cuisineScores?: Record<string, number>;
+      priceRange?: number;
+      dietaryRestrictions?: string[];
+      spiceTolerance?: string;
+      dislikedIngredients?: string[];
+    };
+  }) => {
+    const response = await apiClient.post('/profile/onboard', data);
+    return response.data;
+  },
 };

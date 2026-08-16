@@ -47,7 +47,7 @@ export default function RegisterScreen() {
         displayNamePublic: formData.displayName.trim(),
       });
       await login(formData.email.trim(), formData.password);
-      router.replace('/(tabs)');
+      router.replace('/onboarding' as any);
     } catch (err: any) {
       setError(err.message || 'Đăng ký thất bại');
     } finally {

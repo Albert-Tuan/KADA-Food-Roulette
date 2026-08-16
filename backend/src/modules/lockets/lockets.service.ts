@@ -395,16 +395,6 @@ class LocketsService {
     if (!media) throw new LocketApiError('LOCKET_MEDIA_GONE', 'Ảnh dev đã hết hiệu lực. Bạn đăng lại locket nhé.', 410);
     return { ...media, visibility: record.visibility };
   }
-
-  async getPublicForUser(userId: string) {
-    const records = await prisma.locket.findMany({
-      where: { userId, visibility: LocketVisibility.PUBLIC, deletedAt: null },
-      include: locketInclude,
-      orderBy: [{ capturedAt: 'desc' }, { id: 'desc' }],
-      take: 50,
-    });
-    return Promise.all(records.map((record) => serializeLocket(record, undefined, this.storage)));
-  }
 }
 
 export const locketsService = new LocketsService();
