@@ -1,5 +1,5 @@
-import cors from 'cors'
-import { Request, Response, NextFunction } from 'express'
+import cors from 'cors';
+import { Request, Response, NextFunction } from 'express';
 
 const allowedOrigins = [
   'http://localhost:5173',
@@ -22,17 +22,32 @@ export const corsMiddleware = cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'x-device-id',
+    'x-device-hash',
+    'x-request-id',
+    'x-client-platform',
+    'x-client-version',
+  ],
+  exposedHeaders: ['set-cookie'],
 });
 
 export const handleCors = (req: Request, res: Response, next: NextFunction) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*')
-  res.header('Access-Control-Allow-Credentials', 'true')
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, X-Requested-With, Accept, Origin, x-device-id, x-device-hash, x-request-id, x-client-platform, x-client-version'
+  );
   
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(200)
+    return res.sendStatus(200);
   }
-  next()
-}
+  next();
+};

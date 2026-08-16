@@ -18,15 +18,13 @@ VALUES (
   false, -- BẮT BUỘC false (Private bucket)
   10485760, -- Limit 10MB/file ở tầng Storage (Backend đã limit 5MB trước đó)
   ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/heic']::text[]
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
--- 2. Đảm bảo RLS (Row Level Security) được bật cho bảng objects
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-
--- 3. Xoá các policy cũ (nếu có)
+-- 2. Xoá các policy cũ (nếu có)
 DROP POLICY IF EXISTS "Deny all public access" ON storage.objects;
 
--- 4. Tạo Policy: Chặn TẤT CẢ quyền truy cập từ public/anon
+-- 3. Tạo Policy: Chặn TẤT CẢ quyền truy cập từ public/anon
 -- (Backend của chúng ta dùng SERVICE_ROLE_KEY nên sẽ tự động bypass RLS này)
 CREATE POLICY "Deny all public access"
   ON storage.objects FOR ALL
