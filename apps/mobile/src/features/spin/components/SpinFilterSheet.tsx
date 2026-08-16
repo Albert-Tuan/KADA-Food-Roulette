@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Modal,
   TouchableOpacity,
   ScrollView,
   TextInput,
@@ -11,8 +10,27 @@ import {
 } from 'react-native';
 import type { SpinFilters } from '../types';
 
-const CUISINES = ['Phở', 'Cơm tấm', 'Bún chả', 'Pizza', 'BBQ', 'Bánh mì', 'Lẩu', 'Ốc', 'Ăn vặt', 'Món Hàn'];
-const DIETARY_TAGS = ['Chay', 'Không cay', 'Không hành', 'Low Carb', 'Ăn kiêng'];
+const CUISINE_MAP: { name: string; emoji: string }[] = [
+  { name: 'Phở', emoji: '🍜' },
+  { name: 'Cơm tấm', emoji: '🍚' },
+  { name: 'Bún chả', emoji: '🥢' },
+  { name: 'Pizza', emoji: '🍕' },
+  { name: 'BBQ', emoji: '🥩' },
+  { name: 'Bánh mì', emoji: '🥖' },
+  { name: 'Lẩu', emoji: '🍲' },
+  { name: 'Ốc', emoji: '🐚' },
+  { name: 'Ăn vặt', emoji: '🧋' },
+  { name: 'Món Hàn', emoji: '🍣' },
+];
+
+const DIETARY_MAP: { name: string; emoji: string }[] = [
+  { name: 'Chay', emoji: '🥦' },
+  { name: 'Không cay', emoji: '🌶️' },
+  { name: 'Không hành', emoji: '🧅' },
+  { name: 'Low Carb', emoji: '🥑' },
+  { name: 'Ăn kiêng', emoji: '🥗' },
+];
+
 const PRICE_LEVELS = [1, 2, 3, 4] as const;
 
 interface SpinFilterSheetProps {
@@ -91,10 +109,15 @@ export function SpinFilterSheet({
     <View style={styles.modalContainer}>
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={styles.sheet}>
+        {/* Grab Handle */}
+        <View style={styles.grabHandleContainer}>
+          <View style={styles.grabHandle} />
+        </View>
+
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Bộ Lọc Vòng Quay</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <Text style={styles.title}>🎛️ Bộ Lọc Vòng Quay</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton} activeOpacity={0.8}>
             <Text style={styles.closeText}>✕</Text>
           </TouchableOpacity>
         </View>
@@ -103,7 +126,7 @@ export function SpinFilterSheet({
           {/* Distance */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionLabel}>Khoảng cách</Text>
+              <Text style={styles.sectionLabel}>📍 Khoảng cách tối đa</Text>
               <Text style={styles.sectionValue}>{(localDistance / 1000).toFixed(1)} km</Text>
             </View>
             <View style={styles.distanceRow}>
@@ -111,6 +134,7 @@ export function SpinFilterSheet({
                 <TouchableOpacity
                   key={d}
                   onPress={() => setLocalDistance(d)}
+                  activeOpacity={0.8}
                   style={[
                     styles.distanceChip,
                     localDistance >= d && styles.distanceChipActive,
@@ -130,7 +154,7 @@ export function SpinFilterSheet({
           {/* Price */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionLabel}>Mức giá</Text>
+              <Text style={styles.sectionLabel}>💰 Mức giá tối đa</Text>
               <Text style={styles.sectionValue}>{'$'.repeat(localPrice)}</Text>
             </View>
             <View style={styles.priceRow}>
@@ -138,6 +162,7 @@ export function SpinFilterSheet({
                 <TouchableOpacity
                   key={level}
                   onPress={() => setLocalPrice(level)}
+                  activeOpacity={0.8}
                   style={[
                     styles.priceChip,
                     localPrice >= level && styles.priceChipActive,
@@ -156,62 +181,70 @@ export function SpinFilterSheet({
 
           {/* Cuisines */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Thể loại món ăn</Text>
+            <Text style={styles.sectionLabel}>🍱 Thể loại món ăn</Text>
             <View style={styles.chipWrap}>
-              {CUISINES.map(cat => (
-                <TouchableOpacity
-                  key={cat}
-                  onPress={() => toggleCategory(cat)}
-                  style={[
-                    styles.chip,
-                    localCategories.includes(cat) && styles.chipActive,
-                  ]}
-                >
-                  <Text style={[
-                    styles.chipText,
-                    localCategories.includes(cat) && styles.chipTextActive,
-                  ]}>
-                    {cat}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {CUISINE_MAP.map(item => {
+                const isActive = localCategories.includes(item.name);
+                return (
+                  <TouchableOpacity
+                    key={item.name}
+                    onPress={() => toggleCategory(item.name)}
+                    activeOpacity={0.8}
+                    style={[
+                      styles.chip,
+                      isActive && styles.chipActive,
+                    ]}
+                  >
+                    <Text style={[
+                      styles.chipText,
+                      isActive && styles.chipTextActive,
+                    ]}>
+                      {item.emoji} {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
           {/* Dietary */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Khẩu vị / Dị ứng</Text>
+            <Text style={styles.sectionLabel}>🥗 Khẩu vị / Dị ứng</Text>
             <View style={styles.chipWrap}>
-              {DIETARY_TAGS.map(tag => (
-                <TouchableOpacity
-                  key={tag}
-                  onPress={() => toggleDietary(tag)}
-                  style={[
-                    styles.chip,
-                    localDietary.includes(tag) && styles.chipActive,
-                  ]}
-                >
-                  <Text style={[
-                    styles.chipText,
-                    localDietary.includes(tag) && styles.chipTextActive,
-                  ]}>
-                    {localDietary.includes(tag) ? '✓ ' : ''}{tag}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {DIETARY_MAP.map(item => {
+                const isActive = localDietary.includes(item.name);
+                return (
+                  <TouchableOpacity
+                    key={item.name}
+                    onPress={() => toggleDietary(item.name)}
+                    activeOpacity={0.8}
+                    style={[
+                      styles.chip,
+                      isActive && styles.chipActive,
+                    ]}
+                  >
+                    <Text style={[
+                      styles.chipText,
+                      isActive && styles.chipTextActive,
+                    ]}>
+                      {item.emoji} {item.name} {isActive ? '✓' : ''}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
           {/* Custom Food */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Thêm món ăn tự chọn</Text>
+            <Text style={styles.sectionLabel}>✍️ Thêm món ăn tự chọn</Text>
             <View style={styles.customInputRow}>
               <TextInput
-                placeholder="Ví dụ: Cơm rang..."
+                placeholder="Ví dụ: Cơm rang dưa bò..."
                 value={newCustomFood}
                 onChangeText={setNewCustomFood}
                 style={styles.customInput}
-                placeholderTextColor="#A8A29E"
+                placeholderTextColor="#8e4e14"
                 onSubmitEditing={() => {
                   if (newCustomFood.trim()) {
                     onAddCustom(newCustomFood.trim());
@@ -226,9 +259,10 @@ export function SpinFilterSheet({
                     setNewCustomFood('');
                   }
                 }}
+                activeOpacity={0.85}
                 style={styles.addButton}
               >
-                <Text style={styles.addButtonText}>Thêm</Text>
+                <Text style={styles.addButtonText}>➕ Thêm</Text>
               </TouchableOpacity>
             </View>
             {customCandidates.length > 0 && (
@@ -249,11 +283,11 @@ export function SpinFilterSheet({
 
         {/* Actions */}
         <View style={styles.actions}>
-          <TouchableOpacity onPress={handleReset} style={styles.resetButton}>
-            <Text style={styles.resetButtonText}>Đặt Lại</Text>
+          <TouchableOpacity onPress={handleReset} style={styles.resetButton} activeOpacity={0.8}>
+            <Text style={styles.resetButtonText}>🔄 Đặt Lại</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleApply} style={styles.applyButton}>
-            <Text style={styles.applyButtonText}>Áp Dụng</Text>
+          <TouchableOpacity onPress={handleApply} style={styles.applyButton} activeOpacity={0.88}>
+            <Text style={styles.applyButtonText}>ÁP DỤNG BỘ LỌC ➔</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -270,46 +304,72 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
   sheet: {
     width: '100%',
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: '#fff8ef',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderRightWidth: 2,
+    borderColor: '#e2bebc',
     maxHeight: '85%',
-    paddingBottom: 34,
+    paddingBottom: 24,
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  grabHandleContainer: {
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  grabHandle: {
+    width: 42,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#e2bebc',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 8,
     paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#fbf3e4',
   },
   title: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#292524',
+    fontWeight: '900',
+    color: '#b52330',
   },
   closeButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F5F5F4',
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2bebc',
   },
   closeText: {
-    fontSize: 16,
-    color: '#78716C',
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#b52330',
   },
   scrollContent: {
     paddingHorizontal: 20,
+    paddingTop: 14,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -319,157 +379,175 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#292524',
-    marginBottom: 10,
+    fontWeight: '900',
+    color: '#b52330',
   },
   sectionValue: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#B52330',
-    marginBottom: 10,
+    fontWeight: '900',
+    color: '#8e4e14',
   },
   distanceRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
   },
   distanceChip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 13,
     paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: '#F5F5F4',
-    marginRight: 8,
-    marginBottom: 8,
+    borderRadius: 14,
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
   },
   distanceChipActive: {
-    backgroundColor: '#B52330',
+    backgroundColor: '#b52330',
+    borderColor: '#61000e',
   },
   distanceChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#78716C',
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#8e4e14',
   },
   distanceChipTextActive: {
-    color: '#FFF',
+    color: '#ffffff',
+    fontWeight: '900',
   },
   priceRow: {
     flexDirection: 'row',
+    gap: 8,
   },
   priceChip: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: '#F5F5F4',
+    paddingVertical: 10,
+    borderRadius: 14,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
-    marginHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
   },
   priceChipActive: {
-    backgroundColor: '#B52330',
+    backgroundColor: '#b52330',
+    borderColor: '#61000e',
   },
   priceChipText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#78716C',
+    fontWeight: '800',
+    color: '#8e4e14',
   },
   priceChipTextActive: {
-    color: '#FFF',
+    color: '#ffffff',
+    fontWeight: '900',
   },
   chipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
   },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
-    backgroundColor: '#FFF',
-    marginRight: 8,
-    marginBottom: 8,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    backgroundColor: '#ffffff',
   },
   chipActive: {
-    backgroundColor: '#FFF1F2',
-    borderColor: '#B52330',
+    backgroundColor: '#ffdad8',
+    borderColor: '#b52330',
   },
   chipText: {
     fontSize: 13,
-    color: '#57534E',
+    color: '#5a403f',
+    fontWeight: '700',
   },
   chipTextActive: {
-    color: '#B52330',
-    fontWeight: '600',
+    color: '#b52330',
+    fontWeight: '900',
   },
   customInputRow: {
     flexDirection: 'row',
+    gap: 8,
     marginBottom: 10,
   },
   customInput: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
-    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontSize: 14,
-    color: '#292524',
-    backgroundColor: '#FAFAF9',
-    marginRight: 8,
+    fontSize: 13.5,
+    color: '#b52330',
+    fontWeight: '700',
+    backgroundColor: '#ffffff',
   },
   addButton: {
-    backgroundColor: '#B52330',
+    backgroundColor: '#b52330',
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: '#61000e',
   },
   addButtonText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '600',
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '900',
   },
   customTag: {
-    backgroundColor: '#DBEAFE',
+    backgroundColor: '#ffdcc4',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#ffab69',
   },
   customTagText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1E40AF',
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#8e4e14',
   },
   actions: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 12,
+    gap: 10,
   },
   resetButton: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 16,
-    backgroundColor: '#F5F5F4',
+    paddingVertical: 14,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
-    marginRight: 6,
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
   },
   resetButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#78716C',
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#8e4e14',
   },
   applyButton: {
     flex: 2,
-    paddingVertical: 16,
-    borderRadius: 16,
-    backgroundColor: '#B52330',
+    paddingVertical: 14,
+    borderRadius: 18,
+    backgroundColor: '#b52330',
     alignItems: 'center',
-    marginLeft: 6,
+    justifyContent: 'center',
+    borderBottomWidth: 4,
+    borderBottomColor: '#61000e',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
   applyButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#ffffff',
+    letterSpacing: 0.5,
   },
 });

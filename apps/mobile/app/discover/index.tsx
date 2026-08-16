@@ -7,29 +7,14 @@ import {
   ActivityIndicator,
   Linking,
   Platform,
-  StyleSheet,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { restaurantApi, Restaurant, placesApi } from '@/api';
 
-// Conditionally import react-native-maps only on native platforms
-let MapView: any = null;
-let Marker: any = null;
-let PROVIDER_GOOGLE: any = null;
-
-if (Platform.OS !== 'web') {
-  try {
-    const RNMaps = require('react-native-maps');
-    MapView = RNMaps.default;
-    Marker = RNMaps.Marker;
-    PROVIDER_GOOGLE = RNMaps.PROVIDER_GOOGLE;
-  } catch (e) {
-    // react-native-maps fallback
-  }
-}
+// Import Map components from MapProvider which resolves platform-specific files (.web.tsx vs .tsx)
+import { MapView, Marker, PROVIDER_GOOGLE } from '@/components/MapProvider';
 
 // Color scheme per brand/brand.md
 // Region type for map
@@ -172,7 +157,7 @@ export default function DiscoverScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-cream">
       {/* Map or Web fallback */}
       <View className="flex-1">
         {Platform.OS !== 'web' ? (
@@ -201,15 +186,15 @@ export default function DiscoverScreen() {
             })}
           </MapView>
         ) : (
-          <View className="flex-1 bg-gray-100 items-center justify-center">
-            <Text className="text-text-muted">Bản đồ chỉ khả dụng trên mobile</Text>
-            <Text className="text-text-muted text-sm mt-1">Map available on mobile only</Text>
+          <View className="flex-1 bg-cream-beige items-center justify-center p-6">
+            <Text className="text-espresso font-bold text-lg text-center">🗺️ Bản đồ Khám Phá Quán Ăn</Text>
+            <Text className="text-warmgray text-sm mt-2 text-center">Bản đồ tương tác khả dụng tốt nhất trên ứng dụng Mobile (iOS & Android).</Text>
           </View>
         )}
 
         {/* Loading overlay */}
         {loading && (
-          <View className="absolute inset-0 bg-black/20 items-center justify-center">
+          <View className="absolute inset-0 bg-black/30 items-center justify-center">
             <ActivityIndicator color="#C68E17" size="large" />
           </View>
         )}
@@ -218,14 +203,14 @@ export default function DiscoverScreen() {
         <View className="absolute top-4 left-4 right-4">
           {/* Seed button */}
           <TouchableOpacity
-            className="self-end bg-accent rounded-full px-4 py-2 shadow-md"
+            className="self-end bg-espresso border border-gold rounded-full px-5 py-2.5 shadow-lg"
             onPress={handleSeedGooglePlaces}
             disabled={seeding}
           >
             {seeding ? (
-              <ActivityIndicator color="#3D2314" size="small" />
+              <ActivityIndicator color="#FDF5E6" size="small" />
             ) : (
-              <Text className="text-primary font-semibold text-sm">🌐 Seed</Text>
+              <Text className="text-cream font-bold text-sm">🌐 Seed Google</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -233,67 +218,67 @@ export default function DiscoverScreen() {
         {/* Selected restaurant card */}
         {selected && (
           <View
-            className="absolute bottom-28 left-4 right-4 bg-surface rounded-2xl p-4 shadow-lg border border-border"
+            className="absolute bottom-28 left-4 right-4 bg-cream-beige rounded-3xl p-5 shadow-xl border-1.5 border-borderbrown"
             style={{ marginBottom: 80 }}
           >
             <TouchableOpacity
-              className="absolute top-2 right-2 w-7 h-7 bg-secondary-200 rounded-full items-center justify-center"
+              className="absolute top-3 right-3 w-8 h-8 bg-cream-linen rounded-full items-center justify-center border border-borderbrown"
               onPress={() => setSelectedId(null)}
             >
-              <Text className="text-secondary-500 text-sm">✕</Text>
+              <Text className="text-espresso font-bold text-sm">✕</Text>
             </TouchableOpacity>
 
             <View className="flex-row items-start">
               <View
-                className="w-2 rounded-full mr-3"
-                style={{ backgroundColor: pinColor(selected.ratingAvg ?? 0), minHeight: 40 }}
+                className="w-2.5 rounded-full mr-3"
+                style={{ backgroundColor: pinColor(selected.ratingAvg ?? 0), minHeight: 44 }}
               />
               <View className="flex-1">
-                <Text className="text-primary font-bold text-base">{selected.name}</Text>
-                <Text className="text-text-muted text-xs mt-0.5" numberOfLines={1}>
+                <Text className="text-espresso font-extrabold text-lg">{selected.name}</Text>
+                <Text className="text-warmgray text-xs mt-0.5" numberOfLines={1}>
                   {selected.address}
                 </Text>
-                <View className="flex-row items-center mt-1 gap-2">
+                <View className="flex-row items-center mt-1.5 gap-2">
                   {selected.ratingAvg && (
-                    <View className="bg-accent/10 px-2 py-0.5 rounded flex-row items-center">
-                      <Text className="text-accent text-xs font-bold">★</Text>
-                      <Text className="text-accent text-xs font-semibold ml-0.5">
+                    <View className="bg-gold-soft px-2.5 py-1 rounded-xl border border-gold-light flex-row items-center">
+                      <Text className="text-gold font-bold text-xs">★</Text>
+                      <Text className="text-espresso text-xs font-bold ml-1">
                         {selected.ratingAvg.toFixed(1)}
                       </Text>
                     </View>
                   )}
                   {selected.category && (
-                    <Text className="text-text-muted text-xs">{selected.category}</Text>
+                    <Text className="text-espresso-dark font-semibold text-xs">{selected.category}</Text>
                   )}
                 </View>
               </View>
             </View>
 
-            <View className="flex-row gap-2 mt-3">
+            <View className="flex-row gap-2 mt-4">
               <TouchableOpacity
-                className="flex-1 bg-primary rounded-xl py-2.5 items-center"
+                className="flex-1 bg-espresso border border-gold rounded-2xl py-3 items-center"
                 onPress={() => router.push(`/restaurant/${selected.id}`)}
               >
-                <Text className="text-white font-semibold text-sm">Chi tiết</Text>
+                <Text className="text-cream font-bold text-sm">Xem Chi Tiết</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                className="w-10 bg-accent rounded-xl py-2.5 items-center"
+                className="w-12 bg-gold rounded-2xl py-3 items-center justify-center"
                 onPress={() => openExternalMaps(selected)}
               >
-                <Text className="text-primary text-base">📍</Text>
+                <Text className="text-espresso text-base">📍</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
 
         {/* Bottom panel */}
-        <View className="absolute bottom-0 left-0 right-0 bg-surface rounded-t-3xl shadow-lg border-t border-border">
+        <View className="absolute bottom-0 left-0 right-0 bg-cream-beige rounded-t-4xl shadow-xl border-t border-borderbrown">
           {/* Handle */}
           <TouchableOpacity
-            className="items-center py-2"
+            className="items-center py-3"
             onPress={() => setShowList(!showList)}
           >
-            <View className="w-10 h-1 bg-border rounded-full" />
+            <View className="w-12 h-1.5 bg-borderbrown rounded-full" />
           </TouchableOpacity>
 
           {/* Filter chips */}
@@ -306,12 +291,12 @@ export default function DiscoverScreen() {
             {FILTERS.map((f) => (
               <TouchableOpacity
                 key={f.value}
-                className={`px-3 py-1.5 rounded-full ${filter === f.value ? 'bg-primary' : 'bg-background border border-border'
+                className={`px-4 py-2 rounded-2xl border ${filter === f.value ? 'bg-espresso border-espresso' : 'bg-cream border-borderbrown'
                   }`}
                 onPress={() => setFilter(f.value)}
               >
                 <Text
-                  className={`text-xs font-medium ${filter === f.value ? 'text-white' : 'text-primary'
+                  className={`text-xs font-bold ${filter === f.value ? 'text-cream' : 'text-espresso'
                     }`}
                 >
                   {f.label}
@@ -321,8 +306,8 @@ export default function DiscoverScreen() {
           </ScrollView>
 
           {/* Restaurant count */}
-          <Text className="px-4 text-text-muted text-xs mb-1">
-            {filtered.length} quán {filter === 'nearby' ? 'trong 5km' : ''}
+          <Text className="px-5 text-warmgray text-xs mb-3 font-semibold">
+            Tìm thấy {filtered.length} quán ăn {filter === 'nearby' ? 'trong bán kính 5km' : ''}
           </Text>
         </View>
       </View>

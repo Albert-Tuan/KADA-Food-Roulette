@@ -9,20 +9,24 @@ interface CardProps extends ViewProps {
 export function Card({ children, variant = 'elevated', style, ...props }: CardProps) {
   const variantStyles = {
     elevated: {
-      backgroundColor: 'white',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
+      backgroundColor: '#ffffff', // Clean white surface
+      borderWidth: 1,
+      borderColor: '#e2bebc',
+      shadowColor: '#b52330',
+      shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.1,
-      shadowRadius: 4,
+      shadowRadius: 12,
       elevation: 3,
     },
     outlined: {
-      backgroundColor: 'white',
-      borderWidth: 1,
-      borderColor: '#E7E5E4',
+      backgroundColor: '#fff8ef',
+      borderWidth: 1.5,
+      borderColor: '#e2bebc',
     },
     filled: {
-      backgroundColor: '#F5F5F4',
+      backgroundColor: '#fbf3e4',
+      borderWidth: 1,
+      borderColor: '#e9e2d3',
     },
   };
 
@@ -42,7 +46,7 @@ interface CardHeaderProps extends ViewProps {
 export function CardHeader({ title, subtitle, action, style, ...props }: CardHeaderProps) {
   return (
     <View style={[styles.header, style]} {...props}>
-      <View>
+      <View style={{ flex: 1 }}>
         <Text style={styles.title}>{title}</Text>
         {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       </View>
@@ -53,7 +57,7 @@ export function CardHeader({ title, subtitle, action, style, ...props }: CardHea
 
 const styles = {
   card: {
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 16,
   },
   header: {
@@ -63,13 +67,13 @@ const styles = {
     marginBottom: 12,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: '#292524',
+    fontSize: 19,
+    fontWeight: '800' as const,
+    color: '#b52330',
   },
   subtitle: {
     fontSize: 13,
-    color: '#78716C',
-    marginTop: 4,
+    color: '#5a403f',
+    marginTop: 3,
   },
 };

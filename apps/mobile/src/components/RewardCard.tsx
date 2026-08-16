@@ -17,10 +17,10 @@ interface RewardCardProps {
 }
 
 const variantColors = {
-  gold: { bg: '#FEF3C7', border: '#F59E0B', icon: '#92400E' },
-  green: { bg: '#D1FAE5', border: '#10B981', icon: '#065F46' },
-  blue: { bg: '#DBEAFE', border: '#3B82F6', icon: '#1E40AF' },
-  red: { bg: '#FEE2E2', border: '#EF4444', icon: '#991B1B' },
+  gold: { bg: '#ffdcc4', border: '#ffab69', icon: '#b52330' },
+  green: { bg: '#a3f4c5', border: '#166b47', icon: '#00341f' },
+  blue: { bg: '#ffdad8', border: '#b52330', icon: '#61000e' },
+  red: { bg: '#ffdad6', border: '#b52330', icon: '#93000a' },
 };
 
 export function RewardCard({ data, onPress }: RewardCardProps) {
@@ -52,8 +52,8 @@ export function RewardCard({ data, onPress }: RewardCardProps) {
 export function RewardCardEmpty() {
   return (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>⏳</Text>
-      <Text style={styles.emptyText}>Quay để nhận thêm</Text>
+      <Text style={styles.emptyIcon}>🎁</Text>
+      <Text style={styles.emptyText}>Quay vòng quay để nhận thêm ưu đãi cực hot!</Text>
     </View>
   );
 }
@@ -62,24 +62,26 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
     padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#e2bebc',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    marginRight: 12,
+    marginRight: 14,
   },
   icon: {
     fontSize: 24,
@@ -88,50 +90,52 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#292524',
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#b52330',
   },
   description: {
     fontSize: 13,
-    color: '#78716C',
+    color: '#5a403f',
     marginTop: 2,
   },
   expiryContainer: {
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#FEF3C7',
-    borderRadius: 8,
+    backgroundColor: '#ffdad8',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2bebc',
   },
   expiryLabel: {
     fontSize: 10,
-    color: '#92400E',
-    fontWeight: '500',
+    color: '#b52330',
+    fontWeight: '800',
   },
   expiryValue: {
     fontSize: 12,
-    color: '#92400E',
-    fontWeight: '700',
+    color: '#61000e',
+    fontWeight: '900',
   },
   emptyContainer: {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: '#fbf3e4',
+    borderRadius: 20,
     padding: 24,
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
     borderStyle: 'dashed',
   },
   emptyIcon: {
-    fontSize: 32,
+    fontSize: 36,
     marginBottom: 8,
-    opacity: 0.5,
   },
   emptyText: {
-    fontSize: 13,
-    color: '#78716C',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#b52330',
   },
 });

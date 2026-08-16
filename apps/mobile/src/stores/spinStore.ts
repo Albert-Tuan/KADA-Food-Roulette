@@ -6,10 +6,13 @@ interface SpinState {
   candidates: Restaurant[];
   customCandidates: Restaurant[];
   currentResult: Restaurant | null;
+  luckySpinCount: number;
   setFilters: (filters: Partial<SpinFilters>) => void;
   addCustomCandidate: (item: string | { name: string; category?: string; imageUrl?: string }) => void;
   removeCustomCandidate: (id: string) => void;
   setCurrentResult: (restaurant: Restaurant | null) => void;
+  grantLuckySpin: () => void;
+  consumeLuckySpin: () => void;
   spin: (index?: number) => void;
   resetStore: () => void;
 }
@@ -47,6 +50,10 @@ export const useSpinStore = create<SpinState>((set, get) => ({
   customCandidates: [],
   candidates: MOCK_RESTAURANTS,
   currentResult: null,
+  luckySpinCount: 1,
+
+  grantLuckySpin: () => set((state) => ({ luckySpinCount: state.luckySpinCount + 1 })),
+  consumeLuckySpin: () => set((state) => ({ luckySpinCount: Math.max(0, state.luckySpinCount - 1) })),
 
   setFilters: (newFilters) => set((state) => {
     const updatedFilters = { ...state.filters, ...newFilters };

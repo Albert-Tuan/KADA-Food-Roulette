@@ -23,10 +23,10 @@ export default function RootLayout() {
         <StatusBar style="dark" />
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: '#FDF5E6' },
+            headerStyle: { backgroundColor: '#FFF8E7' },
             headerTintColor: '#3D2314',
             headerTitleStyle: { fontWeight: '600' },
-            contentStyle: { backgroundColor: '#FDF5E6' },
+            contentStyle: { backgroundColor: '#FFF8E7' },
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -34,6 +34,14 @@ export default function RootLayout() {
           <Stack.Screen name="auth/register" options={{ title: 'Đăng ký' }} />
           <Stack.Screen name="restaurant/[id]" options={{ title: 'Chi tiết nhà hàng' }} />
           <Stack.Screen name="locket/capture" options={{ headerShown: false }} />
+          <Stack.Screen name="spin/menu-capture" options={{ headerShown: false }} />
+          <Stack.Screen name="spin/menu-review" options={{ headerShown: false }} />
+          <Stack.Screen name="spin/menu-wheel" options={{ headerShown: false }} />
+          <Stack.Screen name="spin/voice-pick" options={{ headerShown: false }} />
+          <Stack.Screen name="spin/result" options={{ headerShown: false }} />
+          <Stack.Screen name="spin/check-in" options={{ headerShown: false }} />
+          <Stack.Screen name="spin/lucky-spin" options={{ headerShown: false }} />
+          <Stack.Screen name="group-spin/lobby" options={{ headerShown: false }} />
           <Stack.Screen name="u/[public_id]" options={{ title: 'Profile công khai' }} />
         </Stack>
       </SafeAreaProvider>

@@ -1,5 +1,3 @@
-import assert from 'node:assert/strict';
-import test from 'node:test';
 import type { PublicProfileDto } from '../../api/endpoints/users';
 import { mapPublicProfile } from './profileMapper';
 
@@ -16,7 +14,7 @@ test('public profile mapping never exposes private display name or email', () =>
   } as PublicProfileDto & { display_name_private: string; email: string };
 
   const mapped = mapPublicProfile(dto);
-  assert.equal(mapped.displayNamePublic, 'Bình Ăn Gì');
-  assert.equal('displayNamePrivate' in mapped, false);
-  assert.equal('email' in mapped, false);
+  expect(mapped.displayNamePublic).toBe('Bình Ăn Gì');
+  expect('displayNamePrivate' in mapped).toBe(false);
+  expect('email' in mapped).toBe(false);
 });
