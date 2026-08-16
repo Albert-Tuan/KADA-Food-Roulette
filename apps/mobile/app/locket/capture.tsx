@@ -217,7 +217,7 @@ export default function CaptureLocketScreen() {
         location: { latitude: draft.latitude, longitude: draft.longitude },
         deviceHash: draft.deviceHash,
       });
-      router.replace(`/locket/${created.id}` as any);
+      router.replace('/(tabs)/lockets' as any);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Không thể đăng Taste Board. Bạn thử lại nhé.');
     }
