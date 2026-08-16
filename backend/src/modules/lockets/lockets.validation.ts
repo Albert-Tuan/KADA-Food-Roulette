@@ -126,7 +126,7 @@ export function parseCreateLocket(
   }
 
   const capturedAt = new Date(headers.capturedAt ?? '');
-  const tolerance = process.env.NODE_ENV === 'production' ? LOCKET_TIMESTAMP_TOLERANCE_MS : 10 * 60_000;
+  const tolerance = process.env.NODE_ENV === 'development' ? 10 * 60_000 : LOCKET_TIMESTAMP_TOLERANCE_MS;
   if (!Number.isFinite(capturedAt.getTime()) || Math.abs(now.getTime() - capturedAt.getTime()) > tolerance) {
     throw new LocketApiError('LOCKET_CAPTURE_EXPIRED', 'Thời điểm chụp không hợp lệ hoặc đã quá thời gian cho phép.');
   }

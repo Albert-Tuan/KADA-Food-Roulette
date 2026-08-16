@@ -1,6 +1,5 @@
 import prisma from '../../shared/utils/prisma.js';
 import { locketsService } from '../lockets/lockets.service.js';
-import { UserApiError } from './users.errors.js';
 import type { UpdateProfileData } from './users.validation.js';
 import { inMemoryUserStore } from './userStore.js';
 
@@ -77,7 +76,7 @@ class UsersService {
       }
     }
 
-    let publicLockets: any[] = [];
+    let publicLockets: unknown[] = [];
     let stats = { locket_count: 1, check_in_count: 3, group_count: 1 };
     try {
       [publicLockets, stats] = await Promise.all([
@@ -131,7 +130,7 @@ class UsersService {
       };
     }
 
-    let publicLockets: any[] = [];
+    let publicLockets: unknown[] = [];
     let stats = { locket_count: 1, check_in_count: 2, group_count: 1 };
     try {
       publicLockets = await locketsService.getPublicForUser(user.id);

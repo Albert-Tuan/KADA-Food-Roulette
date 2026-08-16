@@ -8,7 +8,7 @@ export interface UpdateProfileData {
 }
 
 export interface UserPreferencesData {
-  cuisineScores?: Record<string, number> | any;
+  cuisineScores?: Record<string, number>;
   priceRange?: number;
   dietaryRestrictions?: string[];
   spiceTolerance?: string;
@@ -114,7 +114,13 @@ export const profileService = {
 
   completeOnboarding: async (userId: string, data: CompleteOnboardingData) => {
     // 1. Update user profile details and set isOnboarded = true
-    const userUpdateData: any = {
+    const userUpdateData: {
+      isOnboarded: boolean;
+      displayNamePrivate?: string;
+      displayNamePublic?: string;
+      avatarUrl?: string;
+      bio?: string;
+    } = {
       isOnboarded: true
     };
     if (data.displayNamePrivate) userUpdateData.displayNamePrivate = data.displayNamePrivate;
@@ -128,12 +134,9 @@ export const profileService = {
     });
 
     // 2. Upsert preferences if provided
-    let preference = null;
-    if (data.preferences) {
-      preference = await profileService.updatePreferences(userId, data.preferences);
-    } else {
-      preference = await profileService.getPreferences(userId);
-    }
+    const preference = data.preferences
+      ? await profileService.updatePreferences(userId, data.preferences)
+      : await profileService.getPreferences(userId);
 
     return {
       user,

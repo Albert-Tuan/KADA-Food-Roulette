@@ -1,3 +1,4 @@
+import type { Readable } from 'node:stream';
 import type { Response } from 'express';
 import type { AuthRequest } from '../../shared/middleware/auth.middleware.js';
 import { logger } from '../../shared/utils/logger.js';
@@ -81,7 +82,7 @@ export const locketsController = {
             destination: '',
             filename: '',
             path: '',
-            stream: null as any,
+            stream: null as unknown as Readable,
           };
         }
       }
@@ -109,7 +110,7 @@ export const locketsController = {
           destination: '',
           filename: '',
           path: '',
-          stream: null as any,
+          stream: null as unknown as Readable,
         };
       }
 

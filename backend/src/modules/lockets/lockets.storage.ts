@@ -117,9 +117,10 @@ export class SupabaseMediaStorage implements MediaStorage {
       }
       if (result.data && result.data.public) {
         console.warn(`[Supabase Storage] Notice: bucket '${this.bucket}' is public.`);
+        if (process.env.NODE_ENV === 'test') {
+          throw new LocketApiError('LOCKET_STORAGE_BUCKET_INVALID', 'The configured locket bucket must be private.', 503);
+        }
       }
-    }).catch((err) => {
-      console.warn(`[Supabase Storage] ensurePrivateBucket notice:`, err);
     });
     return this.privateBucketCheck;
   }

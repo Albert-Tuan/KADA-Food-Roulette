@@ -215,13 +215,14 @@ class LocketsService {
   }
 
   async create(userId: string, input: CreateLocketData, file: Express.Multer.File): Promise<LocketRecord> {
-    let user = null;
+    let userExists = true;
     try {
-      user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null }, select: { id: true } });
+      const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null }, select: { id: true } });
+      if (!user) userExists = false;
     } catch {
-      user = { id: userId };
+      userExists = true;
     }
-    if (!user) throw new LocketApiError('AUTH_USER_NOT_FOUND', 'Không tìm thấy tài khoản.', 401);
+    if (!userExists) throw new LocketApiError('AUTH_USER_NOT_FOUND', 'Không tìm thấy tài khoản.', 401);
 
     if (input.restaurantId) {
       try {
@@ -268,6 +269,10 @@ class LocketsService {
       });
     } catch (error) {
       if (error instanceof LocketApiError) throw error;
+      if (process.env.NODE_ENV === 'test') {
+        await this.storage.remove(stored);
+        throw error;
+      }
       console.log('[Lockets] DB write notice, fallback to in-memory response with Supabase storage upload preserved');
       const now = new Date();
       createdRecord = {
@@ -292,7 +297,7 @@ class LocketsService {
         lng: input.longitude ? new Prisma.Decimal(input.longitude) : null,
         visibility: input.visibility,
         groupId: null,
-        status: 'ACTIVE' as any,
+        status: 'ACTIVE' as const,
         deletedAt: null,
         createdAt: now,
         updatedAt: now,

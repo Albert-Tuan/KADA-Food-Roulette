@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../shared/utils/prisma';
 import { AuthRequest } from '../../shared/middleware/auth.middleware';
-import { inMemoryUserStore, inMemoryUserStoreByEmail } from '../users/userStore.js';
+import { inMemoryUserStore, inMemoryUserStoreByEmail, type InMemoryUser } from '../users/userStore.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'food-roulette-super-secret-jwt-key-2026';
 
@@ -23,7 +23,21 @@ const generateTokens = (userId: string, email: string, role: string) => {
   return { token, refreshToken };
 };
 
-const formatUserProfile = (user: any) => ({
+interface UserLike {
+  id: string;
+  email: string;
+  displayNamePrivate?: string | null;
+  displayNamePublic?: string | null;
+  publicId?: string | null;
+  avatarUrl?: string | null;
+  xp?: number | null;
+  streakDays?: number | null;
+  coins?: number | null;
+  role?: string | null;
+  createdAt?: Date | string | null;
+}
+
+const formatUserProfile = (user: UserLike) => ({
   id: user.id,
   email: user.email,
   displayNamePrivate: user.displayNamePrivate,
@@ -79,7 +93,7 @@ export const authController = {
             isOnboarded: true,
           },
         });
-      } catch (dbError) {
+      } catch {
         console.log('[Auth] DB notice during register, using in-memory demo registration');
         const publicId = `u_${Math.random().toString(36).substring(2, 9)}`;
         user = {
@@ -98,8 +112,8 @@ export const authController = {
       }
 
       if (user) {
-        inMemoryUserStore.set(user.id, user as any);
-        inMemoryUserStoreByEmail.set(user.email, user as any);
+        inMemoryUserStore.set(user.id, user as unknown as InMemoryUser);
+        inMemoryUserStoreByEmail.set(user.email, user as unknown as InMemoryUser);
       }
 
       const { token, refreshToken } = generateTokens(user.id, user.email, user.role || 'USER');
@@ -114,7 +128,7 @@ export const authController = {
           expires_in: 604800
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Register error:', error);
       return res.status(500).json({
         success: false,
@@ -199,8 +213,8 @@ export const authController = {
           role: 'USER',
           createdAt: new Date().toISOString(),
         };
-        inMemoryUserStore.set(demoUser.id, demoUser as any);
-        inMemoryUserStoreByEmail.set(demoUser.email, demoUser as any);
+        inMemoryUserStore.set(demoUser.id, demoUser as unknown as InMemoryUser);
+        inMemoryUserStoreByEmail.set(demoUser.email, demoUser as unknown as InMemoryUser);
         const { token, refreshToken } = generateTokens(demoUser.id, demoUser.email, demoUser.role);
         return res.json({
           success: true,
@@ -233,7 +247,7 @@ export const authController = {
           expires_in: 604800
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
       return res.status(500).json({
         success: false,
@@ -376,7 +390,7 @@ export const authController = {
           preference
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Onboarding error:', error);
       return res.status(500).json({
         success: false,
@@ -442,9 +456,9 @@ export const authController = {
         });
       }
 
-      let payload: any;
+      let payload: { id: string; purpose?: string };
       try {
-        payload = jwt.verify(resetToken, JWT_SECRET);
+        payload = jwt.verify(resetToken, JWT_SECRET) as { id: string; purpose?: string };
       } catch {
         return res.status(400).json({
           success: false,
@@ -492,9 +506,9 @@ export const authController = {
         });
       }
 
-      let payload: any;
+      let payload: { id: string; type?: string };
       try {
-        payload = jwt.verify(refresh_token, JWT_SECRET);
+        payload = jwt.verify(refresh_token, JWT_SECRET) as { id: string; type?: string };
       } catch {
         return res.status(401).json({
           success: false,

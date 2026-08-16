@@ -1,4 +1,3 @@
-import cors from 'cors';
 import { Request, Response, NextFunction } from 'express';
 
 const allowedOrigins = [
