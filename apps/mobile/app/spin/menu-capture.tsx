@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Image, ActivityIndicator, Alert, SafeArea
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { menuApi, MenuCaptureResponse } from '../../src/api/endpoints/menu';
+import { menuApi, MenuCaptureResponse, setLatestCapturedMenu } from '../../src/api/endpoints/menu';
 
 const { width } = Dimensions.get('window');
 
@@ -25,12 +25,10 @@ export default function MenuCaptureScreen() {
         : await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             quality: 0.8,
-            allowsMultipleSelection: true,
           });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const uris = result.assets.map(a => a.uri);
-        setImageUris(prev => [...prev, ...uris]);
+        setImageUris(prev => [...prev, result.assets[0].uri]);
         setErrorMessage(null);
       }
     } catch (error) {
@@ -50,12 +48,11 @@ export default function MenuCaptureScreen() {
       setErrorMessage(null);
 
       const res: MenuCaptureResponse = await menuApi.captureMenu(restaurantId, imageUris);
+      setLatestCapturedMenu(res);
 
       const paramsToPass: Record<string, string> = {
         menuId: res.menuId,
-        initialItems: JSON.stringify(res.items),
         confidence: res.confidence.toString(),
-        previewUrl: imageUris[0],
       };
       if (params.target && typeof params.target === 'string') {
         paramsToPass.target = params.target;

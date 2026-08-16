@@ -38,6 +38,16 @@ export interface VoicePickResponse {
   aiSuggestions: Array<{ name: string; reason: string }>;
 }
 
+let latestCapturedMenu: MenuCaptureResponse | null = null;
+
+export function setLatestCapturedMenu(menu: MenuCaptureResponse | null) {
+  latestCapturedMenu = menu;
+}
+
+export function getLatestCapturedMenu(): MenuCaptureResponse | null {
+  return latestCapturedMenu;
+}
+
 export const menuApi = {
   captureMenu: async (restaurantId: string, imageUris: string[]): Promise<MenuCaptureResponse> => {
     const formData = new FormData();
