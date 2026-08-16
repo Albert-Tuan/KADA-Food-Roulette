@@ -50,23 +50,28 @@ export interface FoodRouletteRef {
 export interface FoodRouletteProps {
   candidates: Restaurant[];
   onSpinEnd?: (winner: Restaurant, index: number) => void;
+  onMultiSpinEnd?: (winners: Restaurant[]) => void;
+  multiSpinMode?: 1 | 2 | 3;
   disabled?: boolean;
   showSpinButton?: boolean;
 }
 
 export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
-  ({ candidates, onSpinEnd, disabled = false, showSpinButton = true }, ref) => {
+  ({ candidates, onSpinEnd, onMultiSpinEnd, multiSpinMode = 1, disabled = false, showSpinButton = true }, ref) => {
     const rotation = useSharedValue(0);
     const [spinning, setSpinning] = React.useState(false);
 
     const segmentAngle = candidates.length > 0 ? 360 / candidates.length : 360;
 
     const handleSpinEnd = useCallback(
-      (winner: Restaurant, index: number) => {
+      (winners: Restaurant[], primaryIndex: number) => {
         setSpinning(false);
-        onSpinEnd?.(winner, index);
+        if (winners.length > 0) {
+          onSpinEnd?.(winners[0], primaryIndex);
+          onMultiSpinEnd?.(winners);
+        }
       },
-      [onSpinEnd]
+      [onSpinEnd, onMultiSpinEnd]
     );
 
     const spin = useCallback(() => {
@@ -86,14 +91,40 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
         },
         (finished) => {
           if (finished) {
-            const pointerAngle = (360 - (newRotation % 360)) % 360;
+            const normalizedRot = (newRotation % 360);
             const sliceAngle = 360 / candidates.length;
-            const winnerIndex = Math.floor(pointerAngle / sliceAngle) % candidates.length;
-            runOnJS(handleSpinEnd)(candidates[winnerIndex], winnerIndex);
+            const won: Restaurant[] = [];
+            const usedIndices = new Set<number>();
+
+            let pointerOffsets = [0];
+            if (multiSpinMode === 2) {
+              pointerOffsets = [0, 180];
+            } else if (multiSpinMode === 3) {
+              pointerOffsets = [0, 120, 240];
+            }
+
+            pointerOffsets.forEach((offset) => {
+              const pointerAngle = (360 - ((normalizedRot + offset) % 360)) % 360;
+              let idx = Math.floor(pointerAngle / sliceAngle) % candidates.length;
+              if (usedIndices.has(idx) && candidates.length >= pointerOffsets.length) {
+                for (let step = 1; step < candidates.length; step++) {
+                  const nextIdx = (idx + step) % candidates.length;
+                  if (!usedIndices.has(nextIdx)) {
+                    idx = nextIdx;
+                    break;
+                  }
+                }
+              }
+              usedIndices.add(idx);
+              won.push(candidates[idx]);
+            });
+
+            const primaryIndex = Math.floor(((360 - (normalizedRot % 360)) % 360) / sliceAngle) % candidates.length;
+            runOnJS(handleSpinEnd)(won, primaryIndex);
           }
         }
       );
-    }, [spinning, disabled, rotation, candidates, handleSpinEnd]);
+    }, [spinning, disabled, rotation, candidates, multiSpinMode, handleSpinEnd]);
 
     useImperativeHandle(ref, () => ({
       spin,
@@ -213,7 +244,7 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
 
     return (
       <View style={styles.container}>
-        {/* 3D Pointer Badge */}
+        {/* Top 3D Pointer Badge (Pointer 1) */}
         <View style={styles.pointerContainer}>
           <Svg width={32} height={40} viewBox="0 0 28 36">
             <Path
@@ -225,6 +256,49 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
             <Circle cx={14} cy={12} r={4} fill="#ffffff" />
           </Svg>
         </View>
+
+        {/* Pointer 2 for Mode 2 (180° Bottom) */}
+        {multiSpinMode === 2 && (
+          <View style={styles.pointerBottomContainer}>
+            <Svg width={32} height={40} viewBox="0 0 28 36" style={{ transform: [{ rotate: '180deg' }] }}>
+              <Path
+                d="M14 36 L2 10 A12 12 0 1 1 26 10 Z"
+                fill="#166b47"
+                stroke="#FFC107"
+                strokeWidth={2.5}
+              />
+              <Circle cx={14} cy={12} r={4} fill="#ffffff" />
+            </Svg>
+          </View>
+        )}
+
+        {/* Pointer 2 & 3 for Mode 3 (120° and 240°) */}
+        {multiSpinMode === 3 && (
+          <>
+            <View style={styles.pointer120Container}>
+              <Svg width={32} height={40} viewBox="0 0 28 36" style={{ transform: [{ rotate: '120deg' }] }}>
+                <Path
+                  d="M14 36 L2 10 A12 12 0 1 1 26 10 Z"
+                  fill="#166b47"
+                  stroke="#FFC107"
+                  strokeWidth={2.5}
+                />
+                <Circle cx={14} cy={12} r={4} fill="#ffffff" />
+              </Svg>
+            </View>
+            <View style={styles.pointer240Container}>
+              <Svg width={32} height={40} viewBox="0 0 28 36" style={{ transform: [{ rotate: '240deg' }] }}>
+                <Path
+                  d="M14 36 L2 10 A12 12 0 1 1 26 10 Z"
+                  fill="#8e4e14"
+                  stroke="#FFC107"
+                  strokeWidth={2.5}
+                />
+                <Circle cx={14} cy={12} r={4} fill="#ffffff" />
+              </Svg>
+            </View>
+          </>
+        )}
 
         {/* Wheel Assembly */}
         <View style={styles.wheelOuterFrame}>
@@ -268,7 +342,11 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
             ]}
           >
             <Text style={styles.spinButtonText}>
-              {spinning ? '🔄 ĐANG CHỌN MÓN...' : '🎰 QUAY MÓN NGAY!'}
+              {spinning 
+                ? '🔄 ĐANG CHỌN MÓN...' 
+                : multiSpinMode > 1 
+                  ? `🎰 QUAY COMBO (${multiSpinMode} MÓN CÙNG LÚC)!` 
+                  : '🎰 QUAY MÓN NGAY!'}
             </Text>
           </TouchableOpacity>
         )}
@@ -289,6 +367,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#b52330',
     shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  pointerBottomContainer: {
+    position: 'absolute',
+    bottom: 60,
+    zIndex: 20,
+    alignItems: 'center',
+    shadowColor: '#166b47',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  pointer120Container: {
+    position: 'absolute',
+    bottom: 95,
+    right: 15,
+    zIndex: 20,
+    alignItems: 'center',
+    shadowColor: '#166b47',
+    shadowOffset: { width: -3, height: -3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  pointer240Container: {
+    position: 'absolute',
+    bottom: 95,
+    left: 15,
+    zIndex: 20,
+    alignItems: 'center',
+    shadowColor: '#8e4e14',
+    shadowOffset: { width: 3, height: -3 },
     shadowOpacity: 0.35,
     shadowRadius: 6,
     elevation: 8,
