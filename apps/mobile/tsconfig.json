@@ -2,6 +2,7 @@
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
+    "types": ["jest"],
     "paths": {
       "@/*": [
         "./src/*"
