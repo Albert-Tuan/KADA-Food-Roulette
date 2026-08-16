@@ -12,42 +12,36 @@ const allowedOrigins = [
   process.env.CLIENT_URL,
 ].filter(Boolean) as string[];
 
-export const corsMiddleware = cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
-      callback(null, true);
-    } else {
-      callback(null, true);
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'x-device-id',
-    'x-device-hash',
-    'x-request-id',
-    'x-client-platform',
-    'x-client-version',
-  ],
-  exposedHeaders: ['set-cookie'],
-});
-
-export const handleCors = (req: Request, res: Response, next: NextFunction) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Content-Type, Authorization, X-Requested-With, Accept, Origin, x-device-id, x-device-hash, x-request-id, x-client-platform, x-client-version'
-  );
-  
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
+export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  // Reflect request origin for local development & allowed origins
+  const origin = req.headers.origin;
+  if (origin && (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production')) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
   }
+
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD');
+  
+  // Allow all requested headers dynamically or fallback to comprehensive list
+  const requestedHeaders = req.headers['access-control-request-headers'];
+  if (requestedHeaders) {
+    res.setHeader('Access-Control-Allow-Headers', requestedHeaders);
+  } else {
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Device-ID, x-device-id, X-Captured-At, x-captured-at, x-device-hash, x-request-id, x-client-platform, x-client-version'
+    );
+  }
+
+  res.setHeader('Access-Control-Expose-Headers', 'set-cookie');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
   next();
 };
+
+export const handleCors = corsMiddleware;
