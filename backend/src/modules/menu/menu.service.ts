@@ -43,8 +43,8 @@ export class MenuService {
       console.log(`[MenuService] No UserPreference found for user ${userId}, proceeding with default scoring.`);
     }
 
-    let rawItems: MenuItemParsed[] = [];
-    let confidence = 0;
+    let rawItems: MenuItemParsed[];
+    let confidence: number;
     let extractedText = '';
 
     // 2. Try Online Vision AI Engine (Gemini 1.5 Flash - Batch Mode)

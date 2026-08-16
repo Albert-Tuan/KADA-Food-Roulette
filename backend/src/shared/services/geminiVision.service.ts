@@ -182,7 +182,6 @@ Quy tắc quan trọng:
 
       const modelsToTry = [userModel, 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-3.7-flash'];
       let response: Response | null = null;
-      let usedModel = '';
 
       for (const modelName of modelsToTry) {
         console.log(`[GeminiVision] Attempting to use model: ${modelName}`);
@@ -204,7 +203,6 @@ Quy tắc quan trọng:
 
           if (res.ok) {
             response = res;
-            usedModel = modelName;
             console.log(`[GeminiVision] Successfully got response from ${modelName}`);
             break; // Stop trying if successful
           } else {
