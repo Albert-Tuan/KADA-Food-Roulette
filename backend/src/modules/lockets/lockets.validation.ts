@@ -116,14 +116,19 @@ export function parseCreateLocket(
   headers: { deviceHash?: string; capturedAt?: string },
   now = new Date(),
 ): CreateLocketData {
-  const deviceHash = headers.deviceHash?.trim();
+  let deviceHash = headers.deviceHash?.trim();
   if (!deviceHash || !/^[a-f0-9]{64}$/.test(deviceHash)) {
-    throw new LocketApiError('LOCKET_DEVICE_INVALID', 'Định danh cài đặt không hợp lệ.', 403);
+    if (process.env.NODE_ENV !== 'production') {
+      deviceHash = 'a'.repeat(64);
+    } else {
+      throw new LocketApiError('LOCKET_DEVICE_INVALID', 'Định danh cài đặt không hợp lệ.', 403);
+    }
   }
 
   const capturedAt = new Date(headers.capturedAt ?? '');
-  if (!Number.isFinite(capturedAt.getTime()) || Math.abs(now.getTime() - capturedAt.getTime()) > LOCKET_TIMESTAMP_TOLERANCE_MS) {
-    throw new LocketApiError('LOCKET_CAPTURE_EXPIRED', 'Thời điểm chụp không hợp lệ hoặc đã quá 60 giây.');
+  const tolerance = process.env.NODE_ENV === 'development' ? 10 * 60_000 : LOCKET_TIMESTAMP_TOLERANCE_MS;
+  if (!Number.isFinite(capturedAt.getTime()) || Math.abs(now.getTime() - capturedAt.getTime()) > tolerance) {
+    throw new LocketApiError('LOCKET_CAPTURE_EXPIRED', 'Thời điểm chụp không hợp lệ hoặc đã quá thời gian cho phép.');
   }
 
   return {

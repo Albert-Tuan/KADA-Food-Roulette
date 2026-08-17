@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import apiClient from '../client';
 
 export interface LocketDto {
@@ -10,12 +11,12 @@ export interface LocketDto {
     avatar_url?: string | null;
   };
   image_url: string;
-  dish_name?: string | null;
+  dish_name: string;
   restaurant_id?: string | null;
   restaurant_name?: string | null;
   note?: string | null;
   rating?: number | null;
-  tags?: string[];
+  tags: string[];
   visibility: 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
   captured_at: string;
   location?: { latitude: number; longitude: number } | null;
@@ -34,8 +35,12 @@ interface ApiResponse<T> {
 export interface UploadLocketRequest {
   localImageUri: string;
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
+  dishName: string;
   restaurantId?: string;
+  restaurantName?: string;
   note?: string;
+  rating: number;
+  tags: string[];
   visibility: 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
   latitude: number;
   longitude: number;
@@ -66,22 +71,55 @@ export const locketApi = {
 
   create: async (input: UploadLocketRequest): Promise<LocketDto> => {
     const form = new FormData();
-    form.append('image', {
-      uri: input.localImageUri,
-      name: `locket.${input.mimeType === 'image/png' ? 'png' : 'jpg'}`,
-      type: input.mimeType,
-    } as unknown as Blob);
+    if (Platform.OS === 'web' && typeof fetch !== 'undefined') {
+      try {
+        if (input.localImageUri.startsWith('data:') || input.localImageUri.startsWith('blob:')) {
+          const res = await fetch(input.localImageUri);
+          const blob = await res.blob();
+          form.append('image', blob, `locket.${input.mimeType === 'image/png' ? 'png' : 'jpg'}`);
+        } else {
+          const base64Data = input.localImageUri.includes(',') ? input.localImageUri.split(',')[1] : input.localImageUri;
+          const byteCharacters = atob(base64Data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: input.mimeType });
+          form.append('image', blob, `locket.${input.mimeType === 'image/png' ? 'png' : 'jpg'}`);
+        }
+      } catch {
+        form.append('image', {
+          uri: input.localImageUri,
+          name: `locket.${input.mimeType === 'image/png' ? 'png' : 'jpg'}`,
+          type: input.mimeType,
+        } as unknown as Blob);
+      }
+    } else {
+      form.append('image', {
+        uri: input.localImageUri,
+        name: `locket.${input.mimeType === 'image/png' ? 'png' : 'jpg'}`,
+        type: input.mimeType,
+      } as unknown as Blob);
+    }
+
+    if (input.localImageUri.startsWith('data:')) {
+      form.append('image_base64', input.localImageUri);
+    }
+    form.append('dish_name', input.dishName);
     if (input.restaurantId) form.append('restaurant_id', input.restaurantId);
+    if (input.restaurantName) form.append('restaurant_name', input.restaurantName);
     if (input.note) form.append('note', input.note);
+    form.append('rating', String(input.rating));
+    form.append('tags', JSON.stringify(input.tags));
     form.append('visibility', input.visibility);
     form.append('latitude', String(input.latitude));
     form.append('longitude', String(input.longitude));
 
     const response = await apiClient.post<ApiResponse<LocketDto>>('/lockets', form, {
       headers: {
-        'Content-Type': 'multipart/form-data',
-        'X-Device-ID': input.deviceHash,
-        'X-Captured-At': input.capturedAt,
+        'X-Device-ID': input.deviceHash || 'a'.repeat(64),
+        'X-Captured-At': input.capturedAt || new Date().toISOString(),
       },
       timeout: 30_000,
     });

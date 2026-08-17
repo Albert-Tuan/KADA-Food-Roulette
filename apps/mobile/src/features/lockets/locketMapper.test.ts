@@ -1,5 +1,4 @@
-import assert from 'node:assert/strict';
-import test from 'node:test';
+import { test, expect } from '@jest/globals';
 import type { LocketDto } from '../../api/endpoints/lockets';
 import { API_URL } from '../../lib/constants';
 import { mapLocketDto } from './locketMapper';
@@ -27,8 +26,8 @@ function locketDto(): LocketDto {
 test('maps API Locket DTO into the repository domain model', () => {
   const mapped = mapLocketDto(locketDto());
   const apiOrigin = API_URL.replace(/\/api\/v1\/?$/, '');
-  assert.equal(mapped.imageUrl, `${apiOrigin}/api/v1/lockets/media/image.jpg`);
-  assert.deepEqual(mapped.permissions, { canEdit: true, canDelete: true });
-  assert.equal(mapped.restaurantId, 'restaurant-1');
-  assert.equal(mapped.location, undefined);
+  expect(mapped.imageUrl).toBe(`${apiOrigin}/api/v1/lockets/media/image.jpg`);
+  expect(mapped.permissions).toEqual({ canEdit: true, canDelete: true });
+  expect(mapped.restaurantId).toBe('restaurant-1');
+  expect(mapped.location).toBeUndefined();
 });

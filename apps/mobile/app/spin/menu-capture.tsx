@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Image, ActivityIndicator, Alert, SafeArea
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { menuApi, MenuCaptureResponse } from '../../src/api/endpoints/menu';
+import { menuApi, MenuCaptureResponse, setLatestCapturedMenu } from '../../src/api/endpoints/menu';
 
 const { width } = Dimensions.get('window');
 
@@ -25,12 +25,10 @@ export default function MenuCaptureScreen() {
         : await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             quality: 0.8,
-            allowsMultipleSelection: true,
           });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const uris = result.assets.map(a => a.uri);
-        setImageUris(prev => [...prev, ...uris]);
+        setImageUris(prev => [...prev, result.assets[0].uri]);
         setErrorMessage(null);
       }
     } catch (error) {
@@ -50,12 +48,11 @@ export default function MenuCaptureScreen() {
       setErrorMessage(null);
 
       const res: MenuCaptureResponse = await menuApi.captureMenu(restaurantId, imageUris);
+      setLatestCapturedMenu(res);
 
       const paramsToPass: Record<string, string> = {
         menuId: res.menuId,
-        initialItems: JSON.stringify(res.items),
         confidence: res.confidence.toString(),
-        previewUrl: imageUris[0],
       };
       if (params.target && typeof params.target === 'string') {
         paramsToPass.target = params.target;
@@ -73,26 +70,37 @@ export default function MenuCaptureScreen() {
     }
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
   const removeImage = (index: number) => {
     setImageUris(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-amber-50">
+    <SafeAreaView className="flex-1" style={{ backgroundColor: '#fff8ef' }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
         {/* Header */}
         <View className="flex-row items-center mb-6 pt-2">
           <TouchableOpacity
-            onPress={() => router.back()}
-            className="p-2 rounded-full bg-white border border-amber-200 shadow-sm mr-3"
+            onPress={handleBack}
+            activeOpacity={0.7}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            style={{ backgroundColor: '#ffffff', borderColor: '#e2bebc' }}
+            className="p-2.5 rounded-2xl border shadow-xs mr-3"
           >
-            <Feather name="arrow-left" size={20} color="#44403C" />
+            <Feather name="arrow-left" size={20} color="#b52330" />
           </TouchableOpacity>
           <View>
-            <Text className="text-xl font-bold text-stone-800">
+            <Text className="text-2xl font-extrabold" style={{ color: '#b52330' }}>
               📷 Chụp Menu Tại Quán
             </Text>
-            <Text className="text-xs text-stone-500 mt-1">
+            <Text className="text-xs font-semibold mt-0.5" style={{ color: '#8e4e14' }}>
               Gemini AI Vision sẽ tự động quét và bóc tách
             </Text>
           </View>
@@ -181,19 +189,21 @@ export default function MenuCaptureScreen() {
           <TouchableOpacity
             onPress={handleCapture}
             disabled={imageUris.length === 0 || isScanning}
-            className={`w-full py-4 rounded-xl flex-row items-center justify-center shadow-lg ${
-              imageUris.length > 0 && !isScanning ? 'bg-amber-500' : 'bg-stone-300'
-            }`}
+            style={{
+              backgroundColor: imageUris.length > 0 && !isScanning ? '#b52330' : '#e1d9cb',
+              borderBottomColor: imageUris.length > 0 && !isScanning ? '#61000e' : '#8e706f',
+            }}
+            className="w-full py-4 rounded-2xl flex-row items-center justify-center border-b-4 shadow-md"
           >
             {isScanning ? (
               <>
                 <ActivityIndicator size="small" color="#FFF" style={{ marginRight: 8 }} />
-                <Text className="text-white font-bold text-sm">Đang phân tích OCR...</Text>
+                <Text className="text-white font-extrabold text-base">Đang phân tích OCR...</Text>
               </>
             ) : (
               <>
-                <Ionicons name="sparkles" size={16} color={imageUris.length > 0 ? "#FFF" : "#9CA3AF"} style={{ marginRight: 8 }} />
-                <Text className={`font-bold text-sm ${imageUris.length > 0 ? 'text-white' : 'text-stone-500'}`}>
+                <Ionicons name="sparkles" size={18} color={imageUris.length > 0 ? "#FFF" : "#5a403f"} style={{ marginRight: 8 }} />
+                <Text className={`font-extrabold text-base ${imageUris.length > 0 ? 'text-white' : 'text-stone-500'}`}>
                   Bắt đầu AI OCR Quét Menu
                 </Text>
               </>

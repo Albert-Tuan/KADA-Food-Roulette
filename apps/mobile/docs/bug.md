@@ -13,7 +13,7 @@
 > **Số thứ tự (`#N`)**: không reuse — bug nào cũng có số duy nhất, giữ nguyên khi
 > move sang `bugdone.md`. Bug mới = max(bug.md + bugdone.md) + 1.
 
----
+
 
 ## 📋 Template (copy block này khi report bug mới)
 

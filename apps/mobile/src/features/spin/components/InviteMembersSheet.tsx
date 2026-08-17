@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Modal,
   TouchableOpacity,
   Pressable,
   Share,
@@ -39,13 +38,16 @@ export function InviteMembersSheet({ visible, onClose }: InviteMembersSheetProps
   const [invitedIds, setInvitedIds] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState(false);
 
-  const inviteLink = `https://foodroulette.app/g/${roomCode}`;
+  if (!visible) return null;
+
+  const currentRoomCode = roomCode || '#PARTY2026';
+  const inviteLink = `https://foodroulette.app/g/${currentRoomCode}`;
 
   const handleShareLink = async () => {
     try {
       await Share.share({
         title: 'Mời tham gia Food Roulette Group Spin',
-        message: `Vào chọn món ăn cùng nhóm mình nhé! Mã phòng: ${roomCode}\nLink tham gia: ${inviteLink}`,
+        message: `Vào chọn món ăn cùng nhóm mình nhé! Mã phòng: ${currentRoomCode}\nLink tham gia: ${inviteLink}`,
       });
     } catch (error) {
       console.error('Error sharing:', error);
@@ -69,213 +71,222 @@ export function InviteMembersSheet({ visible, onClose }: InviteMembersSheetProps
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.sheet}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.handleBar} />
-            <View style={styles.headerTitleRow}>
-              <Text style={styles.title}>Mời bạn vào nhóm</Text>
-              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Text style={styles.closeText}>✕</Text>
+    <View style={styles.modalContainer}>
+      <Pressable style={styles.backdrop} onPress={onClose} />
+      <View style={styles.sheet}>
+        {/* Grab Handle */}
+        <View style={styles.grabHandleContainer}>
+          <View style={styles.grabHandle} />
+        </View>
+
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>👥 Mời Bạn Vào Nhóm</Text>
+            <Text style={styles.subtitle}>Cùng chọn món & chốt nhanh kèo nhậu!</Text>
+          </View>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton} activeOpacity={0.8}>
+            <Text style={styles.closeText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Room Code & Share Link Section */}
+          <View style={styles.codeCard}>
+            <Text style={styles.codeLabel}>MÃ PHÒNG NHÓM</Text>
+            <Text style={styles.codeValue}>{currentRoomCode}</Text>
+            <View style={styles.actionRow}>
+              <TouchableOpacity style={styles.copyBtn} onPress={handleCopyCode} activeOpacity={0.8}>
+                <Text style={styles.copyBtnText}>{copied ? '✓ Đã chép' : '📋 Sao chép mã'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.shareBtn} onPress={handleShareLink} activeOpacity={0.88}>
+                <Text style={styles.shareBtnText}>🔗 Chia sẻ link</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.subtitle}>Tối đa 20 người cùng chọn món & chốt kèo</Text>
           </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            {/* Room Code & Share Link Section */}
-            <View style={styles.codeCard}>
-              <Text style={styles.codeLabel}>MÃ PHÒNG NHÓM</Text>
-              <Text style={styles.codeValue}>{roomCode}</Text>
-              <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.copyBtn} onPress={handleCopyCode}>
-                  <Text style={styles.copyBtnText}>{copied ? '✓ Đã chép' : '📋 Sao chép mã'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.copyBtn, styles.shareBtn]} onPress={handleShareLink}>
-                  <Text style={styles.shareBtnText}>🔗 Chia sẻ link</Text>
-                </TouchableOpacity>
-              </View>
+          {/* QR Code Section */}
+          <View style={styles.qrSection}>
+            <Text style={styles.sectionTitle}>📷 Quét mã tại bàn</Text>
+            <View style={styles.qrContainer}>
+              <Svg width={120} height={120} viewBox="0 0 100 100">
+                <Rect x="0" y="0" width="100" height="100" fill="#FFF" />
+                <Rect x="10" y="10" width="25" height="25" fill="#b52330" />
+                <Rect x="14" y="14" width="17" height="17" fill="#FFF" />
+                <Rect x="18" y="18" width="9" height="9" fill="#b52330" />
+                <Rect x="65" y="10" width="25" height="25" fill="#b52330" />
+                <Rect x="69" y="14" width="17" height="17" fill="#FFF" />
+                <Rect x="73" y="18" width="9" height="9" fill="#b52330" />
+                <Rect x="10" y="65" width="25" height="25" fill="#b52330" />
+                <Rect x="14" y="69" width="17" height="17" fill="#FFF" />
+                <Rect x="18" y="73" width="9" height="9" fill="#b52330" />
+                <Rect x="42" y="15" width="8" height="8" fill="#5a403f" />
+                <Rect x="42" y="30" width="8" height="8" fill="#5a403f" />
+                <Rect x="15" y="42" width="8" height="8" fill="#5a403f" />
+                <Rect x="30" y="42" width="8" height="8" fill="#5a403f" />
+                <Rect x="45" y="45" width="10" height="10" fill="#b52330" />
+                <Rect x="60" y="42" width="8" height="8" fill="#5a403f" />
+                <Rect x="75" y="42" width="8" height="8" fill="#5a403f" />
+                <Rect x="42" y="60" width="8" height="8" fill="#5a403f" />
+                <Rect x="42" y="75" width="8" height="8" fill="#5a403f" />
+                <Rect x="65" y="65" width="12" height="12" fill="#5a403f" />
+                <Rect x="80" y="80" width="10" height="10" fill="#b52330" />
+              </Svg>
+            </View>
+            <Text style={styles.qrHint}>Đưa camera quét để vào phòng nhanh</Text>
+          </View>
+
+          {/* In-app Friends Section */}
+          <View style={styles.friendsSection}>
+            <View style={styles.friendsHeader}>
+              <Text style={styles.sectionTitle}>🔥 Bạn bè trong app</Text>
+              <Text style={styles.memberCount}>{members.length}/20 người</Text>
             </View>
 
-            {/* QR Code Section */}
-            <View style={styles.qrSection}>
-              <Text style={styles.sectionTitle}>Quét mã tại bàn</Text>
-              <View style={styles.qrContainer}>
-                {/* Visual Representation of QR Code using SVG */}
-                <Svg width={140} height={140} viewBox="0 0 100 100">
-                  <Rect x="0" y="0" width="100" height="100" fill="#FFF" />
-                  {/* Top Left Marker */}
-                  <Rect x="10" y="10" width="25" height="25" fill="#B52330" />
-                  <Rect x="14" y="14" width="17" height="17" fill="#FFF" />
-                  <Rect x="18" y="18" width="9" height="9" fill="#B52330" />
-                  {/* Top Right Marker */}
-                  <Rect x="65" y="10" width="25" height="25" fill="#B52330" />
-                  <Rect x="69" y="14" width="17" height="17" fill="#FFF" />
-                  <Rect x="73" y="18" width="9" height="9" fill="#B52330" />
-                  {/* Bottom Left Marker */}
-                  <Rect x="10" y="65" width="25" height="25" fill="#B52330" />
-                  <Rect x="14" y="69" width="17" height="17" fill="#FFF" />
-                  <Rect x="18" y="73" width="9" height="9" fill="#B52330" />
-                  {/* Inner Pattern Dots */}
-                  <Rect x="42" y="15" width="8" height="8" fill="#292524" />
-                  <Rect x="42" y="30" width="8" height="8" fill="#292524" />
-                  <Rect x="15" y="42" width="8" height="8" fill="#292524" />
-                  <Rect x="30" y="42" width="8" height="8" fill="#292524" />
-                  <Rect x="45" y="45" width="10" height="10" fill="#B52330" />
-                  <Rect x="60" y="42" width="8" height="8" fill="#292524" />
-                  <Rect x="75" y="42" width="8" height="8" fill="#292524" />
-                  <Rect x="42" y="60" width="8" height="8" fill="#292524" />
-                  <Rect x="42" y="75" width="8" height="8" fill="#292524" />
-                  <Rect x="65" y="65" width="12" height="12" fill="#292524" />
-                  <Rect x="80" y="80" width="10" height="10" fill="#B52330" />
-                </Svg>
-              </View>
-              <Text style={styles.qrHint}>Đưa camera quét để vào phòng nhanh</Text>
-            </View>
+            {MOCK_FRIENDS.map((friend) => {
+              const isAlreadyJoined = members.some((m) => m.id === friend.id);
+              const isInvited = invitedIds[friend.id] || isAlreadyJoined;
 
-            {/* In-app Friends Section */}
-            <View style={styles.friendsSection}>
-              <View style={styles.friendsHeader}>
-                <Text style={styles.sectionTitle}>Mời bạn bè trong app</Text>
-                <Text style={styles.memberCount}>{members.length}/20 người</Text>
-              </View>
-
-              {MOCK_FRIENDS.map((friend) => {
-                const isAlreadyJoined = members.some((m) => m.id === friend.id);
-                const isInvited = invitedIds[friend.id] || isAlreadyJoined;
-
-                return (
-                  <View key={friend.id} style={styles.friendRow}>
-                    <View style={styles.friendAvatarContainer}>
-                      <Image source={{ uri: friend.avatarUrl }} style={styles.friendAvatar} />
-                      {friend.isOnline && <View style={styles.onlineBadge} />}
-                    </View>
-                    <View style={styles.friendInfo}>
-                      <Text style={styles.friendName}>{friend.name}</Text>
-                      <Text style={styles.friendStatus}>
-                        {isAlreadyJoined
-                          ? 'Đã trong phòng'
-                          : friend.isOnline
-                          ? 'Đang hoạt động'
-                          : 'Ngoại tuyến'}
-                      </Text>
-                    </View>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.inviteBtn,
-                        isInvited && styles.invitedBtn,
-                      ]}
-                      disabled={isInvited}
-                      onPress={() => handleInviteFriend(friend)}
-                    >
-                      <Text style={[styles.inviteBtnText, isInvited && styles.invitedBtnText]}>
-                        {isAlreadyJoined ? 'Đã vào' : isInvited ? 'Đã mời ✓' : 'Mời'}
-                      </Text>
-                    </TouchableOpacity>
+              return (
+                <View key={friend.id} style={styles.friendRow}>
+                  <View style={styles.friendAvatarContainer}>
+                    <Image source={{ uri: friend.avatarUrl }} style={styles.friendAvatar} />
+                    {friend.isOnline && <View style={styles.onlineBadge} />}
                   </View>
-                );
-              })}
-            </View>
-          </ScrollView>
-        </View>
+                  <View style={styles.friendInfo}>
+                    <Text style={styles.friendName}>{friend.name}</Text>
+                    <Text style={styles.friendStatus}>
+                      {isAlreadyJoined
+                        ? '🟢 Đã trong phòng'
+                        : friend.isOnline
+                        ? '🟢 Đang hoạt động'
+                        : '⚪ Ngoại tuyến'}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.inviteBtn,
+                      isInvited && styles.invitedBtn,
+                    ]}
+                    disabled={isInvited}
+                    activeOpacity={0.85}
+                    onPress={() => handleInviteFriend(friend)}
+                  >
+                    <Text style={[styles.inviteBtnText, isInvited && styles.invitedBtnText]}>
+                      {isAlreadyJoined ? 'Đã vào' : isInvited ? 'Đã mời ✓' : '➕ Mời'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+          </View>
+        </ScrollView>
       </View>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  modalContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 9999,
+    elevation: 9999,
     justifyContent: 'flex-end',
   },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
   sheet: {
-    backgroundColor: '#FFF8E7',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    width: '100%',
+    backgroundColor: '#fff8ef',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderRightWidth: 2,
+    borderColor: '#e2bebc',
     maxHeight: '85%',
     paddingBottom: 24,
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  grabHandleContainer: {
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  grabHandle: {
+    width: 42,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#e2bebc',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
+    paddingTop: 6,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E7E5E4',
-  },
-  handleBar: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#D6D3D1',
-    marginBottom: 12,
-  },
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
+    borderBottomColor: '#fbf3e4',
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#B52330',
-  },
-  closeButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#E7E5E4',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#78716C',
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#b52330',
   },
   subtitle: {
     fontSize: 12,
-    color: '#78716C',
-    marginTop: 4,
-    alignSelf: 'flex-start',
+    color: '#8e4e14',
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2bebc',
+  },
+  closeText: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#b52330',
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 14,
   },
   codeCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
     padding: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
-    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    marginBottom: 14,
   },
   codeLabel: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#78716C',
+    fontWeight: '900',
+    color: '#8e4e14',
     letterSpacing: 1,
   },
   codeValue: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#B52330',
-    letterSpacing: 3,
-    marginVertical: 6,
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#b52330',
+    letterSpacing: 2,
+    marginVertical: 4,
   },
   actionRow: {
     flexDirection: 'row',
@@ -285,61 +296,69 @@ const styles = StyleSheet.create({
   },
   copyBtn: {
     flex: 1,
-    backgroundColor: '#F5F5F4',
-    paddingVertical: 10,
-    borderRadius: 10,
+    backgroundColor: '#ffffff',
+    paddingVertical: 12,
+    borderRadius: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
   },
   copyBtnText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#292524',
+    fontWeight: '800',
+    color: '#8e4e14',
   },
   shareBtn: {
-    backgroundColor: '#B52330',
-    borderColor: '#B52330',
+    flex: 1,
+    backgroundColor: '#b52330',
+    paddingVertical: 12,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: '#61000e',
   },
   shareBtnText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#FFF',
+    fontWeight: '900',
+    color: '#ffffff',
   },
   qrSection: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
     padding: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
-    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    marginBottom: 14,
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#292524',
+    fontWeight: '900',
+    color: '#b52330',
     marginBottom: 8,
   },
   qrContainer: {
     padding: 10,
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
     marginVertical: 4,
   },
   qrHint: {
-    fontSize: 11,
-    color: '#78716C',
+    fontSize: 11.5,
+    color: '#8e4e14',
     marginTop: 6,
+    fontWeight: '600',
   },
   friendsSection: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#E7E5E4',
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
     marginBottom: 24,
   },
   friendsHeader: {
@@ -350,25 +369,27 @@ const styles = StyleSheet.create({
   },
   memberCount: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#B52330',
+    fontWeight: '900',
+    color: '#b52330',
   },
   friendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F4',
+    borderBottomColor: '#fbf3e4',
   },
   friendAvatarContainer: {
     position: 'relative',
     marginRight: 10,
   },
   friendAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#E7E5E4',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#ffdcc4',
+    borderWidth: 1,
+    borderColor: '#e2bebc',
   },
   onlineBadge: {
     position: 'absolute',
@@ -377,37 +398,42 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#22C55E',
+    backgroundColor: '#166b47',
     borderWidth: 2,
-    borderColor: '#FFF',
+    borderColor: '#ffffff',
   },
   friendInfo: {
     flex: 1,
   },
   friendName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#292524',
+    fontWeight: '800',
+    color: '#b52330',
   },
   friendStatus: {
-    fontSize: 12,
-    color: '#78716C',
+    fontSize: 11.5,
+    color: '#8e4e14',
+    fontWeight: '600',
+    marginTop: 1,
   },
   inviteBtn: {
-    backgroundColor: '#B52330',
+    backgroundColor: '#b52330',
     paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingVertical: 8,
+    borderRadius: 14,
+    borderBottomWidth: 2,
+    borderBottomColor: '#61000e',
   },
   invitedBtn: {
-    backgroundColor: '#F5F5F4',
+    backgroundColor: '#ffdad8',
+    borderBottomWidth: 0,
   },
   inviteBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#FFF',
+    fontSize: 12.5,
+    fontWeight: '900',
+    color: '#ffffff',
   },
   invitedBtnText: {
-    color: '#A8A29E',
+    color: '#b52330',
   },
 });

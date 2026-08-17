@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, Linking, Platform, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, Platform, StyleSheet, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { restaurantApi } from '../../src/api';
-import { formatCurrency } from '../../src/lib/utils';
 
 export default function RestaurantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -171,6 +170,34 @@ export default function RestaurantDetailScreen() {
             </Text>
           </View>
 
+          {/* Review Section */}
+          <View style={styles.reviewSection}>
+            <Text style={styles.sectionTitle}>Đánh giá</Text>
+            <TouchableOpacity 
+              style={styles.reviewActionCard} 
+              onPress={() => router.push(`/restaurant/${id}/reviews`)}
+            >
+              <Text style={styles.reviewActionIcon}>⭐</Text>
+              <View style={styles.reviewActionContent}>
+                <Text style={styles.reviewActionTitle}>Xem các đánh giá</Text>
+                <Text style={styles.reviewActionSub}>Đọc chia sẻ từ cộng đồng</Text>
+              </View>
+              <Text style={styles.arrowIcon}>→</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.reviewActionCard} 
+              onPress={() => router.push(`/restaurant/${id}/review`)}
+            >
+              <Text style={styles.reviewActionIcon}>✍️</Text>
+              <View style={styles.reviewActionContent}>
+                <Text style={styles.reviewActionTitle}>Viết đánh giá</Text>
+                <Text style={styles.reviewActionSub}>Chia sẻ trải nghiệm của bạn</Text>
+              </View>
+              <Text style={styles.arrowIcon}>→</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Action Buttons */}
           <View style={styles.actions}>
             <TouchableOpacity style={styles.primaryButton} onPress={openMaps}>
@@ -190,7 +217,7 @@ export default function RestaurantDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8E7',
+    backgroundColor: '#FDF5E6',
   },
   loadingContainer: {
     flex: 1,
@@ -200,7 +227,8 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#78716C',
+    color: '#9C8B7A',
+    fontWeight: '600',
   },
   errorContainer: {
     flex: 1,
@@ -213,24 +241,25 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#57534E',
+    color: '#5C3317',
     marginBottom: 16,
+    fontWeight: '600',
   },
   backLink: {
     fontSize: 16,
-    color: '#D97706',
-    fontWeight: '600',
+    color: '#C68E17',
+    fontWeight: '700',
   },
   heroContainer: {
-    height: 256,
-    backgroundColor: '#E7E5E4',
+    height: 240,
+    backgroundColor: '#FAF0E6',
     position: 'relative',
   },
   heroPlaceholder: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F5F5F4',
+    backgroundColor: '#FAF0E6',
   },
   heroEmoji: {
     fontSize: 80,
@@ -239,19 +268,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 16,
     left: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(61,35,20,0.75)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#C68E17',
   },
   backIcon: {
-    color: 'white',
-    fontSize: 20,
+    color: '#FDF5E6',
+    fontSize: 22,
+    fontWeight: '800',
   },
   content: {
-    padding: 16,
+    padding: 20,
   },
   headerRow: {
     flexDirection: 'row',
@@ -263,46 +295,52 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#292524',
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#3D2314',
   },
   category: {
     fontSize: 14,
-    color: '#78716C',
+    color: '#9C8B7A',
     marginTop: 4,
+    fontWeight: '600',
   },
   ratingBadge: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#F5DEB3',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D4A574',
   },
   ratingStar: {
-    color: '#D97706',
-    fontWeight: '700',
+    color: '#C68E17',
+    fontWeight: '800',
     fontSize: 16,
   },
   ratingValue: {
-    color: '#D97706',
-    fontWeight: '700',
+    color: '#3D2314',
+    fontWeight: '800',
     fontSize: 16,
     marginLeft: 4,
   },
   ratingCount: {
-    color: '#A8A29E',
+    color: '#5C3317',
     fontSize: 13,
     marginLeft: 4,
+    fontWeight: '600',
   },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: '#F5F0EB',
+    borderRadius: 18,
     padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#D4C5B5',
   },
   infoIcon: {
     fontSize: 20,
@@ -312,36 +350,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   infoText: {
-    fontSize: 14,
-    color: '#292524',
+    fontSize: 15,
+    color: '#3D2314',
+    fontWeight: '600',
   },
   infoSubtext: {
     fontSize: 13,
-    color: '#78716C',
+    color: '#8B4513',
     marginTop: 2,
+    fontWeight: '600',
   },
   phoneText: {
     flex: 1,
-    fontSize: 14,
-    color: '#D97706',
+    fontSize: 15,
+    color: '#3D2314',
+    fontWeight: '600',
   },
   callLink: {
     fontSize: 14,
-    color: '#D97706',
-    fontWeight: '600',
+    color: '#C68E17',
+    fontWeight: '800',
   },
   priceText: {
     flex: 1,
-    fontSize: 14,
-    color: '#292524',
+    fontSize: 15,
+    color: '#3D2314',
+    fontWeight: '600',
   },
   sourceCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F4',
-    borderRadius: 12,
+    backgroundColor: '#FAF0E6',
+    borderRadius: 18,
     padding: 16,
     marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
   },
   sourceIcon: {
     fontSize: 18,
@@ -350,38 +394,81 @@ const styles = StyleSheet.create({
   sourceText: {
     flex: 1,
     fontSize: 13,
-    color: '#78716C',
+    color: '#9C8B7A',
+    fontWeight: '500',
   },
   actions: {
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: '#D97706',
-    borderRadius: 12,
+    backgroundColor: '#3D2314',
+    borderRadius: 20,
     paddingVertical: 16,
     alignItems: 'center',
-    shadowColor: '#D97706',
+    borderWidth: 1,
+    borderColor: '#C68E17',
+    shadowColor: '#3D2314',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   primaryButtonText: {
-    color: 'white',
-    fontWeight: '700',
+    color: '#FDF5E6',
+    fontWeight: '800',
     fontSize: 16,
   },
   secondaryButton: {
-    backgroundColor: 'white',
-    borderWidth: 2,
-    borderColor: '#D97706',
-    borderRadius: 12,
+    backgroundColor: '#F5F0EB',
+    borderWidth: 1.5,
+    borderColor: '#D4C5B5',
+    borderRadius: 20,
     paddingVertical: 16,
     alignItems: 'center',
   },
   secondaryButtonText: {
-    color: '#D97706',
-    fontWeight: '700',
+    color: '#3D2314',
+    fontWeight: '800',
     fontSize: 16,
   },
+  reviewSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#292524',
+    marginBottom: 12,
+  },
+  reviewActionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E7E5E4',
+  },
+  reviewActionIcon: {
+    fontSize: 24,
+    marginRight: 16,
+  },
+  reviewActionContent: {
+    flex: 1,
+  },
+  reviewActionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#292524',
+  },
+  reviewActionSub: {
+    fontSize: 13,
+    color: '#78716C',
+    marginTop: 4,
+  },
+  arrowIcon: {
+    fontSize: 20,
+    color: '#D97706',
+  }
 });

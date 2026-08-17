@@ -47,7 +47,7 @@ export default function RegisterScreen() {
         displayNamePublic: formData.displayName.trim(),
       });
       await login(formData.email.trim(), formData.password);
-      router.replace('/(tabs)');
+      router.replace('/onboarding' as any);
     } catch (err: any) {
       setError(err.message || 'Đăng ký thất bại');
     } finally {
@@ -56,28 +56,30 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-cream">
       <SafeAreaView className="flex-1">
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1"
         >
-          <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 32 }}>
+          <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 24 }}>
             {/* Header */}
-            <View className="items-center mb-8">
-              <Text className="text-4xl mb-3">🍜</Text>
-              <Text className="text-xl font-bold text-secondary-800">Tạo tài khoản</Text>
-              <Text className="text-secondary-500 mt-1">Tham gia Food Roulette ngay!</Text>
+            <View className="items-center mb-6">
+              <View className="w-16 h-16 rounded-full bg-espresso border border-gold items-center justify-center mb-3 shadow-md">
+                <Text className="text-3xl">🍜</Text>
+              </View>
+              <Text className="text-2xl font-extrabold text-espresso">Tạo Tài Khoản Mới</Text>
+              <Text className="text-warmgray text-sm mt-1 text-center">Tham gia cộng đồng Food Roulette ngay hôm nay!</Text>
             </View>
 
             {/* Form */}
-            <View className="space-y-4">
+            <View className="space-y-3.5">
               <View>
-                <Text className="text-secondary-700 mb-2 font-medium">Tên hiển thị</Text>
+                <Text className="text-espresso mb-1.5 font-bold">Tên hiển thị</Text>
                 <TextInput
-                  className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-800"
-                  placeholder="Nguyễn Văn A"
-                  placeholderTextColor="#A8A29E"
+                  className="bg-cream-beige border border-borderbrown rounded-2xl px-4 py-3 text-espresso font-medium"
+                  placeholder="Ví dụ: Hoàng Nam"
+                  placeholderTextColor="#9C8B7A"
                   value={formData.displayName}
                   onChangeText={(v) => handleChange('displayName', v)}
                   autoCapitalize="words"
@@ -85,11 +87,11 @@ export default function RegisterScreen() {
               </View>
 
               <View>
-                <Text className="text-secondary-700 mb-2 font-medium">Email</Text>
+                <Text className="text-espresso mb-1.5 font-bold">Email</Text>
                 <TextInput
-                  className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-800"
+                  className="bg-cream-beige border border-borderbrown rounded-2xl px-4 py-3 text-espresso font-medium"
                   placeholder="email@example.com"
-                  placeholderTextColor="#A8A29E"
+                  placeholderTextColor="#9C8B7A"
                   value={formData.email}
                   onChangeText={(v) => handleChange('email', v)}
                   keyboardType="email-address"
@@ -99,11 +101,11 @@ export default function RegisterScreen() {
               </View>
 
               <View>
-                <Text className="text-secondary-700 mb-2 font-medium">Mật khẩu</Text>
+                <Text className="text-espresso mb-1.5 font-bold">Mật khẩu</Text>
                 <TextInput
-                  className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-800"
+                  className="bg-cream-beige border border-borderbrown rounded-2xl px-4 py-3 text-espresso font-medium"
                   placeholder="Ít nhất 6 ký tự"
-                  placeholderTextColor="#A8A29E"
+                  placeholderTextColor="#9C8B7A"
                   value={formData.password}
                   onChangeText={(v) => handleChange('password', v)}
                   secureTextEntry
@@ -111,11 +113,11 @@ export default function RegisterScreen() {
               </View>
 
               <View>
-                <Text className="text-secondary-700 mb-2 font-medium">Xác nhận mật khẩu</Text>
+                <Text className="text-espresso mb-1.5 font-bold">Xác nhận mật khẩu</Text>
                 <TextInput
-                  className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-800"
+                  className="bg-cream-beige border border-borderbrown rounded-2xl px-4 py-3 text-espresso font-medium"
                   placeholder="Nhập lại mật khẩu"
-                  placeholderTextColor="#A8A29E"
+                  placeholderTextColor="#9C8B7A"
                   value={formData.confirmPassword}
                   onChangeText={(v) => handleChange('confirmPassword', v)}
                   secureTextEntry
@@ -123,34 +125,34 @@ export default function RegisterScreen() {
               </View>
 
               {error ? (
-                <Text className="text-red-500 text-sm text-center">{error}</Text>
+                <Text className="text-red-700 font-bold text-sm text-center mt-1">{error}</Text>
               ) : null}
 
               <TouchableOpacity
-                className="bg-primary rounded-xl py-4 mt-4 shadow-lg disabled:opacity-50"
+                className="bg-espresso border border-gold rounded-2xl py-4 mt-3 shadow-lg disabled:opacity-50"
                 onPress={handleRegister}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color="white" />
+                  <ActivityIndicator color="#FDF5E6" />
                 ) : (
-                  <Text className="text-white text-center font-bold text-lg">Tạo tài khoản</Text>
+                  <Text className="text-cream text-center font-bold text-lg">Đăng ký tài khoản</Text>
                 )}
               </TouchableOpacity>
 
               {/* Terms */}
-              <Text className="text-secondary-400 text-xs text-center mt-4">
+              <Text className="text-warmgray text-xs text-center mt-3">
                 Bằng việc đăng ký, bạn đồng ý với{' '}
-                <Text className="text-primary">Điều khoản sử dụng</Text> và{' '}
-                <Text className="text-primary">Chính sách bảo mật</Text>
+                <Text className="text-gold font-bold">Điều khoản</Text> và{' '}
+                <Text className="text-gold font-bold">Chính sách bảo mật</Text>
               </Text>
             </View>
 
             {/* Footer */}
             <View className="flex-row justify-center mt-6 pb-8">
-              <Text className="text-secondary-500">Đã có tài khoản? </Text>
+              <Text className="text-warmgray font-medium">Đã có tài khoản? </Text>
               <Link href="/auth/login">
-                <Text className="text-primary font-semibold">Đăng nhập</Text>
+                <Text className="text-gold font-bold">Đăng nhập</Text>
               </Link>
             </View>
           </ScrollView>

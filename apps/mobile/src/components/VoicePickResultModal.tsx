@@ -31,48 +31,48 @@ export const VoicePickResultModal: React.FC<VoicePickResultModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View className="flex-1 bg-black/60 justify-end">
-        <View className="bg-white rounded-t-3xl p-5 max-h-[85%] border-t border-amber-200">
+      <View className="flex-1 bg-black/70 justify-end">
+        <View className="bg-surface rounded-t-4xl p-6 max-h-[85%] border-t-2 border-outline-variant shadow-2xl">
           {/* Header */}
-          <View className="flex-row items-center justify-between pb-3 border-b border-stone-100">
+          <View className="flex-row items-center justify-between pb-4 border-b border-outline-variant">
             <View className="flex-row items-center">
-              <View className="w-10 h-10 rounded-full bg-amber-100 items-center justify-center mr-3">
-                <Ionicons name="sparkles" size={20} color="#D97706" />
+              <View className="w-11 h-11 rounded-2xl bg-primary items-center justify-center mr-3 border border-secondary-container">
+                <Ionicons name="sparkles" size={22} color="#ffffff" />
               </View>
               <View>
-                <Text className="text-lg font-bold text-stone-800">Kết quả Phân tích AI</Text>
-                <Text className="text-xs text-stone-500">Giọng nói nhóm tại bàn</Text>
+                <Text className="text-xl font-extrabold text-primary">Phân Tích Món Thèm AI 🍜</Text>
+                <Text className="text-xs text-on-surface-variant">Giọng nói thảo luận tại bàn ăn</Text>
               </View>
             </View>
             <TouchableOpacity onPress={onClose} className="p-2">
-              <Feather name="x" size={24} color="#78716C" />
+              <Feather name="x" size={24} color="#8e706f" />
             </TouchableOpacity>
           </View>
 
           <ScrollView contentContainerStyle={{ paddingVertical: 16 }} showsVerticalScrollIndicator={false}>
             {/* Audio Summary */}
-            <View className="mb-4 p-3 bg-amber-50 rounded-2xl border border-amber-200">
-              <Text className="text-xs font-bold text-amber-800 mb-1 flex-row items-center">
-                💬 Nội dung máy nghe được (Vui lòng kiểm tra lại):
+            <View className="mb-4 p-4 bg-surface-container-low rounded-2xl border border-outline-variant">
+              <Text className="text-xs font-bold text-secondary mb-1">
+                💬 AI ghi nhận thảo luận của nhóm:
               </Text>
-              <Text className="text-sm text-stone-700 italic">
+              <Text className="text-sm text-primary italic font-semibold">
                 "{result.transcription}"
               </Text>
-              <Text className="text-[10px] text-amber-600 mt-2 font-medium">
-                * Nếu máy nghe sót món do ồn, vui lòng bấm "Hủy / Thu âm lại".
+              <Text className="text-[11px] text-on-surface-variant mt-2">
+                * Muốn đổi nội dung? Bấm "Thu âm lại" ở phía dưới.
               </Text>
             </View>
 
             {/* Craved Items */}
             {result.cravedItems && result.cravedItems.length > 0 && (
               <View className="mb-4">
-                <Text className="text-sm font-bold text-red-600 mb-2 flex-row items-center">
-                  🔥 Món thèm nhất (Khao khát):
+                <Text className="text-sm font-bold text-primary mb-2 flex-row items-center">
+                  🔥 Món khao khát nhất (Thèm điên đảo):
                 </Text>
                 {result.cravedItems.map((item, idx) => (
-                  <View key={idx} className="bg-red-50 p-3 rounded-xl mb-2 border border-red-200">
-                    <Text className="font-bold text-stone-800 text-sm">{item.name}</Text>
-                    <Text className="text-xs text-stone-600 mt-0.5">{item.reason}</Text>
+                  <View key={idx} className="bg-secondary-fixed p-3.5 rounded-2xl mb-2 border border-secondary-container">
+                    <Text className="font-extrabold text-primary text-base">{item.name}</Text>
+                    <Text className="text-xs text-secondary mt-0.5 font-medium">{item.reason}</Text>
                   </View>
                 ))}
               </View>
@@ -81,13 +81,13 @@ export const VoicePickResultModal: React.FC<VoicePickResultModalProps> = ({
             {/* Matched Items */}
             {result.matchedItems && result.matchedItems.length > 0 && (
               <View className="mb-4">
-                <Text className="text-sm font-bold text-emerald-700 mb-2 flex-row items-center">
-                  ✅ Món phù hợp sở thích:
+                <Text className="text-sm font-bold text-secondary mb-2">
+                  ✅ Món hợp khẩu vị nhóm:
                 </Text>
                 {result.matchedItems.map((item, idx) => (
-                  <View key={idx} className="bg-emerald-50 p-3 rounded-xl mb-2 border border-emerald-200">
-                    <Text className="font-bold text-stone-800 text-sm">{item.name}</Text>
-                    <Text className="text-xs text-stone-600 mt-0.5">{item.reason}</Text>
+                  <View key={idx} className="bg-surface-white p-3.5 rounded-2xl mb-2 border border-outline-variant">
+                    <Text className="font-bold text-primary text-sm">{item.name}</Text>
+                    <Text className="text-xs text-on-surface-variant mt-0.5">{item.reason}</Text>
                   </View>
                 ))}
               </View>
@@ -96,13 +96,13 @@ export const VoicePickResultModal: React.FC<VoicePickResultModalProps> = ({
             {/* Excluded Items */}
             {result.excludedItems && result.excludedItems.length > 0 && (
               <View className="mb-4">
-                <Text className="text-sm font-bold text-stone-500 mb-2 flex-row items-center">
-                  🚫 Món bị loại bỏ (Ghét / Dị ứng / Không muốn):
+                <Text className="text-sm font-bold text-on-surface-variant mb-2">
+                  🚫 Món bị loại bỏ (Ghét / Không ăn):
                 </Text>
                 {result.excludedItems.map((item, idx) => (
-                  <View key={idx} className="bg-stone-100 p-3 rounded-xl mb-2 border border-stone-200">
-                    <Text className="font-bold text-stone-500 line-through text-sm">{item.name}</Text>
-                    <Text className="text-xs text-stone-500 mt-0.5">{item.reason}</Text>
+                  <View key={idx} className="bg-surface-container-high p-3 rounded-2xl mb-2 border border-outline-variant/40">
+                    <Text className="font-bold text-on-surface-variant line-through text-sm">{item.name}</Text>
+                    <Text className="text-xs text-on-surface-variant mt-0.5">{item.reason}</Text>
                   </View>
                 ))}
               </View>
@@ -111,13 +111,13 @@ export const VoicePickResultModal: React.FC<VoicePickResultModalProps> = ({
             {/* AI Suggestions */}
             {result.aiSuggestions && result.aiSuggestions.length > 0 && (
               <View className="mb-4">
-                <Text className="text-sm font-bold text-amber-700 mb-2 flex-row items-center">
-                  💡 AI Gợi ý thêm cho nhóm:
+                <Text className="text-sm font-bold text-tertiary mb-2">
+                  💡 AI Đề Xuất Thêm Món Ngon:
                 </Text>
                 {result.aiSuggestions.map((item, idx) => (
-                  <View key={idx} className="bg-amber-50 p-3 rounded-xl mb-2 border border-amber-200">
-                    <Text className="font-bold text-stone-800 text-sm">{item.name}</Text>
-                    <Text className="text-xs text-stone-600 mt-0.5">{item.reason}</Text>
+                  <View key={idx} className="bg-tertiary-container/30 p-3 rounded-2xl mb-2 border border-tertiary">
+                    <Text className="font-bold text-tertiary-dark text-sm">{item.name}</Text>
+                    <Text className="text-xs text-on-surface-variant mt-0.5">{item.reason}</Text>
                   </View>
                 ))}
               </View>
@@ -125,22 +125,22 @@ export const VoicePickResultModal: React.FC<VoicePickResultModalProps> = ({
           </ScrollView>
 
           {/* Action Buttons */}
-          <View className="pt-3 border-t border-stone-100 gap-2">
+          <View className="pt-3 border-t border-outline-variant gap-2">
             <TouchableOpacity
               onPress={() => onConfirmAndSpin(allRecommended)}
               disabled={allRecommended.length === 0}
-              className={`w-full py-4 rounded-xl items-center justify-center flex-row shadow-sm ${
-                allRecommended.length === 0 ? 'bg-stone-300' : 'bg-orange-500'
+              className={`w-full py-4 rounded-2xl items-center justify-center flex-row shadow-lg border-b-4 ${
+                allRecommended.length === 0 ? 'bg-on-surface-variant/30 border-on-surface-variant/50' : 'bg-primary border-primary-dark'
               }`}
             >
-              <Ionicons name="dice" size={20} color="#FFF" style={{ marginRight: 8 }} />
-              <Text className="text-white font-bold text-base">
-                Quay Vòng Ngay ({allRecommended.length} món chọn lọc)
+              <Ionicons name="dice" size={20} color="#ffffff" style={{ marginRight: 8 }} />
+              <Text className="text-white font-extrabold text-base">
+                QUAY VÒNG NGAY! ({allRecommended.length} món chọn lọc)
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={onClose} className="w-full py-3 rounded-xl items-center justify-center">
-              <Text className="text-stone-500 font-semibold text-sm">Hủy / Thu âm lại</Text>
+            <TouchableOpacity onPress={onClose} className="w-full py-3 rounded-2xl items-center justify-center">
+              <Text className="text-on-surface-variant font-bold text-sm">Hủy / Thu âm lại</Text>
             </TouchableOpacity>
           </View>
         </View>

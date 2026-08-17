@@ -31,28 +31,29 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView testID="auth-login-screen" className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-cream">
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <View className="flex-1 px-6 pt-12">
           {/* Header */}
-          <View className="items-center mb-10">
-            <Text className="text-5xl mb-4">🍜</Text>
-            <Text className="text-2xl font-bold text-secondary-800">Chào mừng!</Text>
-            <Text className="text-secondary-500 mt-2">Đăng nhập để tiếp tục</Text>
+          <View className="items-center mb-8">
+            <View className="w-20 h-20 rounded-full bg-espresso border-2 border-gold items-center justify-center mb-4 shadow-md">
+              <Text className="text-4xl">🎰</Text>
+            </View>
+            <Text className="text-3xl font-extrabold text-espresso">Food Roulette</Text>
+            <Text className="text-warmgray text-sm mt-2 text-center">Đăng nhập để vòng quay chọn ngay quán ngon!</Text>
           </View>
 
           {/* Form */}
           <View className="space-y-4">
             <View>
-              <Text className="text-secondary-700 mb-2 font-medium">Email</Text>
+              <Text className="text-espresso mb-2 font-bold">Email</Text>
               <TextInput
-                testID="auth-login-email"
-                className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-800"
+                className="bg-cream-beige border border-borderbrown rounded-2xl px-4 py-3.5 text-espresso font-medium"
                 placeholder="email@example.com"
-                placeholderTextColor="#A8A29E"
+                placeholderTextColor="#9C8B7A"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -62,12 +63,11 @@ export default function LoginScreen() {
             </View>
 
             <View>
-              <Text className="text-secondary-700 mb-2 font-medium">Mật khẩu</Text>
+              <Text className="text-espresso mb-2 font-bold">Mật khẩu</Text>
               <TextInput
-                testID="auth-login-password"
-                className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-800"
+                className="bg-cream-beige border border-borderbrown rounded-2xl px-4 py-3.5 text-espresso font-medium"
                 placeholder="••••••••"
-                placeholderTextColor="#A8A29E"
+                placeholderTextColor="#9C8B7A"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -75,40 +75,39 @@ export default function LoginScreen() {
             </View>
 
             {error ? (
-              <Text className="text-red-500 text-sm text-center">{error}</Text>
+              <Text className="text-red-700 font-bold text-sm text-center mt-1">{error}</Text>
             ) : null}
 
             <TouchableOpacity
-              testID="auth-login-submit"
-              className="bg-primary rounded-xl py-4 mt-4 shadow-lg disabled:opacity-50"
+              className="bg-espresso border border-gold rounded-2xl py-4 mt-4 shadow-lg disabled:opacity-50"
               onPress={handleLogin}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="white" />
+                <ActivityIndicator color="#FDF5E6" />
               ) : (
-                <Text className="text-white text-center font-bold text-lg">Đăng nhập</Text>
+                <Text className="text-cream text-center font-bold text-lg">Đăng nhập</Text>
               )}
             </TouchableOpacity>
 
             {/* Social Login */}
-            <View className="flex-row items-center my-6">
-              <View className="flex-1 h-px bg-secondary-200" />
-              <Text className="mx-4 text-secondary-400">hoặc</Text>
-              <View className="flex-1 h-px bg-secondary-200" />
+            <View className="flex-row items-center my-5">
+              <View className="flex-1 h-px bg-borderbrown" />
+              <Text className="mx-4 text-warmgray font-semibold">hoặc</Text>
+              <View className="flex-1 h-px bg-borderbrown" />
             </View>
 
-            <TouchableOpacity className="bg-white border border-secondary-200 rounded-xl py-4 flex-row items-center justify-center">
-              <Text className="text-xl mr-3">🍎</Text>
-              <Text className="text-secondary-800 font-medium">Đăng nhập với Google</Text>
+            <TouchableOpacity className="bg-cream-beige border border-borderbrown rounded-2xl py-4 flex-row items-center justify-center shadow-xs">
+              <Text className="text-xl mr-3">🌐</Text>
+              <Text className="text-espresso font-bold text-base">Đăng nhập với Google</Text>
             </TouchableOpacity>
           </View>
 
           {/* Footer */}
           <View className="flex-row justify-center mt-8">
-            <Text className="text-secondary-500">Chưa có tài khoản? </Text>
+            <Text className="text-warmgray font-medium">Chưa có tài khoản? </Text>
             <Link href="/auth/register">
-              <Text className="text-primary font-semibold">Đăng ký ngay</Text>
+              <Text className="text-gold font-bold">Đăng ký ngay</Text>
             </Link>
           </View>
         </View>

@@ -32,8 +32,12 @@ class ApiLocketRepository implements LocketRepository {
       return mapLocketDto(await locketApi.create({
         localImageUri: input.localImageUri,
         mimeType: input.mimeType,
+        dishName: input.dishName,
         restaurantId: input.restaurantId,
+        restaurantName: input.restaurantName,
         note: input.note,
+        rating: input.rating,
+        tags: input.tags,
         visibility: input.visibility,
         latitude: input.location.latitude,
         longitude: input.location.longitude,

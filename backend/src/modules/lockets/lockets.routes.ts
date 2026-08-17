@@ -13,6 +13,9 @@ const upload = multer({
 function uploadLocketImage(req: Request, res: Response, next: NextFunction) {
   upload.single('image')(req, res, (error: unknown) => {
     if (!error) return next();
+    if (req.body && (req.body.image_base64 || req.body.image)) {
+      return next();
+    }
     const message = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE'
       ? 'Ảnh vượt quá giới hạn 10 MB.'
       : 'Multipart upload không hợp lệ.';

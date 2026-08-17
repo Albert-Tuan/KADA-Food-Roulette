@@ -43,11 +43,21 @@ import MenuReviewScreen from './features/menu/components/MenuReviewScreen';
 import MenuDishSpinWheel from './features/menu/components/MenuDishSpinWheel';
 import PreferencesScreen from './features/profile/components/PreferencesScreen';
 
+// Landing, Onboarding & Legal
+import LandingPage from './features/landing/LandingPage';
+import OnboardingWizard from './features/onboarding/components/OnboardingWizard';
+import TermsOfService from './features/legal/TermsOfService';
+import PrivacyPolicy from './features/legal/PrivacyPolicy';
+
 function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
-        {/* Auth Routes - No layout wrapper */}
+        {/* Full Page Routes - No bottom nav layout */}
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/onboarding" element={<OnboardingWizard />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
