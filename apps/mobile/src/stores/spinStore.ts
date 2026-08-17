@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import type { Restaurant, SpinFilters } from '../features/spin/types';
+import { restaurantApi } from '../api/endpoints/restaurants';
+import { rouletteApi } from '../api/endpoints/roulette';
+import { mapBackendRestaurantToSpinCandidate } from '../features/spin/utils/mapper';
 
 interface SpinState {
   filters: SpinFilters;
@@ -13,21 +16,26 @@ interface SpinState {
   setCurrentResult: (restaurant: Restaurant | null) => void;
   grantLuckySpin: () => void;
   consumeLuckySpin: () => void;
-  spin: (index?: number) => void;
+  fetchNearbyCandidates: (lat: number, lng: number) => Promise<void>;
+  spin: (lat?: number, lng?: number) => Promise<void>;
   resetStore: () => void;
 }
 
 const MOCK_RESTAURANTS: Restaurant[] = [
-  { id: '1', name: 'Phở Hòa Pasteur', category: 'Phở', rating: 4.8, totalReviews: 1200, distance: 800, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=400', dietary: ['Không cay'] },
-  { id: '2', name: 'Cơm Tấm Ba Ghiền', category: 'Cơm tấm', rating: 4.6, totalReviews: 3400, distance: 1200, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1564834724105-918b73d1b9e0?auto=format&fit=crop&q=80&w=400', dietary: ['Không hành'] },
-  { id: '3', name: 'Bún Chả Hà Nội', category: 'Bún chả', rating: 4.5, totalReviews: 890, distance: 450, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1555126634-323283e090fa?auto=format&fit=crop&q=80&w=400', dietary: [] },
-  { id: '4', name: 'Pizza 4P\'s', category: 'Pizza', rating: 4.9, totalReviews: 5000, distance: 2500, priceLevel: 4, imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&q=80&w=400', dietary: ['Chay'] },
-  { id: '5', name: 'Gyu-Kaku BBQ', category: 'BBQ', rating: 4.7, totalReviews: 1100, distance: 3000, priceLevel: 3, imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=400', dietary: ['Low Carb'] },
-  { id: '6', name: 'Bánh Mì Huỳnh Hoa', category: 'Bánh mì', rating: 4.8, totalReviews: 4500, distance: 1500, priceLevel: 1, imageUrl: 'https://images.unsplash.com/photo-1509722747041-616f39b57569?auto=format&fit=crop&q=80&w=400', dietary: ['Không cay'] },
+  { id: '1', name: 'Bún đậu Tiến Hải', category: 'Món Việt', rating: 4.5, totalReviews: 320, distance: 1500, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1555126634-323283e090fa?w=400', dietary: ['Ăn mặn'] },
+  { id: '2', name: 'Bún chả Hương Liên', category: 'Món Việt', rating: 4.8, totalReviews: 512, distance: 2000, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1626804475297-41609ea264eb?w=400', dietary: ['Ăn mặn'] },
+  { id: '3', name: 'Pizza 4P\'s', category: 'Ý', rating: 4.9, totalReviews: 1024, distance: 3000, priceLevel: 4, imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', dietary: ['Ăn chay', 'Ăn mặn'] },
+  { id: '4', name: 'Gogi House', category: 'Hàn Quốc', rating: 4.6, totalReviews: 856, distance: 1200, priceLevel: 3, imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400', dietary: ['Ăn mặn'] },
+  { id: '5', name: 'Phở Hòa', category: 'Món Việt', rating: 4.7, totalReviews: 450, distance: 500, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb431?w=400', dietary: ['Ăn mặn'] },
+  { id: '6', name: 'Haidilao', category: 'Lẩu', rating: 4.9, totalReviews: 2000, distance: 4000, priceLevel: 4, imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb431?w=400', dietary: ['Ăn mặn', 'Ăn chay'] },
+  { id: '7', name: 'Cơm tấm Ba Ghiền', category: 'Món Việt', rating: 4.4, totalReviews: 300, distance: 2500, priceLevel: 1, imageUrl: 'https://images.unsplash.com/photo-1626804475297-41609ea264eb?w=400', dietary: ['Ăn mặn'] },
+  { id: '8', name: 'Trà sữa KOI', category: 'Đồ uống', rating: 4.8, totalReviews: 900, distance: 800, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400', dietary: ['Ăn chay'] },
 ];
 
-const applyFilters = (filters: SpinFilters, custom: Restaurant[]) => {
-  const filtered = MOCK_RESTAURANTS.filter(r => {
+let API_CANDIDATES: Restaurant[] = [...MOCK_RESTAURANTS];
+
+const applyFilters = (filters: SpinFilters, custom: Restaurant[], apiData: Restaurant[]) => {
+  const filtered = apiData.filter(r => {
     if (r.distance > filters.maxDistance) return false;
     if (r.priceLevel > filters.maxPrice) return false;
     if (filters.categories.length > 0 && !filters.categories.includes(r.category)) return false;
@@ -48,7 +56,7 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     dietary: [],
   },
   customCandidates: [],
-  candidates: MOCK_RESTAURANTS,
+  candidates: [],
   currentResult: null,
   luckySpinCount: 1,
 
@@ -59,7 +67,7 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     const updatedFilters = { ...state.filters, ...newFilters };
     return {
       filters: updatedFilters,
-      candidates: applyFilters(updatedFilters, state.customCandidates),
+      candidates: applyFilters(updatedFilters, state.customCandidates, API_CANDIDATES),
     };
   }),
 
@@ -89,7 +97,7 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     const newCustoms = [...state.customCandidates, newCustom];
     return {
       customCandidates: newCustoms,
-      candidates: applyFilters(state.filters, newCustoms),
+      candidates: applyFilters(state.filters, newCustoms, API_CANDIDATES),
     };
   }),
 
@@ -97,21 +105,36 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     const newCustoms = state.customCandidates.filter(c => c.id !== id);
     return {
       customCandidates: newCustoms,
-      candidates: applyFilters(state.filters, newCustoms),
+      candidates: applyFilters(state.filters, newCustoms, API_CANDIDATES),
     };
   }),
 
   setCurrentResult: (result) => set({ currentResult: result }),
 
-  spin: (index?: number) => {
+  fetchNearbyCandidates: async (lat: number, lng: number) => {
+    try {
+      // Simulate network delay for Mock Data
+      await new Promise(resolve => setTimeout(resolve, 800));
+      API_CANDIDATES = [...MOCK_RESTAURANTS];
+      set((state) => ({
+        candidates: applyFilters(state.filters, state.customCandidates, API_CANDIDATES)
+      }));
+    } catch (error) {
+      console.error('Failed to fetch nearby restaurants:', error);
+    }
+  },
+
+  spin: async (lat?: number, lng?: number) => {
     const { candidates } = get();
     if (candidates.length === 0) return;
-    const winnerIndex = index !== undefined ? index : Math.floor(Math.random() * candidates.length);
+    
+    // Fallback to local random (Mock spin)
+    const winnerIndex = Math.floor(Math.random() * candidates.length);
     set({ currentResult: candidates[winnerIndex] });
   },
 
   resetStore: () => set((state) => ({
     customCandidates: [],
-    candidates: applyFilters(state.filters, []),
+    candidates: applyFilters(state.filters, [], API_CANDIDATES),
   })),
 }));

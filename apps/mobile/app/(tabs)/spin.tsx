@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, AppState, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, AppState, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
+import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { RewardCard, RewardCardEmpty } from '../../src/components/RewardCard';
@@ -25,13 +26,22 @@ const MOCK_REWARDS: Reward[] = [
 
 export default function SpinScreen() {
   const router = useRouter();
-  const { candidates, filters, customCandidates, setFilters, addCustomCandidate, removeCustomCandidate, setCurrentResult, resetStore } = useSpinStore();
+  const { candidates, filters, customCandidates, setFilters, addCustomCandidate, removeCustomCandidate, setCurrentResult, resetStore, fetchNearbyCandidates, spin, currentResult } = useSpinStore();
   const [rewards] = useState<Reward[]>(MOCK_REWARDS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [multiMode, setMultiMode] = useState<1 | 2 | 3>(1);
   const [comboWinners, setComboWinners] = useState<Restaurant[]>([]);
   const [isComboModalOpen, setIsComboModalOpen] = useState(false);
+  const [newFoodInput, setNewFoodInput] = useState('');
+
+  const handleAddDish = () => {
+    if (!newFoodInput.trim()) return;
+    addCustomCandidate(newFoodInput.trim());
+    setNewFoodInput('');
+  };
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
@@ -44,6 +54,26 @@ export default function SpinScreen() {
       subscription.remove();
     };
   }, [resetStore]);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Lỗi', 'Không thể lấy vị trí của bạn để tìm quán ăn.');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        let loc = await Location.getCurrentPositionAsync({});
+        setLocation(loc);
+        await fetchNearbyCandidates(loc.coords.latitude, loc.coords.longitude);
+      } catch (error) {
+        console.error('Error fetching location', error);
+      }
+      setIsLoading(false);
+    })();
+  }, [fetchNearbyCandidates]);
 
   const handleFoodSpinEnd = useCallback((winner: Restaurant, index: number) => {
     if (multiMode === 1) {
@@ -69,33 +99,56 @@ export default function SpinScreen() {
         >
           {/* Food Roulette Section */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#b52330" style={{ marginTop: 60, marginBottom: 200 }} />
+            ) : (
+              <>
+                <View style={styles.sectionHeader}>
               <View>
                 <Text style={styles.sectionTitle}>Ăn gì hôm nay?</Text>
                 <Text style={styles.sectionSubtitle}>Chọn 1 đến 3 món quay ngẫu nhiên 3D cùng lúc!</Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {customCandidates.length > 0 && (
-                  <TouchableOpacity 
-                    onPress={() => {
-                      Alert.alert(
-                        'Làm mới vòng quay',
-                        'Bạn có chắc chắn muốn xóa tất cả các món ăn tự chọn khỏi vòng quay?',
-                        [
-                          { text: 'Hủy', style: 'cancel' },
-                          { text: 'Xóa', style: 'destructive', onPress: () => resetStore() },
-                        ]
-                      );
-                    }} 
-                    style={[styles.filterButton, { marginRight: 8 }]}
-                  >
-                    <Text style={styles.filterIcon}>🔄</Text>
+                
+                {/* Filter Context Chips */}
+                <View style={styles.contextChipsRow}>
+                  <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={styles.contextChip}>
+                    <Text style={styles.contextChipText}>📍 {(filters.maxDistance / 1000).toFixed(1)}km</Text>
                   </TouchableOpacity>
-                )}
+                  <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={styles.contextChip}>
+                    <Text style={styles.contextChipText}>
+                      💰 {filters.maxPrice === 1 ? 'Bình dân' : filters.maxPrice === 2 ? 'Trung bình' : filters.maxPrice === 3 ? 'Hơi sang' : 'Sang trọng'}
+                    </Text>
+                  </TouchableOpacity>
+                  {filters.categories.length > 0 && (
+                    <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={styles.contextChip}>
+                      <Text style={styles.contextChipText}>🍲 {filters.categories.length} loại</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                 <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={styles.filterButton}>
                   <Text style={styles.filterIcon}>⚙️</Text>
                 </TouchableOpacity>
               </View>
+            </View>
+
+            {/* Quick Input Bar */}
+            <View style={styles.addInputRow}>
+              <TextInput
+                placeholder="Ví dụ: Bún đậu, Gà rán..."
+                value={newFoodInput}
+                onChangeText={setNewFoodInput}
+                onSubmitEditing={handleAddDish}
+                style={styles.addInput}
+                placeholderTextColor="#8e4e14"
+              />
+              <TouchableOpacity
+                style={styles.addInputBtn}
+                onPress={handleAddDish}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.addInputBtnText}>➕ Thêm món</Text>
+              </TouchableOpacity>
             </View>
 
             {/* 3D Multi-Dish Selector Bar */}
@@ -134,14 +187,44 @@ export default function SpinScreen() {
             <FoodRoulette
               candidates={candidates}
               multiSpinMode={multiMode}
+              onSpinStart={async () => {
+                if (location) {
+                  await spin(location.coords.latitude, location.coords.longitude);
+                  // Find the index of the result that spinStore just set
+                  const newResult = useSpinStore.getState().currentResult;
+                  if (newResult) {
+                    const idx = useSpinStore.getState().candidates.findIndex(c => c.id === newResult.id);
+                    if (idx !== -1) return idx;
+                  }
+                }
+                return undefined;
+              }}
               onSpinEnd={handleFoodSpinEnd}
               onMultiSpinEnd={handleMultiSpinEnd}
             />
 
             {/* Candidates List */}
-            <Text style={styles.candidatesTitle}>
-              🍽️ Danh sách đề cử ({candidates.length})
-            </Text>
+            <View style={styles.candidatesHeaderRow}>
+              <Text style={styles.candidatesTitle}>
+                🍽️ Danh sách đề cử ({candidates.length})
+              </Text>
+              {customCandidates.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert(
+                      'Làm mới vòng quay',
+                      'Bạn có chắc chắn muốn xóa tất cả các món ăn tự chọn?',
+                      [
+                        { text: 'Hủy', style: 'cancel' },
+                        { text: 'Xóa', style: 'destructive', onPress: () => resetStore() },
+                      ]
+                    );
+                  }}
+                >
+                  <Text style={styles.clearAllText}>Xóa tất cả 🔄</Text>
+                </TouchableOpacity>
+              )}
+            </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.candidatesScroll}>
               {candidates.map(restaurant => (
                 <View key={restaurant.id} style={styles.candidateCard}>
@@ -169,6 +252,8 @@ export default function SpinScreen() {
                 <Text style={styles.quickLinkText}>📸 Locket Feed</Text>
               </TouchableOpacity>
             </View>
+            </>
+            )}
           </View>
 
           {/* Divider */}
@@ -456,12 +541,73 @@ const styles = StyleSheet.create({
   filterIcon: {
     fontSize: 18,
   },
+  contextChipsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 8,
+    flexWrap: 'wrap',
+  },
+  contextChip: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2bebc',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  contextChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#b52330',
+  },
+  addInputRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  addInput: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 13,
+    color: '#b52330',
+    fontWeight: '700',
+  },
+  addInputBtn: {
+    backgroundColor: '#b52330',
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: '#61000e',
+  },
+  addInputBtnText: {
+    color: '#ffffff',
+    fontWeight: '900',
+    fontSize: 12,
+  },
+  candidatesHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 12,
+  },
   candidatesTitle: {
     fontSize: 18,
     fontWeight: '900',
     color: '#b52330',
-    marginTop: 20,
-    marginBottom: 12,
+  },
+  clearAllText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#8e4e14',
   },
   candidatesScroll: {
     marginBottom: 16,

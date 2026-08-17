@@ -343,7 +343,7 @@ export default function DiscoverScreen() {
           visible={showFilter}
           onClose={() => setShowFilter(false)}
           filter={filter}
-          setFilter={setFilter}
+          setFilter={(f) => setFilter(f as any)}
         />
       </View>
     </SafeAreaView>
