@@ -35,7 +35,7 @@
 | **Locket feed** | ✅ | ✅ | ✅ | ✅ Done |
 | **Taste Board** | ✅ | ✅ | ✅ | ✅ Done |
 | **Profile công khai** | ✅ | ✅ | ✅ | ✅ Done |
-| **Thêm quán (user-submitted)** | ✅ | ❌ | ❌ | 🟡 Partial |
+| **Thêm quán (user-submitted)** | ✅ | ✅ | ❌ | 🟡 Partial |
 | **Steward dashboard** | ✅ | ❌ | ✅ | 🟡 Partial |
 | **Google Places lookup** | ✅ | ❌ | ❌ | 🟡 Partial |
 | **Restaurant Partner (B2B)** | ✅ | ✅ | ✅ | ✅ Done |
@@ -54,7 +54,7 @@
 | Feature | Backend | Mobile | Web | Status | Plan File |
 |---------|---------|--------|-----|--------|-----------|
 | **Onboarding Flow** | 🟡 | ❌ | ❌ | 🟡 Partial | `plans/feature-v1.1-onboarding.md` |
-| **Discover Map** | 🟡 | ❌ | ❌ | ❌ Not Started | `plans/feature-v1.1-discover-map.md` |
+| **Discover Map** | 🟡 | ✅ | ❌ | 🟡 Partial | `plans/feature-v1.1-discover-map.md` |
 | **Steward Dashboard** | ✅ | ❌ | ✅ | 🟡 Partial | `plans/feature-v1.1-steward.md` |
 | **Review UI** | ✅ | ✅ | ✅ | ✅ Done | `plans/feature-v1.1-review-ui.md` |
 
@@ -303,7 +303,7 @@
 ### Còn lại ⬜
 - [x] ✅ EAS Submit (store submission)
 - [x] ✅ Automated testing workflow
-- [ ] Preview deployments
+- [x] ✅ Preview deployments
 
 ---
 
@@ -379,7 +379,7 @@ Xem chi tiết trong: `plans/team-assignment.md`
 | 1 | AI OCR engine final (Tesseract vs Google ML Kit)? | Trường | ✅ Tesseract selected |
 | 2 | Preference learning (real-time vs batch)? | Trường | Open |
 | 3 | Payment gateway (VNPay, MoMo, Stripe)? | Tuấn Anh | Open |
-| 4 | Push notification provider (Expo vs Firebase)? | Thành Nam | Open |
+| 4 | Push notification provider (Expo vs Firebase)? | Thành Nam | ✅ Expo Push selected |
 
 ---
 
