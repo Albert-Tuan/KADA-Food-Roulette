@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { restaurantApi } from '@/api';
@@ -24,11 +24,20 @@ export default function AddRestaurantScreen() {
     try {
       // Mock API call to submit restaurant
       await new Promise(resolve => setTimeout(resolve, 1000));
-      Alert.alert('Thành công', 'Cảm ơn bạn đã đóng góp! Đội ngũ Steward sẽ kiểm duyệt thông tin.', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
+      if (Platform.OS === 'web') {
+        window.alert('Thành công: Cảm ơn bạn đã đóng góp! Đội ngũ Steward sẽ kiểm duyệt thông tin.');
+        router.back();
+      } else {
+        Alert.alert('Thành công', 'Cảm ơn bạn đã đóng góp! Đội ngũ Steward sẽ kiểm duyệt thông tin.', [
+          { text: 'OK', onPress: () => router.back() }
+        ]);
+      }
     } catch (error) {
-      Alert.alert('Lỗi', 'Không thể gửi thông tin lúc này');
+      if (Platform.OS === 'web') {
+        window.alert('Lỗi: Không thể gửi thông tin lúc này');
+      } else {
+        Alert.alert('Lỗi', 'Không thể gửi thông tin lúc này');
+      }
     } finally {
       setLoading(false);
     }

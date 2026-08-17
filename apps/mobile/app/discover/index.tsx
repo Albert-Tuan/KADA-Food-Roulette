@@ -51,10 +51,10 @@ const FILTERS: FilterChip[] = [
 ];
 
 const INITIAL_REGION: Region = {
-  latitude: 10.762622,
-  longitude: 106.6822,
-  latitudeDelta: 0.05,
-  longitudeDelta: 0.05,
+  latitude: 10.8465, // Man Thiện, Quận 9
+  longitude: 106.7938,
+  latitudeDelta: 0.02,
+  longitudeDelta: 0.02,
 };
 
 export default function DiscoverScreen() {
@@ -297,53 +297,53 @@ export default function DiscoverScreen() {
 
         {/* Bottom panel */}
         {!showList && (
-        <View className="absolute bottom-0 left-0 right-0 bg-cream-beige rounded-t-4xl shadow-xl border-t border-borderbrown">
-          {/* Handle */}
-          <TouchableOpacity
-            className="items-center py-3"
-            onPress={() => setShowFilter(true)}
-          >
-            <View className="w-12 h-1.5 bg-borderbrown rounded-full" />
-            <Text className="text-warmgray text-xs font-bold mt-1">Lọc Nâng Cao</Text>
-          </TouchableOpacity>
+          <View className="absolute bottom-0 left-0 right-0 bg-cream-beige rounded-t-4xl shadow-xl border-t border-borderbrown">
+            {/* Handle */}
+            <TouchableOpacity
+              className="items-center py-3"
+              onPress={() => setShowFilter(true)}
+            >
+              <View className="w-12 h-1.5 bg-borderbrown rounded-full" />
+              <Text className="text-warmgray text-xs font-bold mt-1">Lọc Nâng Cao</Text>
+            </TouchableOpacity>
 
-          {/* Filter chips */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="px-4 mb-2"
-            contentContainerStyle={{ gap: 8 }}
-          >
-            {FILTERS.map((f) => (
-              <TouchableOpacity
-                key={f.value}
-                className={`px-4 py-2 rounded-2xl border ${filter === f.value ? 'bg-espresso border-espresso' : 'bg-cream border-borderbrown'
-                  }`}
-                onPress={() => setFilter(f.value)}
-              >
-                <Text
-                  className={`text-xs font-bold ${filter === f.value ? 'text-cream' : 'text-espresso'
+            {/* Filter chips */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="px-4 mb-2"
+              contentContainerStyle={{ gap: 8 }}
+            >
+              {FILTERS.map((f) => (
+                <TouchableOpacity
+                  key={f.value}
+                  className={`px-4 py-2 rounded-2xl border ${filter === f.value ? 'bg-espresso border-espresso' : 'bg-cream border-borderbrown'
                     }`}
+                  onPress={() => setFilter(f.value)}
                 >
-                  {f.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  <Text
+                    className={`text-xs font-bold ${filter === f.value ? 'text-cream' : 'text-espresso'
+                      }`}
+                  >
+                    {f.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
 
-          {/* Restaurant count */}
-          <Text className="px-5 text-warmgray text-xs mb-3 font-semibold">
-            Tìm thấy {filtered.length} quán ăn {filter === 'nearby' ? 'trong bán kính 5km' : ''}
-          </Text>
-        </View>
+            {/* Restaurant count */}
+            <Text className="px-5 text-warmgray text-xs mb-3 font-semibold">
+              Tìm thấy {filtered.length} quán ăn {filter === 'nearby' ? 'trong bán kính 5km' : ''}
+            </Text>
+          </View>
         )}
 
         {/* Filter Sheet Modal */}
-        <MapFilterSheet 
-          visible={showFilter} 
-          onClose={() => setShowFilter(false)} 
-          filter={filter} 
-          setFilter={setFilter} 
+        <MapFilterSheet
+          visible={showFilter}
+          onClose={() => setShowFilter(false)}
+          filter={filter}
+          setFilter={setFilter}
         />
       </View>
     </SafeAreaView>
