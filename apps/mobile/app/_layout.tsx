@@ -26,6 +26,7 @@ export default function RootLayout() {
             headerStyle: { backgroundColor: '#FFF8E7' },
             headerTintColor: '#3D2314',
             headerTitleStyle: { fontWeight: '600' },
+            headerBackButtonDisplayMode: 'minimal',
             contentStyle: { backgroundColor: '#FFF8E7' },
           }}
         >
@@ -36,6 +37,8 @@ export default function RootLayout() {
           <Stack.Screen name="restaurant/[id]" options={{ title: 'Chi tiết nhà hàng' }} />
           <Stack.Screen name="locket/capture" options={{ headerShown: false }} />
           <Stack.Screen name="locket/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="profile/edit" options={{ title: 'Chỉnh sửa hồ sơ' }} />
+          <Stack.Screen name="profile/settings" options={{ title: 'Cài đặt' }} />
           <Stack.Screen name="spin/menu-capture" options={{ headerShown: false }} />
           <Stack.Screen name="spin/menu-review" options={{ headerShown: false }} />
           <Stack.Screen name="spin/menu-wheel" options={{ headerShown: false }} />

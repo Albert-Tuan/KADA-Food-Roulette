@@ -33,7 +33,7 @@ Migration: `backend/prisma/migrations/20260809_add_locket_profile_fields/migrati
 
 - `users.bio`: `VARCHAR(160) NULL`.
 - `lockets`: thêm `dish_name`, `restaurant_name`, `note`, `rating`, `tags`, `updated_at`, `deleted_at`.
-- Backfill Locket cũ với `dish_name = 'Món ăn'` trước khi áp dụng `NOT NULL`.
+- `20260811_simplify_taste_board` đổi `dish_name` về nullable; dữ liệu metadata cũ được giữ để tương thích API nhưng không còn dùng trong UI Taste Board.
 - Thêm check constraint `rating` trong khoảng 1–5 và index cho soft delete.
 - `exif_stripped` chỉ là `TRUE` cho ảnh đã được Sharp re-encode server-side.
 

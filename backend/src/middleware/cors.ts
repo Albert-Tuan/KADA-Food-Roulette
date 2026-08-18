@@ -1,46 +1,69 @@
-import { Request, Response, NextFunction } from 'express';
+import cors, { type CorsOptions } from 'cors'
+import type { RequestHandler } from 'express'
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:8081',
-  'http://localhost:8082',
-  'http://localhost:19006',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:8081',
-  process.env.CLIENT_URL,
-].filter(Boolean) as string[];
+const DEVELOPMENT_PORTS = new Set(['5173', '8081', '8082', '19006'])
+const DEVELOPMENT_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])
+const ALLOWED_HEADERS = [
+  'Content-Type',
+  'Authorization',
+  'X-Requested-With',
+  'X-Device-ID',
+  'X-Captured-At',
+  'Accept',
+]
 
-export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  // Reflect request origin for local development & allowed origins
-  const origin = req.headers.origin;
-  if (origin && (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production')) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (!origin) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+function configuredOrigins(environment: NodeJS.ProcessEnv): Set<string> {
+  const origins = [
+    ...(environment.CLIENT_URLS ?? '').split(','),
+    environment.CLIENT_URL ?? '',
+  ]
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+  return new Set(origins)
+}
+
+function isPrivateIpv4(hostname: string): boolean {
+  const octets = hostname.split('.').map(Number)
+  if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+    return false
   }
+  return octets[0] === 10
+    || (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31)
+    || (octets[0] === 192 && octets[1] === 168)
+}
 
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD');
-  
-  // Allow all requested headers dynamically or fallback to comprehensive list
-  const requestedHeaders = req.headers['access-control-request-headers'];
-  if (requestedHeaders) {
-    res.setHeader('Access-Control-Allow-Headers', requestedHeaders);
-  } else {
-    res.setHeader(
-      'Access-Control-Allow-Headers',
-      'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Device-ID, x-device-id, X-Captured-At, x-captured-at, x-device-hash, x-request-id, x-client-platform, x-client-version'
-    );
+function isDevelopmentOrigin(origin: string): boolean {
+  try {
+    const parsed = new URL(origin)
+    return parsed.protocol === 'http:'
+      && DEVELOPMENT_PORTS.has(parsed.port)
+      && (DEVELOPMENT_HOSTS.has(parsed.hostname) || isPrivateIpv4(parsed.hostname))
+  } catch {
+    return false
   }
+}
 
-  res.setHeader('Access-Control-Expose-Headers', 'set-cookie');
+export function createCorsOptions(environment: NodeJS.ProcessEnv = process.env): CorsOptions {
+  const allowedOrigins = configuredOrigins(environment)
+  const isProduction = environment.NODE_ENV === 'production'
 
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+  return {
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.has(origin) || (!isProduction && isDevelopmentOrigin(origin))) {
+        callback(null, true)
+        return
+      }
+      callback(new Error(`CORS: Origin ${origin} not allowed`))
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ALLOWED_HEADERS,
   }
+}
 
-  next();
-};
+export function createCorsMiddleware(environment: NodeJS.ProcessEnv = process.env): RequestHandler {
+  return cors(createCorsOptions(environment))
+}
 
-export const handleCors = corsMiddleware;
+export const corsMiddleware = createCorsMiddleware()
+export const handleCors = corsMiddleware

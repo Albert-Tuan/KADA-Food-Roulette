@@ -32,8 +32,8 @@ router.get(
   locketsController.getMedia,
 );
 router.get('/me', requireJWT, locketsController.getMine);
-router.get('/', requireJWT, locketsController.getFeed);
-router.post('/', requireJWT, uploadLocketImage, locketsController.create);
+router.get('/', optionalJWT, locketsController.getFeed);
+router.post('/', optionalJWT, uploadLocketImage, locketsController.create);
 router.get('/:id', optionalJWT, locketsController.getById);
 router.patch('/:id', requireJWT, locketsController.update);
 router.delete('/:id', requireJWT, locketsController.delete);

@@ -1,0 +1,39 @@
+appId: ${EXPO_APP_ID}
+name: Taste Board permission denial states
+---
+- stopApp
+- setPermissions:
+    appId: ${EXPO_APP_ID}
+    permissions:
+      camera: deny
+- openLink: ${EXPO_URL}/--/locket/capture
+- extendedWaitUntil:
+    visible:
+      id: locket-camera-permission-required
+    timeout: 30000
+- assertVisible: Cần quyền camera
+- stopApp
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - setPermissions:
+          appId: ${EXPO_APP_ID}
+          permissions:
+            camera: allow
+            location: never
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - setPermissions:
+          appId: ${EXPO_APP_ID}
+          permissions:
+            camera: allow
+            location: deny
+- openLink: ${EXPO_URL}/--/locket/capture
+- extendedWaitUntil:
+    visible:
+      id: locket-location-permission-required
+    timeout: 30000
+- assertVisible: Cần quyền vị trí

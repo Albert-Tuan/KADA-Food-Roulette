@@ -137,9 +137,9 @@ interface Restaurant {
   submitted_by?: string; approved_by?: string; created_at: Date;
 }
 interface Locket {
-  id: string; user_id: string; restaurant_id?: string; dish_name?: string;
+  id: string; user_id: string; restaurant_id?: string; // hidden Spin/check-in link
   image_url: string; thumbnail_url: string;
-  note?: string; rating?: number;
+  note?: string; // optional free-form review
   visibility: 'private'|'friends'|'public';
   captured_at: Date; captured_gps?: GeoJSON<Point>;
   device_hash: string;               // anonymized
@@ -239,7 +239,7 @@ Food Roulette là ứng dụng **giải quyết "nghịch lý lựa chọn"** kh
 ### 2. 🔒 Locket (gọi là "Taste Board" trong docx cũ) — Camera-only
 - **Vấn đề:** Lưu ảnh món ngon qua Zalo/chat → trôi mất; bookmark Google Maps → không có review; Notes app → không chia sẻ được.
 - **Khác biệt v1.0:** **camera-only** — không có nút upload từ thư viện.
-- **Tạo:** Đặt tên board (vd: "Quán ngon Sài Gòn", "Bữa trưa team") → Thêm món (tìm quán hoặc thêm thủ công) → Chụp ảnh từ camera → Ghi chú + rating 1–5 + tags → Chọn visibility (private / friends / public).
+- **Tạo:** Chụp ảnh từ camera → Ghi review tự do (tùy chọn) → Chọn visibility (private / friends / public). Khi đi từ Spin, nhà hàng được liên kết ngầm để xác minh check-in.
 - **Chia sẻ & tương tác:**
   - Nút "Tôi cũng muốn ăn!" → bạn bè lưu vào board của họ.
   - QR Code · Link chia sẻ · Nhúng web.

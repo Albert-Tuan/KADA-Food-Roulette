@@ -23,12 +23,15 @@ export default function RestaurantList({ restaurants, visible }: RestaurantListP
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16, gap: 16 }}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => router.push(`/restaurant/${item.id}`)}>
+          <TouchableOpacity onPress={() => router.push(`/restaurant/${item.id}` as any)}>
             <View className="bg-white rounded-3xl p-4 shadow-sm border border-borderbrown">
               <View className="flex-row">
                 <View className="w-24 h-24 bg-cream-linen rounded-2xl overflow-hidden mr-4">
                   {item.photos && item.photos.length > 0 ? (
-                    <Image source={{ uri: item.photos[0] }} className="w-full h-full" />
+                    <Image
+                      source={{ uri: typeof item.photos[0] === 'string' ? item.photos[0] : (item.photos[0] as any)?.url }}
+                      className="w-full h-full"
+                    />
                   ) : (
                     <View className="flex-1 items-center justify-center">
                       <Text className="text-2xl">🍽️</Text>

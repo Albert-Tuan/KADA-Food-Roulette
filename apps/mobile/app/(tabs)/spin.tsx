@@ -107,7 +107,25 @@ export default function SpinScreen() {
               <View>
                 <Text style={styles.sectionTitle}>Ăn gì hôm nay?</Text>
                 <Text style={styles.sectionSubtitle}>Chọn 1 đến 3 món quay ngẫu nhiên 3D cùng lúc!</Text>
-                
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                {customCandidates.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      Alert.alert(
+                        'Làm mới vòng quay',
+                        'Bạn có chắc chắn muốn xóa tất cả các món ăn tự chọn khỏi vòng quay?',
+                        [
+                          { text: 'Hủy', style: 'cancel' },
+                          { text: 'Xóa', style: 'destructive', onPress: () => resetStore() },
+                        ]
+                      );
+                    }}
+                    style={[styles.filterButton, { marginRight: 8 }]}
+                  >
+                    <Text style={styles.filterIcon}>🔄</Text>
+                  </TouchableOpacity>
+                )}
                 {/* Filter Context Chips */}
                 <View style={styles.contextChipsRow}>
                   <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={styles.contextChip}>

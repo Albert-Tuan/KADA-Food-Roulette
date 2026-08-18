@@ -93,7 +93,7 @@ let lockets: Locket[] = [
 ];
 
 function validateLocketInput(input: CreateLocketInput): string[] {
-  const normalizedTags = input.tags.map((tag) => tag.trim()).filter(Boolean);
+  const normalizedTags = (input.tags ?? []).map((tag) => tag.trim()).filter(Boolean);
   const capturedAt = new Date(input.capturedAt).getTime();
   const timestampDelta = Math.abs(Date.now() - capturedAt);
 
@@ -101,13 +101,13 @@ function validateLocketInput(input: CreateLocketInput): string[] {
   if (!input.localImageUri || !['image/jpeg', 'image/png', 'image/webp'].includes(input.mimeType)) {
     throw new Error('Ảnh Taste Board không hợp lệ.');
   }
-  if (!input.dishName.trim() || input.dishName.trim().length > 80) {
-    throw new Error('Tên món phải có từ 1 đến 80 ký tự.');
+  if ((input.dishName?.trim().length ?? 0) > 80) {
+    throw new Error('Tên món tối đa 80 ký tự.');
   }
   if ((input.restaurantName?.trim().length ?? 0) > 120) {
     throw new Error('Tên nhà hàng tối đa 120 ký tự.');
   }
-  if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) {
+  if (input.rating != null && (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5)) {
     throw new Error('Rating phải từ 1 đến 5.');
   }
   if ((input.note?.length ?? 0) > MAX_CAPTION_LENGTH) {
@@ -176,11 +176,11 @@ class MockLocketRepository implements LocketRepository {
         avatarUrl: 'https://i.pravatar.cc/160?img=12',
       },
       imageUrl: input.localImageUri,
-      dishName: input.dishName.trim(),
+      dishName: input.dishName?.trim() || undefined,
       restaurantId: input.restaurantId,
-      restaurantName: input.restaurantName?.trim(),
-      note: input.note?.trim(),
-      rating: input.rating,
+      restaurantName: input.restaurantName?.trim() || undefined,
+      note: input.note?.trim() || undefined,
+      rating: input.rating ?? undefined,
       tags: normalizedTags,
       visibility: input.visibility,
       capturedAt: input.capturedAt,

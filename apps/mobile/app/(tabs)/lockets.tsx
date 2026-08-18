@@ -122,22 +122,24 @@ function LocketCard({ locket }: { locket: Locket }) {
             <Text className="font-extrabold text-flamered text-base">{locket.author.displayNamePublic}</Text>
             <Text className="text-warmgray text-xs mt-0.5">{formatRelativeTime(locket.capturedAt)}</Text>
           </View>
-          <Text className="text-gold font-extrabold text-sm">{'★'.repeat(locket.rating)}</Text>
+          <Text className="text-gold font-extrabold text-sm">{locket.rating ? '★'.repeat(locket.rating) : ''}</Text>
         </View>
 
         <Image source={{ uri: locket.imageUrl }} className="w-full aspect-square bg-cream-linen" resizeMode="cover" />
 
         <View className="p-4">
-          <Text className="text-xl font-extrabold text-flamered">{locket.dishName}</Text>
+          <Text className="text-xl font-extrabold text-flamered">{locket.dishName ?? 'Taste Board'}</Text>
           {locket.restaurantName ? <Text className="text-flameorange font-bold mt-1">📍 {locket.restaurantName}</Text> : null}
           {locket.note ? <Text className="text-gray-800 leading-5 mt-2 font-medium">{locket.note}</Text> : null}
-          <View className="flex-row flex-wrap gap-2 mt-3">
-            {locket.tags.map((tag) => (
-              <View key={tag} className="rounded-xl bg-gold-soft px-3 py-1 border border-gold-light">
-                <Text className="text-flameorange text-xs font-extrabold">#{tag}</Text>
-              </View>
-            ))}
-          </View>
+          {locket.tags && locket.tags.length > 0 ? (
+            <View className="flex-row flex-wrap gap-2 mt-3">
+              {locket.tags.map((tag) => (
+                <View key={tag} className="rounded-xl bg-gold-soft px-3 py-1 border border-gold-light">
+                  <Text className="text-flameorange text-xs font-extrabold">#{tag}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
       </TouchableOpacity>
     </Link>

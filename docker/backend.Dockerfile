@@ -1,6 +1,8 @@
 # Multi-stage Dockerfile for Food Roulette Backend
 FROM node:22-alpine AS builder
 
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
 # Copy package manifests and Prisma schema
@@ -19,11 +21,19 @@ COPY . .
 # Build TypeScript to JavaScript (dist/)
 RUN npm run build
 
+FROM builder AS migrator
+
+CMD ["npm", "run", "db:migrate"]
+
+FROM builder AS production-deps
+
 # Prune devDependencies for runtime
-RUN npm prune --production
+RUN npm prune --omit=dev
 
 # Production Runner Stage
 FROM node:22-alpine AS runner
+
+RUN apk add --no-cache openssl
 
 WORKDIR /app
 
@@ -31,8 +41,8 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 # Copy node_modules, compiled dist, and prisma from builder stage
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=production-deps /app/package*.json ./
+COPY --from=production-deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 

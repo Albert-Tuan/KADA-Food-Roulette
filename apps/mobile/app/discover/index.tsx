@@ -217,7 +217,7 @@ export default function DiscoverScreen() {
             {/* Add Restaurant button */}
             <TouchableOpacity
               className="bg-cream-beige border border-borderbrown rounded-full w-12 h-12 items-center justify-center shadow-lg"
-              onPress={() => router.push('/discover/add-restaurant')}
+              onPress={() => router.push('/discover/add-restaurant' as any)}
             >
               <Text className="text-xl">➕</Text>
             </TouchableOpacity>
@@ -343,7 +343,7 @@ export default function DiscoverScreen() {
           visible={showFilter}
           onClose={() => setShowFilter(false)}
           filter={filter}
-          setFilter={(f) => setFilter(f as any)}
+          setFilter={(f: any) => setFilter(f)}
         />
       </View>
     </SafeAreaView>

@@ -1,0 +1,16 @@
+appId: ${EXPO_APP_ID}
+---
+- extendedWaitUntil:
+    visible: Cần quyền camera
+    timeout: 5000
+    optional: true
+- tapOn:
+    text: Cho phép camera
+    optional: true
+- extendedWaitUntil:
+    visible: Experience needs permissions
+    timeout: 5000
+    optional: true
+- tapOn:
+    text: Allow
+    optional: true

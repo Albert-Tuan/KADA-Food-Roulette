@@ -818,16 +818,14 @@ interface Restaurant {
   created_at: Date;
 }
 
-// Locket (chụp ảnh món ăn, kèm review)
+// Locket (Taste Board: ảnh camera-only, review tự do)
 interface Locket {
   id: string;
   user_id: string;
-  restaurant_id?: string;            // optional - có thể chụp món không rõ quán
-  dish_name?: string;
+  restaurant_id?: string;            // liên kết ngầm từ Spin/check-in khi có
   image_url: string;                 // đã strip EXIF
   thumbnail_url: string;
-  note?: string;                     // text review
-  rating?: number;                   // 1..5
+  note?: string;                     // review tự do, tùy chọn
   visibility: 'private' | 'friends' | 'public';
   captured_at: Date;                 // timestamp từ thiết bị
   captured_gps?: GeoJSON<Point>;

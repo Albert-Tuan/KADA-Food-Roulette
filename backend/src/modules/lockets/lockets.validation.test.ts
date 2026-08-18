@@ -6,7 +6,25 @@ const deviceHash = 'a'.repeat(64);
 const now = new Date('2026-08-09T09:00:00.000Z');
 
 describe('Locket request validation', () => {
-  it('normalizes a valid multipart payload', () => {
+  it('accepts the minimal Taste Board payload', () => {
+    const result = parseCreateLocket({
+      visibility: 'FRIENDS',
+      latitude: '10.7769',
+      longitude: '106.7009',
+    }, {
+      deviceHash,
+      capturedAt: '2026-08-09T08:59:30.000Z',
+    }, now);
+
+    expect(result).toMatchObject({
+      visibility: 'FRIENDS',
+      dishName: undefined,
+      rating: undefined,
+      tags: undefined,
+    });
+  });
+
+  it('continues to normalize legacy metadata when supplied', () => {
     const result = parseCreateLocket({
       dish_name: '  Bún bò Huế  ',
       restaurant_name: ' Bếp Huế ',
@@ -31,7 +49,7 @@ describe('Locket request validation', () => {
 
   it('rejects captures outside the 60 second boundary', () => {
     expect(() => parseCreateLocket({
-      dish_name: 'Phở', rating: '5', latitude: '10', longitude: '106',
+      latitude: '10', longitude: '106',
     }, {
       deviceHash,
       capturedAt: '2026-08-09T08:58:59.000Z',
