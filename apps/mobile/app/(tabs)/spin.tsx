@@ -76,7 +76,7 @@ export default function SpinScreen() {
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 {customCandidates.length > 0 && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={() => {
                       Alert.alert(
                         'Làm mới vòng quay',
@@ -86,7 +86,7 @@ export default function SpinScreen() {
                           { text: 'Xóa', style: 'destructive', onPress: () => resetStore() },
                         ]
                       );
-                    }} 
+                    }}
                     style={[styles.filterButton, { marginRight: 8 }]}
                   >
                     <Text style={styles.filterIcon}>🔄</Text>

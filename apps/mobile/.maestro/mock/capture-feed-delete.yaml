@@ -1,0 +1,67 @@
+appId: ${EXPO_APP_ID}
+name: Taste Board capture to delete in mock mode
+---
+- stopApp
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - setPermissions:
+          appId: ${EXPO_APP_ID}
+          permissions:
+            camera: allow
+            location: inuse
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - setPermissions:
+          appId: ${EXPO_APP_ID}
+          permissions:
+            camera: allow
+            location: allow
+- setLocation:
+    latitude: 10.7769
+    longitude: 106.7009
+- openLink: ${EXPO_URL}/--/locket/capture
+- runFlow: ../subflows/allow-expo-experience-location.yaml
+- runFlow: ../subflows/grant-expo-camera-permission.yaml
+- extendedWaitUntil:
+    visible:
+      id: locket-capture-button
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "GPS .*"
+    timeout: 30000
+- tapOn: Chụp ảnh
+- extendedWaitUntil:
+    visible:
+      id: locket-preview-screen
+    timeout: 30000
+- tapOn:
+    id: locket-note-input
+- inputText: Maestro mock Taste Board
+- hideKeyboard
+- tapOn:
+    id: locket-visibility-public
+- scrollUntilVisible:
+    element:
+      id: locket-submit-button
+    direction: DOWN
+- tapOn:
+    id: locket-submit-button
+- extendedWaitUntil:
+    visible:
+      id: locket-detail-screen
+    timeout: 30000
+- assertVisible:
+    id: locket-detail-visibility
+- assertVisible: Công khai
+- tapOn:
+    id: locket-delete-button
+- tapOn: Xóa
+- extendedWaitUntil:
+    visible:
+      id: locket-feed-screen
+    timeout: 30000
+- assertNotVisible: Maestro mock Taste Board

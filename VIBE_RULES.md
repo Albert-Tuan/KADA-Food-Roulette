@@ -84,9 +84,9 @@ Khi team dùng AI để code, mỗi người có thể dùng tool khác nhau (Cu
 | Feature | Owner | Stack |
 |---------|-------|-------|
 | SPIN (Personal + Group) | Hoàng Hiếu | React Native + Expo + NativeWind + Reanimated |
-| AUTH + ONBOARDING | Trường | Supabase Auth + Express + Prisma |
+| AUTH + ONBOARDING | Trường | Express + Prisma + MySQL + JWT |
 | LOCKET + PROFILE | Gia Bình | React Native + Expo + Supabase Storage |
-| REVIEW + DISCOVER | Thành Nam | Supabase + GitHub Actions + EAS Build |
+| REVIEW + DISCOVER | Thành Nam | Express + Prisma + MySQL + GitHub Actions + EAS Build |
 | PM + B2B | Tuấn Anh | Architecture + Scope Control |
 
 ### Rule 9: Privacy & Security

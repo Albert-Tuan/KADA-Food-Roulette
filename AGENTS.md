@@ -151,9 +151,9 @@ Cách hỏi: dùng tool `AskQuestion` với options rõ ràng, **không** liệt
 | # | Tên | Feature | Stack |
 |---|-----|---------|-------|
 | 1 | Hoàng Hiếu | **SPIN** (Personal + Group) | React Native + Expo + NativeWind + Reanimated |
-| 2 | Trường | **AUTH + ONBOARDING** | Supabase Auth + Backend API |
+| 2 | Trường | **AUTH + ONBOARDING** | Express + Prisma + MySQL + JWT |
 | 3 | Gia Bình | **LOCKET + PROFILE** | React Native + Expo + NativeWind |
-| 4 | Thành Nam | **REVIEW + DISCOVER** | Supabase + GitHub Actions + EAS Build |
+| 4 | Thành Nam | **REVIEW + DISCOVER** | Express + Prisma + MySQL + GitHub Actions + EAS Build |
 | 5 | Tuấn Anh | **PM + B2B** | Architecture + Scope Control |
 
 ---
@@ -198,7 +198,7 @@ CHECKLIST TRƯỚC CODE:
 **System prompt:**
 ```
 Bạn là Auth + Onboarding Lead cho Food Roulette.
-Stack: Supabase Auth + Express.js + Prisma + JWT
+Stack: Express.js + Prisma + MySQL + JWT
 Backend: Node.js + Express + Prisma + MySQL
 
 TUÂN THỦ:
@@ -269,7 +269,7 @@ CHECKLIST TRƯỚC CODE:
 **System prompt:**
 ```
 Bạn là Review + Discover Lead cho Food Roulette.
-Stack: Supabase + React Native + Expo + GitHub Actions + EAS Build
+Stack: React Native + Expo + Express + Prisma + MySQL + GitHub Actions + EAS Build
 
 TUÂN THU:
 - brand/prompts.md §0

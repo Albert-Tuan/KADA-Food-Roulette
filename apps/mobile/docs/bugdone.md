@@ -275,4 +275,29 @@ Dung lượng ảnh gốc tải lên từ camera điện thoại di động quá
 
 
 
+## BUG #11: Nút quay lại Profile công khai hiện tên route nội bộ
 
+**Status**: `[x] Verified`
+**Ngày report**: 2026-08-14
+**Ngày fix**: 2026-08-15
+**Ngày verify**: 2026-08-15
+**Severity**: `P2 minor`
+
+### Triệu chứng
+- Từ Profile riêng, mở "Xem profile công khai".
+- Header iOS hiển thị nhãn quay lại là tên route nội bộ `(tabs)`.
+
+### Expected
+Header chỉ hiển thị biểu tượng quay lại tối giản, không lộ tên route nội bộ.
+
+### Root cause
+Expo Router lấy nhãn quay lại từ route trước. Stack screen của `/u/[public_id]` chưa cấu hình chế độ nút quay lại tối giản trên iOS.
+
+### Fix
+- `apps/mobile/app/_layout.tsx` — đặt `headerBackButtonDisplayMode: 'minimal'` cho public Profile.
+
+### Verify steps
+1. Mở app trên iOS và vào tab Profile.
+2. Chọn "Xem profile công khai".
+3. Xác nhận header chỉ còn biểu tượng quay lại, không hiện `(tabs)`.
+4. Chạm quay lại và xác nhận trở về Profile riêng.

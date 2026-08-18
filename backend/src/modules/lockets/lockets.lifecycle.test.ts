@@ -50,9 +50,6 @@ describe('Locket media lifecycle', () => {
     const storage = createStorage();
     const service = new LocketsService(storage, async () => images);
     const input: CreateLocketData = {
-      dishName: 'Bún bò Huế',
-      rating: 5,
-      tags: [],
       visibility: LocketVisibility.PRIVATE,
       latitude: 10.7769,
       longitude: 106.7009,

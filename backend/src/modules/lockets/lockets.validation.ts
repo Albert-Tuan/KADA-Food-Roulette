@@ -8,10 +8,10 @@ export const ALLOWED_LOCKET_MIME_TYPES = new Set(['image/jpeg', 'image/png']);
 export interface CreateLocketData {
   restaurantId?: string;
   restaurantName?: string;
-  dishName: string;
+  dishName?: string;
   note?: string;
-  rating: number;
-  tags: string[];
+  rating?: number;
+  tags?: string[];
   visibility: LocketVisibility;
   latitude: number;
   longitude: number;
@@ -150,10 +150,10 @@ export function parseCreateLocket(
   return {
     restaurantId: optionalText(body.restaurant_id, 36, 'Mã nhà hàng'),
     restaurantName: optionalText(body.restaurant_name, 120, 'Tên nhà hàng'),
-    dishName: requiredText(body.dish_name, 80, 'Tên món'),
+    dishName: optionalText(body.dish_name, 80, 'Tên món'),
     note: optionalText(body.note, 280, 'Note'),
-    rating: parseRating(body.rating, true) ?? 5,
-    tags: parseTags(body.tags ?? []),
+    rating: parseRating(body.rating, false),
+    tags: body.tags === undefined ? undefined : parseTags(body.tags),
     visibility: parseVisibility(body.visibility, LocketVisibility.FRIENDS)!,
     latitude: parseCoordinate(body.latitude, -90, 90, 'Latitude', 10.7769),
     longitude: parseCoordinate(body.longitude, -180, 180, 'Longitude', 106.7009),

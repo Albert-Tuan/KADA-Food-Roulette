@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { LocketVisibility, Prisma } from '@prisma/client';
 import prisma from '../../shared/utils/prisma.js';
-import { inMemoryUserStore } from '../users/userStore.js';
 import { LocketApiError } from './lockets.errors.js';
 import { processLocketImage, type ProcessedLocketImages } from './lockets.imageProcessor.js';
 import type { CreateLocketData, UpdateLocketData } from './lockets.validation.js';
@@ -356,8 +355,11 @@ class LocketsService {
 
     const locketId = randomUUID();
     const images = await this.imageProcessor(file.buffer);
+
+    // Step 1: upload media to storage (side effect A)
     const stored = await this.storage.upload({ userId, locketId, images });
 
+    // Step 2: persist metadata to DB (side effect B)
     let createdRecord: LocketRecord;
     try {
       createdRecord = await prisma.locket.create({
@@ -386,47 +388,9 @@ class LocketsService {
         include: locketInclude,
       });
     } catch (error) {
-      if (error instanceof LocketApiError) throw error;
-      if (process.env.NODE_ENV === 'test') {
-        await this.storage.remove(stored);
-        throw error;
-      }
-      console.log('[Lockets] DB write notice, fallback to in-memory response with Supabase storage upload preserved');
-      const now = new Date();
-      createdRecord = {
-        id: locketId,
-        userId,
-        restaurantId: input.restaurantId ?? null,
-        imageUrl: stored.originalPath,
-        thumbnailUrl: stored.thumbnailPath,
-        imageWidth: images.width,
-        imageHeight: images.height,
-        imageBytes: images.originalBytes,
-        thumbnailBytes: images.thumbnailBytes,
-        dishName: input.dishName,
-        restaurantName: input.restaurantName ?? null,
-        note: input.note ?? null,
-        rating: input.rating,
-        tags: input.tags,
-        deviceHash: input.deviceHash,
-        capturedAt: input.capturedAt,
-        exifStripped: images.exifStripped,
-        lat: input.latitude ? new Prisma.Decimal(input.latitude) : null,
-        lng: input.longitude ? new Prisma.Decimal(input.longitude) : null,
-        visibility: input.visibility,
-        groupId: null,
-        status: 'ACTIVE' as const,
-        deletedAt: null,
-        createdAt: now,
-        updatedAt: now,
-        user: {
-          id: userId,
-          publicId: inMemoryUserStore.get(userId)?.publicId || `u_${userId.substring(0, 8)}`,
-          displayNamePublic: inMemoryUserStore.get(userId)?.displayNamePublic || 'sau code',
-          avatarUrl: inMemoryUserStore.get(userId)?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
-        },
-        restaurant: input.restaurantId ? { id: input.restaurantId, name: input.restaurantName || 'Quán ăn' } : null,
-      } as unknown as LocketRecord;
+      // Compensate step 1: remove uploaded objects so no orphan media remains
+      await this.storage.remove(stored);
+      throw error;
     }
 
     inMemoryLocketStore.set(locketId, createdRecord);
