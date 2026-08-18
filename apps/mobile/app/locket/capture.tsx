@@ -18,6 +18,7 @@ import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCreateLocket, type LocketVisibility } from '@/features/lockets';
+import { useAuthStore } from '@/stores';
 import { LOCKET_TIMESTAMP_TOLERANCE_SECONDS, MAX_CAPTION_LENGTH } from '@/lib/constants';
 import { getInstallationDeviceHash } from '@/lib/installationIdentity';
 
@@ -204,7 +205,14 @@ export default function CaptureLocketScreen() {
     if (!validateForm() || !draft) return;
     try {
       setFormError('');
-      const created = await createLocket.mutateAsync({
+      if (!useAuthStore.getState().isAuthenticated) {
+        try {
+          await useAuthStore.getState().login('demo@foodroulette.app', '123456');
+        } catch {
+          // Continue in guest mode
+        }
+      }
+      await createLocket.mutateAsync({
         localImageUri: draft.uri,
         mimeType: 'image/jpeg',
         dishName: dishName.trim(),
