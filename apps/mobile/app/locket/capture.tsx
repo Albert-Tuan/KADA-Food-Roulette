@@ -18,7 +18,7 @@ import * as Location from 'expo-location';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCreateLocket, type LocketVisibility } from '@/features/lockets';
-import { useAuthStore } from '@/stores';
+import { useAuthStore, useSpinStore } from '@/stores';
 import { LOCKET_TIMESTAMP_TOLERANCE_SECONDS, MAX_CAPTION_LENGTH } from '@/lib/constants';
 import { getInstallationDeviceHash } from '@/lib/installationIdentity';
 
@@ -223,7 +223,11 @@ export default function CaptureLocketScreen() {
         deviceHash: draft.deviceHash,
       });
       if (returnTo === 'spin-check-in') {
-        router.replace({ pathname: '/spin/check-in', params: { tasteBoardId: created.id } });
+        if (restaurantId) {
+          useSpinStore.getState().markCheckedIn(restaurantId);
+        }
+        useSpinStore.getState().grantLuckySpin();
+        router.replace('/spin/lucky-spin');
       } else {
         router.replace('/(tabs)/lockets' as any);
       }
@@ -269,7 +273,7 @@ export default function CaptureLocketScreen() {
               <TouchableOpacity onPress={() => setDraft(null)} className="px-3 py-2">
                 <Text className="text-secondary-700">Chụp lại</Text>
               </TouchableOpacity>
-              <Text className="text-xl font-bold text-secondary-900">Taste Board mới</Text>
+              <Text className="text-xl font-bold text-secondary-900">{returnTo === 'spin-check-in' ? '📸 Check-in & Nhận Spin' : 'Taste Board mới'}</Text>
               <View className="w-20" />
             </View>
 
@@ -342,7 +346,7 @@ export default function CaptureLocketScreen() {
               {createLocket.isPending ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text className="text-white font-bold text-base">Đăng Taste Board</Text>
+                <Text className="text-white font-bold text-base">{returnTo === 'spin-check-in' ? '🎉 Đăng Locket & Quay May Mắn' : 'Đăng Taste Board'}</Text>
               )}
             </TouchableOpacity>
           </ScrollView>

@@ -139,7 +139,10 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     
     // Fallback to local random (Mock spin)
     const winnerIndex = Math.floor(Math.random() * candidates.length);
-    set({ currentResult: candidates[winnerIndex] });
+    set({ 
+      currentResult: candidates[winnerIndex],
+      checkedInRestaurantIds: [] // Reset check-in lock for the new spin
+    });
   },
 
   resetStore: () => set((state) => ({
