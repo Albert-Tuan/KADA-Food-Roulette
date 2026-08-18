@@ -1,0 +1,61 @@
+appId: ${EXPO_APP_ID}
+name: Spin to Taste Board to lucky spin
+---
+- stopApp
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - setPermissions:
+          appId: ${EXPO_APP_ID}
+          permissions:
+            camera: allow
+            location: inuse
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - setPermissions:
+          appId: ${EXPO_APP_ID}
+          permissions:
+            camera: allow
+            location: allow
+- setLocation:
+    latitude: 10.7769
+    longitude: 106.7009
+- openLink: ${EXPO_URL}/--/spin
+- extendedWaitUntil:
+    visible: "🎉 QUAY NGAY!"
+    timeout: 30000
+- tapOn: "🎉 QUAY NGAY!"
+- extendedWaitUntil:
+    visible: "IT'S A MATCH!"
+    timeout: 15000
+- tapOn: "🍽️ Let's Eat Here!"
+- assertVisible: ".*Tạo Taste Board \\(Bắt buộc\\).*"
+- tapOn: ".*Mở camera tạo Taste Board.*"
+- runFlow: ../subflows/allow-expo-experience-location.yaml
+- runFlow: ../subflows/grant-expo-camera-permission.yaml
+- extendedWaitUntil:
+    visible:
+      id: locket-capture-button
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "GPS .*"
+    timeout: 30000
+- tapOn: Chụp ảnh
+- extendedWaitUntil:
+    visible:
+      id: locket-preview-screen
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: locket-submit-button
+    direction: DOWN
+- tapOn:
+    id: locket-submit-button
+- extendedWaitUntil:
+    visible: Taste Board đã tạo
+    timeout: 30000
+- tapOn: "🎉 Hoàn Tất Check-in & Quay May Mắn"
+- assertVisible: ".*Vòng Quay May Mắn.*"

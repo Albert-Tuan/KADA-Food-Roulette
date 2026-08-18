@@ -1,0 +1,21 @@
+appId: ${EXPO_APP_ID}
+name: Public Profile privacy in mock mode
+---
+- stopApp
+- openLink: ${EXPO_URL}/--/u/gia-binh-food
+- extendedWaitUntil:
+    visible:
+      id: profile-public-screen
+    timeout: 30000
+- assertVisible:
+    id: profile-public-display-name
+- assertVisible: Bình Ăn Gì
+- assertVisible:
+    id: profile-public-locket-locket-2
+- assertNotVisible:
+    id: profile-public-locket-locket-private
+- assertNotVisible:
+    id: profile-public-locket-locket-1
+- assertNotVisible:
+    id: profile-private-display-name
+- assertNotVisible: binh@example.com

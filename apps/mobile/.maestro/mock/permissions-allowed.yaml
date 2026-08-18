@@ -1,0 +1,34 @@
+appId: ${EXPO_APP_ID}
+name: Taste Board permission allow state
+---
+- stopApp
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - setPermissions:
+          appId: ${EXPO_APP_ID}
+          permissions:
+            camera: allow
+            location: inuse
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - setPermissions:
+          appId: ${EXPO_APP_ID}
+          permissions:
+            camera: allow
+            location: allow
+- setLocation:
+    latitude: 10.7769
+    longitude: 106.7009
+- openLink: ${EXPO_URL}/--/locket/capture
+- runFlow: ../subflows/allow-expo-experience-location.yaml
+- runFlow: ../subflows/grant-expo-camera-permission.yaml
+- extendedWaitUntil:
+    visible:
+      id: locket-camera-screen
+    timeout: 30000
+- assertVisible:
+    id: locket-capture-button

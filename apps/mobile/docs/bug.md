@@ -15,50 +15,6 @@
 
 
 
-## BUG #1: <tên bug ngắn gọn>
-
-**Status**: `[ ] Open`
-**Ngày report**: `<YYYY-MM-DD>`
-**Severity**: `[ ] P0 crash  [ ] P1 major  [ ] P2 minor  [ ] P3 polish`
-
-### Triệu chứng
-
-`<user thấy gì sai, gồm bước reproduce ngắn>`
-
-**Ví dụ**:
-- Khi tap "Xoá transaction" trong list, app crash với message "undefined is not a function"
-- Chỉ xảy ra khi list > 20 items
-- Steps: mở app → tab Home → tap 1 transaction → tap 🗑
-
-### Expected
-
-`<hành vi đúng phải là gì>`
-
-### Root cause (fill sau khi debug)
-
-`<AI phân tích + patch ở đâu>`
-
-### Fix (fill khi AI xong)
-
-`<file:line thay đổi + PR link nếu có>`
-
-**Ví dụ**:
-- `services/transaction-db.ts:45` — thiếu `?.` optional chain
-- `app/(tabs)/index.tsx:120` — memoize handleDelete với useCallback
-
-### Verify steps (cho user test)
-
-`<AI ghi rõ user cần test cái gì để confirm fix>`
-
-**Ví dụ**:
-1. Mở app, vào tab Home
-2. Tap 1 transaction bất kỳ trong list
-3. Tap nút 🗑 → confirm dialog hiện
-4. Tap "Xoá" → transaction biến mất khỏi list, không crash
-5. Repeat 5 lần với transaction khác nhau
-
----
-
 ## 📋 Template (copy block này khi report bug mới)
 
 ```markdown

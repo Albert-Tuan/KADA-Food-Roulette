@@ -1577,11 +1577,7 @@ POST /lockets
 **Form Fields:**
 - `image`: File (required), max 10MB, jpg/png
 - `restaurant_id`: UUID (optional)
-- `restaurant_name`: String (optional), max 120 chars
-- `dish_name`: String (required), max 80 chars
 - `note`: String (optional), max 280 chars
-- `rating`: Int 1-5 (required)
-- `tags`: JSON String array (optional), max 5 tags, 24 chars/tag
 - `visibility`: `PUBLIC` | `FRIENDS` | `PRIVATE` (default: `FRIENDS`)
 - `latitude`: Float (required)
 - `longitude`: Float (required)
@@ -1628,12 +1624,8 @@ X-Captured-At: <ISO8601_timestamp>
       "thumbnail_bytes": 18420,
       "mime_type": "image/jpeg"
     },
-    "dish_name": "Bún bò Huế",
     "restaurant_id": null,
-    "restaurant_name": "Bếp Huế Mộc",
     "note": "Bữa ăn ngon quá!",
-    "rating": 5,
-    "tags": ["món Việt", "cay nhẹ"],
     "visibility": "FRIENDS",
     "location": { "latitude": 10.7769, "longitude": 106.7009 },
     "can_display_location": true,
@@ -1657,6 +1649,8 @@ X-Captured-At: <ISO8601_timestamp>
 - `LOCKET_STORAGE_ERROR`: Supabase upload/download/delete/signing thất bại
 - `LOCKET_STORAGE_CLEANUP_FAILED`: Không thể dọn object sau khi Prisma persistence thất bại
 - `LOCKET_IMAGE_PROCESSING_FAILED`: Sharp không thể giải mã hoặc chuẩn hóa ảnh
+
+**Legacy compatibility:** API vẫn nhận và lưu `dish_name`, `restaurant_name`, `rating`, `tags` từ client cũ. Client mới không gửi hoặc hiển thị các field này; `restaurant_id` vẫn có thể được truyền ngầm từ Spin check-in.
 
 **Media pipeline:**
 
@@ -1707,7 +1701,6 @@ GET /lockets
   "data": [
     {
       "id": "uuid",
-      "dish_name": "Bún bò Huế",
       "owner_id": "uuid",
       "author": {
         "id": "uuid",
@@ -1725,10 +1718,7 @@ GET /lockets
         "mime_type": "image/jpeg"
       },
       "restaurant_id": null,
-      "restaurant_name": "Bếp Huế Mộc",
       "note": "Bữa ăn ngon quá!",
-      "rating": 5,
-      "tags": ["món Việt", "cay nhẹ"],
       "visibility": "FRIENDS",
       "exif_stripped": true,
       "permissions": { "can_edit": true, "can_delete": true },
@@ -1791,11 +1781,7 @@ GET /lockets/:locket_id
     "owner_id": "uuid",
     "author": { ... },
     "image_url": "...",
-    "dish_name": "Bún bò Huế",
-    "restaurant_name": "Bếp Huế Mộc",
     "note": "...",
-    "rating": 5,
-    "tags": ["món Việt"],
     "visibility": "FRIENDS",
     "permissions": { "can_edit": false, "can_delete": false },
     "created_at": "2026-08-07T12:00:00Z"
@@ -1818,10 +1804,7 @@ PATCH /lockets/:locket_id
 **Request Body:**
 ```json
 {
-  "dish_name": "Bún bò Huế đặc biệt",
   "note": "Updated note",
-  "rating": 5,
-  "tags": ["món Việt"],
   "visibility": "PUBLIC",
   "restaurant_id": "uuid"  // null to remove
 }

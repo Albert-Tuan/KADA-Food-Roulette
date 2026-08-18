@@ -52,7 +52,7 @@ KADA-Food-Roulette/
 - `CLAUDE.md` — Entry point
 
 ## Key Specs
-- Auth: Supabase (email + Google)
+- Auth: JWT + bcrypt qua Express (email + Google OAuth)
 - Spin: Random restaurant với bánh xe quay
 - Group spin: Max 20 người, vote accept/respin
 - Locket: Camera-only photo với metadata
@@ -101,9 +101,9 @@ Skills trong `.agents/skills/` chỉ hoạt động với Cursor IDE. Các AI to
 | Feature | Owner | Stack |
 |---------|-------|-------|
 | SPIN (Personal + Group) | Hoàng Hiếu | React Native + Expo + Reanimated |
-| AUTH + ONBOARDING | Trường | Supabase Auth + Express + Prisma |
+| AUTH + ONBOARDING | Trường | Express + Prisma + MySQL + JWT |
 | LOCKET + PROFILE | Gia Bình | React Native + Expo + Supabase Storage |
-| REVIEW + DISCOVER | Thành Nam | Supabase + GitHub Actions + EAS Build |
+| REVIEW + DISCOVER | Thành Nam | Express + Prisma + MySQL + GitHub Actions + EAS Build |
 | PM + B2B | Tuấn Anh | Architecture + Scope Control |
 
 ## Cross-File Consistency (CRITICAL)

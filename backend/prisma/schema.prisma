@@ -391,7 +391,7 @@ model Locket {
   imageHeight    Int?             @map("image_height")
   imageBytes     Int?             @map("image_bytes")
   thumbnailBytes Int?             @map("thumbnail_bytes")
-  dishName       String           @map("dish_name") @db.VarChar(80)
+  dishName       String?          @map("dish_name") @db.VarChar(80)
   restaurantName String?          @map("restaurant_name") @db.VarChar(120)
   note           String?          @db.VarChar(280)
   rating         Int?

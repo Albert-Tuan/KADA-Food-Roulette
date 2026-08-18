@@ -1,0 +1,10 @@
+appId: com.foodroulette.app
+name: Standalone app launch smoke
+---
+- launchApp:
+    clearState: false
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Chào mừng!|Trang chủ|Ăn gì hôm nay?"
+    timeout: 30000

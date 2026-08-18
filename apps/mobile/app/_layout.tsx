@@ -35,7 +35,9 @@ export default function RootLayout() {
           <Stack.Screen name="onboarding/index" options={{ headerShown: false }} />
           <Stack.Screen name="restaurant/[id]" options={{ title: 'Chi tiết nhà hàng' }} />
           <Stack.Screen name="locket/capture" options={{ headerShown: false }} />
-          <Stack.Screen name="locket/[id]" options={{ headerShown: false }} />
+<Stack.Screen name="locket/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="profile/edit" options={{ title: 'Chỉnh sửa hồ sơ' }} />
+          <Stack.Screen name="profile/settings" options={{ title: 'Cài đặt' }} />
           <Stack.Screen name="spin/menu-capture" options={{ headerShown: false }} />
           <Stack.Screen name="spin/menu-review" options={{ headerShown: false }} />
           <Stack.Screen name="spin/menu-wheel" options={{ headerShown: false }} />
@@ -44,7 +46,10 @@ export default function RootLayout() {
           <Stack.Screen name="spin/check-in" options={{ headerShown: false }} />
           <Stack.Screen name="spin/lucky-spin" options={{ headerShown: false }} />
           <Stack.Screen name="group-spin/lobby" options={{ headerShown: false }} />
-          <Stack.Screen name="u/[public_id]" options={{ title: 'Profile công khai' }} />
+          <Stack.Screen
+            name="u/[public_id]"
+            options={{ title: 'Profile công khai', headerBackButtonDisplayMode: 'minimal' }}
+          />
         </Stack>
       </SafeAreaProvider>
     </QueryClientProvider>
