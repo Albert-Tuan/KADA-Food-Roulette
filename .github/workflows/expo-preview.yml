@@ -35,9 +35,6 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: 🚀 Publish Preview
-        uses: expo/expo-github-action/preview@v8
-        with:
-          command: eas update --auto
-          working-directory: apps/mobile
-          comment: true
+      - name: 🚀 Export Preview Bundle
+        run: npx expo export --platform all
+        working-directory: apps/mobile
