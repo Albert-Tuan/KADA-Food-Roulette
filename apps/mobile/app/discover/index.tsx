@@ -64,7 +64,7 @@ export default function DiscoverScreen() {
   const [region, setRegion] = useState<Region>(INITIAL_REGION);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<FilterChip['value']>('nearby');
+  const [filter, setFilter] = useState<FilterChip['value']>('all');
   const [seeding, setSeeding] = useState(false);
   const [showList, setShowList] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
@@ -97,7 +97,7 @@ export default function DiscoverScreen() {
     try {
       setLoading(true);
       const data = await restaurantApi.list({ status: 'APPROVED' });
-      setRestaurants(data);
+      console.log(JSON.stringify(data).slice(0, 500)); setRestaurants(data);
     } catch (error) {
       console.error('Load restaurants error:', error);
     } finally {
@@ -173,11 +173,11 @@ export default function DiscoverScreen() {
             showsMyLocationButton
             mapType={Platform.select({ android: 'standard', ios: 'mutedStandard' }) as any}
           >
-            {filtered.map((r) => {
+            {filtered.map((r, index) => {
               if (!r.lat || !r.lng) return null;
               return (
                 <Marker
-                  key={r.id}
+                  key={r.id || `marker-${index}`}
                   coordinate={{ latitude: r.lat, longitude: r.lng }}
                   title={r.name}
                   description={r.address}

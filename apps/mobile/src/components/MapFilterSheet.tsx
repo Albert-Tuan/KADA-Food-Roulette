@@ -4,7 +4,7 @@ interface MapFilterSheetProps {
   visible: boolean;
   onClose: () => void;
   filter: string;
-  setFilter: (f: string) => void;
+  setFilter: (f: any) => void;
 }
 
 export default function MapFilterSheet({ visible, onClose, filter, setFilter }: MapFilterSheetProps) {

@@ -6,94 +6,26 @@ export const restaurantsController = {
   // GET /api/restaurants - Nearby and filter list
   getNearby: async (req: Request, res: Response) => {
     try {
-      const { lat, lng, radiusKm, price, cuisine, search } = req.query;
+      const { category } = req.query;
 
-      // Mock sample restaurant dataset if DB is empty or during development
-      const sampleRestaurants = [
-        {
-          id: 'rest-1',
-          name: 'Cơm Tấm Ba Cường',
-          address: '123 Nguyễn Trãi, Quận 1, TP.HCM',
-          lat: 10.762622,
-          lng: 106.682200,
-          rating: 4.8,
-          reviewCount: 342,
-          priceLevel: '$$',
-          cuisineType: 'Cơm Tấm',
-          tasteNote: 'Đậm đà, béo ngậy',
-          isSpicy: false,
-          isVegetarian: false,
-          photoUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600',
-          distanceKm: 0.8,
-        },
-        {
-          id: 'rest-2',
-          name: 'Phở Thìn Hà Nội - Chi nhánh Q3',
-          address: '45 Võ Văn Tần, Quận 3, TP.HCM',
-          lat: 10.778000,
-          lng: 106.691000,
-          rating: 4.7,
-          reviewCount: 520,
-          priceLevel: '$$$',
-          cuisineType: 'Phở',
-          tasteNote: 'Thanh ngọt, thơm nức',
-          isSpicy: false,
-          isVegetarian: false,
-          photoUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=600',
-          distanceKm: 1.2,
-        },
-        {
-          id: 'rest-3',
-          name: 'Bún Bò Huế Chị Mây',
-          address: '88 Nguyễn Đình Chiểu, Quận 3, TP.HCM',
-          lat: 10.785000,
-          lng: 106.695000,
-          rating: 4.9,
-          reviewCount: 210,
-          priceLevel: '$$',
-          cuisineType: 'Bún Bò',
-          tasteNote: 'Cay nồng, đậm đà',
-          isSpicy: true,
-          isVegetarian: false,
-          photoUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&q=80&w=600',
-          distanceKm: 2.1,
-        },
-        {
-          id: 'rest-4',
-          name: 'Bánh Mì Huỳnh Hoa',
-          address: '26 Lê Thị Riêng, Quận 1, TP.HCM',
-          lat: 10.771000,
-          lng: 106.692000,
-          rating: 4.6,
-          reviewCount: 1450,
-          priceLevel: '$$',
-          cuisineType: 'Bánh Mì',
-          tasteNote: 'Giòn rụm, đẫm nhân',
-          isSpicy: true,
-          isVegetarian: false,
-          photoUrl: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=600',
-          distanceKm: 1.5,
-        },
-        {
-          id: 'rest-5',
-          name: 'Quán Chay Bồ Đề Tâm',
-          address: '15 Trần Hưng Đạo, Quận 1, TP.HCM',
-          lat: 10.768000,
-          lng: 106.690000,
-          rating: 4.8,
-          reviewCount: 180,
-          priceLevel: '$',
-          cuisineType: 'Món Chay',
-          tasteNote: 'Thanh tịnh, tươi ngon',
-          isSpicy: false,
-          isVegetarian: true,
-          photoUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600',
-          distanceKm: 1.0,
-        },
-      ];
+      // Query real data from the database
+      const restaurants = await prisma.restaurant.findMany({
+        where: {
+          status: 'APPROVED',
+          ...(category ? { category: String(category) } : {})
+        }
+      });
 
-      return res.json(sampleRestaurants);
+      // Convert Decimal to Number for Mobile Map compatibility
+      const formattedRestaurants = restaurants.map(rest => ({
+        ...rest,
+        lat: rest.lat ? Number(rest.lat) : null,
+        lng: rest.lng ? Number(rest.lng) : null,
+      }));
+
+      return res.json(formattedRestaurants);
     } catch (error: any) {
+      console.error('Error fetching restaurants:', error);
       return res.status(500).json({ error: 'Lỗi máy chủ khi lấy danh sách quán ăn.' });
     }
   },
@@ -102,25 +34,23 @@ export const restaurantsController = {
   getById: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const restaurant = {
-        id,
-        name: 'Cơm Tấm Ba Cường',
-        address: '123 Nguyễn Trãi, Quận 1, TP.HCM',
-        phone: '0901234567',
-        rating: 4.8,
-        reviewCount: 342,
-        priceLevel: '$$',
-        cuisineType: 'Cơm Tấm',
-        openingHours: '06:00 - 22:00',
-        photoUrls: [
-          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600',
-          'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600'
-        ],
-        popularDishes: ['Cơm tấm sườn bì chả', 'Cơm tấm sườn nướng mật ong', 'Canh khổ qua dồn thịt'],
+      const restaurant = await prisma.restaurant.findUnique({
+        where: { id: id as string }
+      });
+
+      if (!restaurant) {
+        return res.status(404).json({ error: 'Không tìm thấy quán ăn.' });
+      }
+
+      const formattedRestaurant = {
+        ...restaurant,
+        lat: restaurant.lat ? Number(restaurant.lat) : null,
+        lng: restaurant.lng ? Number(restaurant.lng) : null,
       };
 
-      return res.json(restaurant);
+      return res.json(formattedRestaurant);
     } catch (error: any) {
+      console.error('Error fetching restaurant by id:', error);
       return res.status(500).json({ error: 'Không tìm thấy quán ăn.' });
     }
   },
@@ -128,29 +58,89 @@ export const restaurantsController = {
   // POST /api/restaurants - User-submitted restaurant
   create: async (req: AuthRequest, res: Response) => {
     try {
-      const { name, address, cuisineType, priceLevel } = req.body;
+      const { name, address, category, priceLevel, lat, lng } = req.body;
 
-      if (!name || !address) {
-        return res.status(400).json({ error: 'Tên quán và địa chỉ không được để trống.' });
+      if (!name || !address || lat === undefined || lng === undefined) {
+        return res.status(400).json({ error: 'Tên quán, địa chỉ và tọa độ không được để trống.' });
       }
 
-      const newRestaurant = {
-        id: `user_rest_${Date.now()}`,
-        name,
-        address,
-        cuisineType: cuisineType || 'Khác',
-        priceLevel: priceLevel || '$$',
-        approvalStatus: 'PENDING',
-        submittedBy: req.user?.id || 'anonymous',
-        createdAt: new Date().toISOString(),
-      };
+      const numLat = Number(lat);
+      const numLng = Number(lng);
+
+      // Check for duplicates within 50m
+      const existingRestaurants = await prisma.restaurant.findMany({
+        where: {
+          lat: { not: null },
+          lng: { not: null },
+        }
+      });
+
+      const EARTH_RADIUS_KM = 6371;
+      const toRad = (d: number) => (d * Math.PI) / 180;
+      
+      const isDuplicate = existingRestaurants.some((rest) => {
+        const restLat = Number(rest.lat);
+        const restLng = Number(rest.lng);
+        const dLat = toRad(restLat - numLat);
+        const dLng = toRad(restLng - numLng);
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(numLat)) * Math.cos(toRad(restLat)) * Math.sin(dLng / 2) ** 2;
+        const distanceKm = 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(a));
+        
+        return distanceKm <= 0.05; // 50 meters
+      });
+
+      if (isDuplicate) {
+        return res.status(409).json({ error: 'Đã có quán ăn khác tồn tại trong vòng bán kính 50m.' });
+      }
+
+      // Save to database
+      const newRestaurant = await prisma.restaurant.create({
+        data: {
+          name,
+          address,
+          lat: numLat,
+          lng: numLng,
+          category: category || 'Khác',
+          priceLevel: typeof priceLevel === 'number' ? priceLevel : 2,
+          status: 'PENDING',
+          source: 'USER_SUBMITTED',
+          rating: 0
+        }
+      });
 
       return res.status(201).json({
         message: 'Đề xuất quán ăn thành công! Quán đang chờ Steward kiểm duyệt.',
-        restaurant: newRestaurant,
+        data: {
+          ...newRestaurant,
+          lat: newRestaurant.lat ? Number(newRestaurant.lat) : null,
+          lng: newRestaurant.lng ? Number(newRestaurant.lng) : null,
+        },
       });
     } catch (error: any) {
+      console.error('Error creating restaurant:', error);
       return res.status(500).json({ error: 'Lỗi gửi đề xuất quán ăn.' });
+    }
+  },
+
+  // PUT /api/restaurants/:id
+  updateStatus: async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      if (!['APPROVED', 'REJECTED'].includes(status)) {
+        return res.status(400).json({ error: 'Trạng thái không hợp lệ.' });
+      }
+
+      const updated = await prisma.restaurant.update({
+        where: { id: id as string },
+        data: { status }
+      });
+
+      return res.json({ message: 'Đã cập nhật trạng thái.', data: updated });
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      return res.status(500).json({ error: 'Lỗi cập nhật trạng thái quán ăn.' });
     }
   },
 };

@@ -105,3 +105,15 @@ export const optionalJWT = (req: AuthRequest, res: Response, next: NextFunction)
     });
   }
 };
+
+export const requireRole = (requiredRoles: string[]) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Yêu cầu xác thực tài khoản.' });
+    }
+    if (!requiredRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Không có quyền truy cập.' });
+    }
+    next();
+  };
+};

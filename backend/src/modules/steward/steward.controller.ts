@@ -1,25 +1,40 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../../shared/middleware/auth.middleware';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export const stewardController = {
   // GET /api/steward/pending-restaurants
   getPending: async (req: AuthRequest, res: Response) => {
     try {
-      const pendingList = [
-        {
-          id: 'user_rest_01',
-          name: 'Quán Ốc Đêm 77',
-          address: '450 Nguyễn Thị Minh Khai, Quận 3, TP.HCM',
-          cuisineType: 'Quán Ốc',
-          priceLevel: '$$',
-          submittedBy: 'u_user_99',
-          submittedAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-          status: 'PENDING',
-        },
-      ];
+      const page = Number(req.query.page) || 1;
+      const pageSize = Number(req.query.pageSize) || 20;
+      
+      const total = await prisma.restaurant.count({
+        where: { status: 'PENDING' }
+      });
+      
+      const pendingList = await prisma.restaurant.findMany({
+        where: { status: 'PENDING' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' }
+      });
 
-      return res.json(pendingList);
+      return res.json({
+        success: true,
+        data: {
+          restaurants: pendingList.map(r => ({
+            ...r,
+            lat: r.lat ? Number(r.lat) : null,
+            lng: r.lng ? Number(r.lng) : null,
+          })),
+          pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) }
+        }
+      });
     } catch (error: any) {
+      console.error('Error in getPending:', error);
       return res.status(500).json({ error: 'Lỗi lấy danh sách quán chờ duyệt.' });
     }
   },
@@ -28,13 +43,25 @@ export const stewardController = {
   approve: async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { action } = req.body; // 'APPROVE' | 'REJECT'
+      const { action, notes } = req.body; // 'APPROVE' | 'REJECT'
+
+      if (!['APPROVE', 'REJECT'].includes(action)) {
+        return res.status(400).json({ error: 'Action không hợp lệ.' });
+      }
+
+      const status = action === 'APPROVE' ? 'APPROVED' : 'REJECTED';
+      
+      const updated = await prisma.restaurant.update({
+        where: { id: id as string },
+        data: { status } // assuming we don't save notes in this simple version
+      });
 
       return res.json({
-        message: action === 'APPROVE' ? `Đã duyệt quán ${id} thành công!` : `Đã từ chối quán ${id}.`,
-        status: action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
+        success: true,
+        message: action === 'APPROVE' ? `Đã duyệt quán ${updated.name} thành công!` : `Đã từ chối quán ${updated.name}.`,
       });
     } catch (error: any) {
+      console.error('Error in approve:', error);
       return res.status(500).json({ error: 'Lỗi duyệt quán.' });
     }
   },
