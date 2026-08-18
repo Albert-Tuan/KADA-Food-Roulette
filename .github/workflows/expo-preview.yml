@@ -1,0 +1,41 @@
+name: Expo Preview
+
+on:
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: npm
+
+      - name: 📦 Install dependencies
+        run: |
+          cd apps/mobile
+          npm ci
+
+      - name: 🏗 Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 🚀 Publish Preview
+        uses: expo/expo-github-action/preview@v8
+        with:
+          command: expo export --platform all
+          working-directory: apps/mobile
+          comment: true

@@ -13,8 +13,9 @@ import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { restaurantApi, Restaurant, placesApi } from '@/api';
 
-// Import Map components from MapProvider which resolves platform-specific files (.web.tsx vs .tsx)
 import { MapView, Marker, PROVIDER_GOOGLE } from '@/components/MapProvider';
+import MapFilterSheet from '@/components/MapFilterSheet';
+import RestaurantList from '@/components/RestaurantList';
 
 // Color scheme per brand/brand.md
 // Region type for map
@@ -50,10 +51,10 @@ const FILTERS: FilterChip[] = [
 ];
 
 const INITIAL_REGION: Region = {
-  latitude: 10.762622,
-  longitude: 106.6822,
-  latitudeDelta: 0.05,
-  longitudeDelta: 0.05,
+  latitude: 10.8465, // Man Thiện, Quận 9
+  longitude: 106.7938,
+  latitudeDelta: 0.02,
+  longitudeDelta: 0.02,
 };
 
 export default function DiscoverScreen() {
@@ -66,6 +67,7 @@ export default function DiscoverScreen() {
   const [filter, setFilter] = useState<FilterChip['value']>('nearby');
   const [seeding, setSeeding] = useState(false);
   const [showList, setShowList] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
 
   useEffect(() => {
     loadRestaurants();
@@ -199,20 +201,42 @@ export default function DiscoverScreen() {
           </View>
         )}
 
+        {/* List View Overlay */}
+        <RestaurantList restaurants={filtered} visible={showList} />
+
         {/* Top controls */}
-        <View className="absolute top-4 left-4 right-4">
-          {/* Seed button */}
+        <View className="absolute top-4 left-4 right-4 flex-row justify-between">
           <TouchableOpacity
-            className="self-end bg-espresso border border-gold rounded-full px-5 py-2.5 shadow-lg"
-            onPress={handleSeedGooglePlaces}
-            disabled={seeding}
+            className="bg-cream-beige border border-borderbrown rounded-full w-12 h-12 items-center justify-center shadow-lg"
+            onPress={() => setShowList(!showList)}
           >
-            {seeding ? (
-              <ActivityIndicator color="#FDF5E6" size="small" />
-            ) : (
-              <Text className="text-cream font-bold text-sm">🌐 Seed Google</Text>
-            )}
+            <Text className="text-xl">{showList ? '🗺️' : '📋'}</Text>
           </TouchableOpacity>
+
+          <View className="flex-row gap-2">
+            {/* Add Restaurant button */}
+            <TouchableOpacity
+              className="bg-cream-beige border border-borderbrown rounded-full w-12 h-12 items-center justify-center shadow-lg"
+              onPress={() => router.push('/discover/add-restaurant' as any)}
+            >
+              <Text className="text-xl">➕</Text>
+            </TouchableOpacity>
+
+            {/* Seed button */}
+            {!showList && (
+              <TouchableOpacity
+                className="bg-espresso border border-gold rounded-full px-5 py-2.5 shadow-lg items-center justify-center"
+                onPress={handleSeedGooglePlaces}
+                disabled={seeding}
+              >
+                {seeding ? (
+                  <ActivityIndicator color="#FDF5E6" size="small" />
+                ) : (
+                  <Text className="text-cream font-bold text-sm">🌐 Seed</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* Selected restaurant card */}
@@ -272,44 +296,55 @@ export default function DiscoverScreen() {
         )}
 
         {/* Bottom panel */}
-        <View className="absolute bottom-0 left-0 right-0 bg-cream-beige rounded-t-4xl shadow-xl border-t border-borderbrown">
-          {/* Handle */}
-          <TouchableOpacity
-            className="items-center py-3"
-            onPress={() => setShowList(!showList)}
-          >
-            <View className="w-12 h-1.5 bg-borderbrown rounded-full" />
-          </TouchableOpacity>
+        {!showList && (
+          <View className="absolute bottom-0 left-0 right-0 bg-cream-beige rounded-t-4xl shadow-xl border-t border-borderbrown">
+            {/* Handle */}
+            <TouchableOpacity
+              className="items-center py-3"
+              onPress={() => setShowFilter(true)}
+            >
+              <View className="w-12 h-1.5 bg-borderbrown rounded-full" />
+              <Text className="text-warmgray text-xs font-bold mt-1">Lọc Nâng Cao</Text>
+            </TouchableOpacity>
 
-          {/* Filter chips */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="px-4 mb-2"
-            contentContainerStyle={{ gap: 8 }}
-          >
-            {FILTERS.map((f) => (
-              <TouchableOpacity
-                key={f.value}
-                className={`px-4 py-2 rounded-2xl border ${filter === f.value ? 'bg-espresso border-espresso' : 'bg-cream border-borderbrown'
-                  }`}
-                onPress={() => setFilter(f.value)}
-              >
-                <Text
-                  className={`text-xs font-bold ${filter === f.value ? 'text-cream' : 'text-espresso'
+            {/* Filter chips */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="px-4 mb-2"
+              contentContainerStyle={{ gap: 8 }}
+            >
+              {FILTERS.map((f) => (
+                <TouchableOpacity
+                  key={f.value}
+                  className={`px-4 py-2 rounded-2xl border ${filter === f.value ? 'bg-espresso border-espresso' : 'bg-cream border-borderbrown'
                     }`}
+                  onPress={() => setFilter(f.value)}
                 >
-                  {f.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  <Text
+                    className={`text-xs font-bold ${filter === f.value ? 'text-cream' : 'text-espresso'
+                      }`}
+                  >
+                    {f.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
 
-          {/* Restaurant count */}
-          <Text className="px-5 text-warmgray text-xs mb-3 font-semibold">
-            Tìm thấy {filtered.length} quán ăn {filter === 'nearby' ? 'trong bán kính 5km' : ''}
-          </Text>
-        </View>
+            {/* Restaurant count */}
+            <Text className="px-5 text-warmgray text-xs mb-3 font-semibold">
+              Tìm thấy {filtered.length} quán ăn {filter === 'nearby' ? 'trong bán kính 5km' : ''}
+            </Text>
+          </View>
+        )}
+
+        {/* Filter Sheet Modal */}
+        <MapFilterSheet
+          visible={showFilter}
+          onClose={() => setShowFilter(false)}
+          filter={filter}
+          setFilter={(f: any) => setFilter(f)}
+        />
       </View>
     </SafeAreaView>
   );

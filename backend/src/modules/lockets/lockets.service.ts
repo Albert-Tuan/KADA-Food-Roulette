@@ -57,7 +57,7 @@ export async function serializeLocket(
 ) {
   const isOwner = record.userId === viewerId;
   const paths = mediaPaths(record);
-  const urls = paths
+  const urls = paths && !record.imageUrl.startsWith('http')
     ? await storage.getUrls(paths, record.visibility)
     : { imageUrl: record.imageUrl, thumbnailUrl: record.thumbnailUrl ?? record.imageUrl };
   return {
@@ -99,9 +99,125 @@ export async function serializeLocket(
   };
 }
 
-const inMemoryLocketStore = new Map<string, LocketRecord>();
+const inMemoryLocketStore = new Map<string, LocketRecord>([
+  [
+    'locket-demo-1',
+    {
+      id: 'locket-demo-1',
+      userId: 'usr_demo_1',
+      restaurantId: 'rest-1',
+      imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=300',
+      imageWidth: 800,
+      imageHeight: 600,
+      imageBytes: 154000,
+      thumbnailBytes: 25000,
+      dishName: 'Cơm Tấm Sườn Bì Chả Đặc Biệt',
+      restaurantName: 'Cơm Tấm Ba Cường',
+      note: 'Sườn nướng mật ong thơm lừng, bì giòn sần sật cực ngon!',
+      rating: 5,
+      tags: ['Cơm Tấm', 'Sài Gòn', 'Ăn Trưa', 'Đậm Đà'],
+      deviceHash: 'a'.repeat(64),
+      capturedAt: new Date(Date.now() - 3600000),
+      exifStripped: true,
+      lat: new Prisma.Decimal(10.762622),
+      lng: new Prisma.Decimal(106.682200),
+      visibility: LocketVisibility.PUBLIC,
+      deletedAt: null,
+      createdAt: new Date(Date.now() - 3600000),
+      updatedAt: new Date(Date.now() - 3600000),
+      user: {
+        id: 'usr_demo_1',
+        publicId: 'foodie_sai_gon',
+        displayNamePublic: 'Ẩm Thực Sài Gòn',
+        avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+      },
+      restaurant: {
+        id: 'rest-1',
+        name: 'Cơm Tấm Ba Cường',
+      },
+    },
+  ],
+  [
+    'locket-demo-2',
+    {
+      id: 'locket-demo-2',
+      userId: 'usr_demo_2',
+      restaurantId: 'rest-2',
+      imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=800',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=300',
+      imageWidth: 800,
+      imageHeight: 600,
+      imageBytes: 160000,
+      thumbnailBytes: 27000,
+      dishName: 'Phở Tái Lăn Hà Nội Béo Ngậy',
+      restaurantName: 'Phở Thìn Lò Đúc Q3',
+      note: 'Nước dùng thanh ngọt, thịt bò xào lăn thơm phức mùi tỏi!',
+      rating: 5,
+      tags: ['Phở', 'Hà Nội', 'Món Nước', 'Buổi Sáng'],
+      deviceHash: 'a'.repeat(64),
+      capturedAt: new Date(Date.now() - 7200000),
+      exifStripped: true,
+      lat: new Prisma.Decimal(10.778000),
+      lng: new Prisma.Decimal(106.691000),
+      visibility: LocketVisibility.PUBLIC,
+      deletedAt: null,
+      createdAt: new Date(Date.now() - 7200000),
+      updatedAt: new Date(Date.now() - 7200000),
+      user: {
+        id: 'usr_demo_2',
+        publicId: 'tuan_anh_dev',
+        displayNamePublic: 'Tuấn Anh',
+        avatarUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=200',
+      },
+      restaurant: {
+        id: 'rest-2',
+        name: 'Phở Thìn Lò Đúc Q3',
+      },
+    },
+  ],
+  [
+    'locket-demo-3',
+    {
+      id: 'locket-demo-3',
+      userId: 'usr_demo_3',
+      restaurantId: 'rest-3',
+      imageUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&q=80&w=800',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&q=80&w=300',
+      imageWidth: 800,
+      imageHeight: 600,
+      imageBytes: 145000,
+      thumbnailBytes: 24000,
+      dishName: 'Bún Bò Huế Chả Cua Đậm Đà',
+      restaurantName: 'Bún Bò Huế Chị Mây',
+      note: 'Vị cay nồng sa tế chuẩn Huế, chả cua dai ngọt tự nhiên.',
+      rating: 5,
+      tags: ['Bún Bò', 'Món Cay', 'Món Huế'],
+      deviceHash: 'a'.repeat(64),
+      capturedAt: new Date(Date.now() - 10800000),
+      exifStripped: true,
+      lat: new Prisma.Decimal(10.785000),
+      lng: new Prisma.Decimal(106.695000),
+      visibility: LocketVisibility.PUBLIC,
+      deletedAt: null,
+      createdAt: new Date(Date.now() - 10800000),
+      updatedAt: new Date(Date.now() - 10800000),
+      user: {
+        id: 'usr_demo_3',
+        publicId: 'gia_binh_locket',
+        displayNamePublic: 'Gia Bình',
+        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+      },
+      restaurant: {
+        id: 'rest-3',
+        name: 'Bún Bò Huế Chị Mây',
+      },
+    },
+  ],
+]);
 
 async function acceptedFriendIds(userId: string): Promise<Set<string>> {
+  if (!userId) return new Set<string>();
   try {
     const friendships = await prisma.friendship.findMany({
       where: {
@@ -129,10 +245,10 @@ class LocketsService {
     const friendIds = await acceptedFriendIds(userId);
     let accessWhere: Prisma.LocketWhereInput;
 
-    if (type === 'MINE') {
-      accessWhere = { userId };
-    } else if (type === 'DISCOVER') {
+    if (!userId || type === 'DISCOVER') {
       accessWhere = { visibility: LocketVisibility.PUBLIC };
+    } else if (type === 'MINE') {
+      accessWhere = { userId };
     } else if (type === 'FRIENDS') {
       accessWhere = {
         userId: { in: [...friendIds] },

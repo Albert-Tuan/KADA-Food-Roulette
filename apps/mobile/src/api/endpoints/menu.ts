@@ -52,7 +52,7 @@ export const menuApi = {
   captureMenu: async (restaurantId: string, imageUris: string[]): Promise<MenuCaptureResponse> => {
     const formData = new FormData();
     formData.append('restaurantId', restaurantId);
-    
+
     for (const imageUri of imageUris) {
       const filename = imageUri.split('/').pop() || 'menu.jpg';
       const match = /\.(\w+)$/.exec(filename);

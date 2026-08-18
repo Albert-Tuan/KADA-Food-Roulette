@@ -7,6 +7,8 @@ import { useAuthStore } from '@/stores';
 export default function ProfileScreen() {
   const profile = useMyProfile();
   const logout = useAuthStore((state) => state.logout);
+  const login = useAuthStore((state) => state.login);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   if (profile.isLoading) {
     return (
@@ -16,16 +18,38 @@ export default function ProfileScreen() {
     );
   }
 
-  if (profile.isError || !profile.data) {
+  if (!isAuthenticated || profile.isError || !profile.data) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center px-8" style={{ backgroundColor: '#fff8ef' }}>
-        <Text className="text-2xl font-extrabold" style={{ color: '#b52330' }}>Chưa tải được profile</Text>
+        <View className="w-24 h-24 rounded-full items-center justify-center mb-4 shadow-lg" style={{ backgroundColor: '#b52330' }}>
+          <Text className="text-5xl">👤</Text>
+        </View>
+        <Text className="text-2xl font-extrabold text-center mb-2" style={{ color: '#b52330' }}>
+          Hồ Sơ Cá Nhân
+        </Text>
+        <Text className="text-center font-medium text-sm leading-6 mb-8" style={{ color: '#8e4e14' }}>
+          Đăng nhập để theo dõi streak, lưu món ăn yêu thích và chia sẻ Taste Board cùng bạn bè!
+        </Text>
         <TouchableOpacity
-          onPress={() => profile.refetch()}
+          onPress={() => router.push('/auth/login')}
           style={{ backgroundColor: '#b52330', borderBottomColor: '#61000e' }}
-          className="rounded-2xl px-7 py-3.5 mt-6 border-b-4 shadow-md items-center justify-center"
+          className="w-full rounded-2xl py-4 border-b-4 shadow-md items-center justify-center mb-3"
         >
-          <Text className="text-white font-extrabold text-base">Thử lại</Text>
+          <Text className="text-white font-extrabold text-base">🔑 Đăng nhập / Đăng ký</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={async () => {
+            try {
+              await login('demo@foodroulette.app', '123456');
+              profile.refetch();
+            } catch {
+              router.push('/auth/login');
+            }
+          }}
+          className="w-full rounded-2xl py-3.5 border-1.5 items-center justify-center bg-white shadow-xs"
+          style={{ borderColor: '#e2bebc' }}
+        >
+          <Text className="font-bold text-base" style={{ color: '#b52330' }}>⚡ Trải nghiệm tài khoản Demo</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
