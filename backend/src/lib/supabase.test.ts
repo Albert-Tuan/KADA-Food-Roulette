@@ -40,6 +40,14 @@ describe('Supabase Storage configuration', () => {
     });
   });
 
+  it('treats .env.example placeholder values as unconfigured', () => {
+    process.env.SUPABASE_URL = 'https://your-project.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'your-backend-only-service-role-key';
+    process.env.SUPABASE_STORAGE_BUCKET = 'lockets';
+
+    expect(readSupabaseStorageConfig()).toBeNull();
+  });
+
   it('rejects a bucket outside the approved Locket boundary', () => {
     process.env.SUPABASE_URL = 'https://project.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'server-secret';
