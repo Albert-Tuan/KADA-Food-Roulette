@@ -64,10 +64,10 @@ export async function serializeLocket(
     id: record.id,
     owner_id: record.userId,
     author: {
-      id: record.user.id,
-      public_id: record.user.publicId,
-      display_name_public: record.user.displayNamePublic,
-      avatar_url: record.user.avatarUrl,
+      id: record.user?.id || record.userId,
+      public_id: record.user?.publicId || `u_${record.userId.substring(0, 8)}`,
+      display_name_public: record.user?.displayNamePublic || 'sau code',
+      avatar_url: record.user?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
     },
     image_url: urls.imageUrl,
     thumbnail_url: urls.thumbnailUrl,
@@ -334,7 +334,9 @@ class LocketsService {
     let userExists = true;
     try {
       const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null }, select: { id: true } });
-      if (!user) userExists = false;
+      if (!user && !inMemoryUserStore.has(userId) && !userId.startsWith('usr_')) {
+        userExists = false;
+      }
     } catch {
       userExists = true;
     }

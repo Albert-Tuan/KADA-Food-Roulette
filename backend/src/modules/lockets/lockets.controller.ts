@@ -23,10 +23,11 @@ function sendError(res: Response, error: unknown, requestId?: string) {
     });
   }
 
-  logger.error('locket_request_failed', { requestId, code: 'LOCKET_INTERNAL', statusCode: 500 });
+  console.error('[Lockets Controller Error]', error);
+  logger.error('locket_request_failed', { requestId, code: 'LOCKET_INTERNAL', statusCode: 500, error: error instanceof Error ? error.message : String(error) });
   return res.status(500).json({
     success: false,
-    error: { code: 'LOCKET_INTERNAL', message: 'Không thể xử lý Locket lúc này.' },
+    error: { code: 'LOCKET_INTERNAL', message: error instanceof Error ? error.message : 'Không thể xử lý Locket lúc này.' },
   });
 }
 
@@ -134,7 +135,7 @@ export const locketsController = {
       });
       return res.status(201).json({
         success: true,
-        data: await serializeLocket(record, req.user!.id),
+        data: await serializeLocket(record, userId),
       });
     } catch (error) {
       return sendError(res, error, req.requestId);
