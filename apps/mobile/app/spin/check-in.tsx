@@ -10,31 +10,42 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSpinStore } from '../../src/stores/spinStore';
 
 export default function PersonalCheckInScreen() {
   const router = useRouter();
-  const { currentResult, grantLuckySpin } = useSpinStore();
+  const { currentResult, grantLuckySpin, markCheckedIn, isCheckedIn } = useSpinStore();
+  const params = useLocalSearchParams<{ tasteBoardId?: string }>();
+  const tasteBoardId = typeof params.tasteBoardId === 'string' ? params.tasteBoardId : undefined;
 
   const [rating, setRating] = useState(5);
   const [dishName, setDishName] = useState('');
   const [reviewNote, setReviewNote] = useState('');
-  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
 
   const restaurantName = currentResult?.name || 'Nhà hàng đã chọn';
   const restaurantCategory = currentResult?.category || 'Ẩm thực';
   const restaurantImage =
     currentResult?.imageUrl ||
     'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500';
+  const alreadyCheckedIn = currentResult ? isCheckedIn(currentResult.id) : false;
+  const hasPostedReview = Boolean(tasteBoardId);
 
   const handleTakePhoto = () => {
-    // Simulated Locket photo capture with EXIF/GPS metadata strip simulation
-    setCapturedPhoto('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600');
-    Alert.alert('📸 Locket Photo Taken!', 'Ảnh đã gắn thẻ GPS & tự động ẩn EXIF cá nhân.');
+    router.push({
+      pathname: '/locket/capture',
+      params: {
+        restaurantId: currentResult?.id,
+        restaurantName: restaurantName,
+        returnTo: 'spin-check-in',
+      },
+    });
   };
 
   const handleConfirmCheckIn = () => {
+    if (currentResult) {
+      markCheckedIn(currentResult.id);
+    }
     grantLuckySpin();
     Alert.alert('🎉 Check-in Thành Công!', 'Bạn đã tích lũy thêm 1 lượt quay Vòng Quay May Mắn!');
     router.push('/spin/lucky-spin');
@@ -50,6 +61,26 @@ export default function PersonalCheckInScreen() {
       ]
     );
   };
+
+  if (alreadyCheckedIn) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.completedCard}>
+          <Text style={styles.completedEmoji}>✅</Text>
+          <Text style={styles.completedTitle}>Quán này đã check-in</Text>
+          <Text style={styles.completedSubtitle}>
+            Bạn đã check-in quán này rồi. Hãy quay vòng mới để khám phá quán khác nhé!
+          </Text>
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => router.replace('/(tabs)/spin')}
+          >
+            <Text style={styles.primaryBtnText}>🎡 Về Trang Chủ</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -77,12 +108,9 @@ export default function PersonalCheckInScreen() {
             Chụp ảnh món ăn trực tiếp tại quán để xác thực review thật.
           </Text>
 
-          {capturedPhoto ? (
-            <View style={styles.previewContainer}>
-              <Image source={{ uri: capturedPhoto }} style={styles.previewImage} />
-              <TouchableOpacity style={styles.retakeBtn} onPress={handleTakePhoto}>
-                <Text style={styles.retakeBtnText}>🔄 Chụp lại</Text>
-              </TouchableOpacity>
+          {hasPostedReview ? (
+            <View style={styles.reviewPostedBadge}>
+              <Text style={styles.reviewPostedText}>✅ Đã đăng review món ăn</Text>
             </View>
           ) : (
             <TouchableOpacity style={styles.cameraBtn} onPress={handleTakePhoto}>
@@ -93,44 +121,46 @@ export default function PersonalCheckInScreen() {
         </View>
 
         {/* Review & Rating Section */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>⭐ Đánh giá món ăn</Text>
-          <Text style={styles.sectionSubtitle}>Chia sẻ trải nghiệm ăn uống với cộng đồng</Text>
+        {!hasPostedReview && (
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>⭐ Đánh giá món ăn</Text>
+            <Text style={styles.sectionSubtitle}>Chia sẻ trải nghiệm ăn uống với cộng đồng</Text>
 
-          {/* Star Rating */}
-          <View style={styles.starRow}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                <Text style={[styles.starIcon, rating >= star ? styles.starSelected : styles.starUnselected]}>
-                  ★
-                </Text>
-              </TouchableOpacity>
-            ))}
-            <Text style={styles.ratingText}>{rating}/5 điểm</Text>
+            {/* Star Rating */}
+            <View style={styles.starRow}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                  <Text style={[styles.starIcon, rating >= star ? styles.starSelected : styles.starUnselected]}>
+                    ★
+                  </Text>
+                </TouchableOpacity>
+              ))}
+              <Text style={styles.ratingText}>{rating}/5 điểm</Text>
+            </View>
+
+            {/* Dish Name Input */}
+            <Text style={styles.inputLabel}>Tên món bạn ăn</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ví dụ: Phở Bò Tái Nạm, Trà Éch..."
+              placeholderTextColor="#A8A29E"
+              value={dishName}
+              onChangeText={setDishName}
+            />
+
+            {/* Review Note Input */}
+            <Text style={styles.inputLabel}>Cảm nhận / Review ngắn</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Nước dùng đậm đà, thịt bò mềm thơm..."
+              placeholderTextColor="#A8A29E"
+              multiline
+              numberOfLines={3}
+              value={reviewNote}
+              onChangeText={setReviewNote}
+            />
           </View>
-
-          {/* Dish Name Input */}
-          <Text style={styles.inputLabel}>Tên món bạn ăn</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ví dụ: Phở Bò Tái Nạm, Trà Éch..."
-            placeholderTextColor="#A8A29E"
-            value={dishName}
-            onChangeText={setDishName}
-          />
-
-          {/* Review Note Input */}
-          <Text style={styles.inputLabel}>Cảm nhận / Review ngắn</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Nước dùng đậm đà, thịt bò mềm thơm..."
-            placeholderTextColor="#A8A29E"
-            multiline
-            numberOfLines={3}
-            value={reviewNote}
-            onChangeText={setReviewNote}
-          />
-        </View>
+        )}
 
         {/* Action Buttons */}
         <TouchableOpacity style={styles.primaryBtn} onPress={handleConfirmCheckIn}>
@@ -253,30 +283,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
-  previewContainer: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  previewImage: {
-    width: '100%',
-    height: 180,
-    borderRadius: 12,
-  },
-  retakeBtn: {
-    position: 'absolute',
-    bottom: 12,
-    right: 12,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  retakeBtnText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
   starRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -344,5 +350,43 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#A8A29E',
     textDecorationLine: 'underline',
+  },
+  reviewPostedBadge: {
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1,
+    borderColor: '#16A34A',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  reviewPostedText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#166534',
+  },
+  completedCard: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  completedEmoji: {
+    fontSize: 56,
+    marginBottom: 12,
+  },
+  completedTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#292524',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  completedSubtitle: {
+    fontSize: 14,
+    color: '#78716C',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
   },
 });

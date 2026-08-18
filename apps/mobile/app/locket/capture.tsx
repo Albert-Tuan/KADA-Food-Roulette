@@ -15,7 +15,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Location from 'expo-location';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCreateLocket, type LocketVisibility } from '@/features/lockets';
 import { useAuthStore } from '@/stores';
@@ -28,6 +28,20 @@ interface CaptureDraft {
   deviceHash: string;
   latitude: number;
   longitude: number;
+}
+
+type CaptureRouteParams = {
+  restaurantId?: string;
+  restaurantName?: string;
+  returnTo?: string;
+};
+
+function getRouteParam(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? value[0] ?? '' : value ?? '';
+}
+
+function isBackendRestaurantId(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 const VISIBILITY_OPTIONS: { value: LocketVisibility; label: string; description: string }[] = [
@@ -68,17 +82,18 @@ function getLocationStatusLabel(isLocating: boolean, location: Location.Location
 }
 
 export default function CaptureLocketScreen() {
+  const routeParams = useLocalSearchParams<CaptureRouteParams>();
+  const restaurantId = getRouteParam(routeParams.restaurantId);
+  const routeRestaurantName = getRouteParam(routeParams.restaurantName);
+  const returnTo = getRouteParam(routeParams.returnTo);
+  const isMockRepository = process.env.EXPO_PUBLIC_USE_MOCK_REPOSITORIES === 'true';
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [locationPermission, setLocationPermission] = useState<Location.PermissionStatus | null>(null);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [cameraFacing, setCameraFacing] = useState<'front' | 'back'>('back');
   const [draft, setDraft] = useState<CaptureDraft | null>(null);
   const [dishName, setDishName] = useState('');
-  const [restaurantName, setRestaurantName] = useState('');
   const [note, setNote] = useState('');
-  const [rating, setRating] = useState(5);
-  const [tagInput, setTagInput] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
   const [visibility, setVisibility] = useState<LocketVisibility>('FRIENDS');
   const [isCapturing, setIsCapturing] = useState(false);
   const [isLocating, setIsLocating] = useState(true);
@@ -159,35 +174,18 @@ export default function CaptureLocketScreen() {
     }
   };
 
-  const addTag = () => {
-    const normalized = tagInput.trim().replace(/^#/, '');
-    if (!normalized) return;
-    if (normalized.length > 24) {
-      setFormError('Mỗi tag tối đa 24 ký tự.');
-      return;
-    }
-    if (tags.some((tag) => tag.toLocaleLowerCase('vi') === normalized.toLocaleLowerCase('vi'))) {
-      setFormError('Tag này đã có rồi.');
-      return;
-    }
-    if (tags.length >= 5) {
-      setFormError('Bạn có thể thêm tối đa 5 tag.');
-      return;
-    }
-    setTags((current) => [...current, normalized]);
-    setTagInput('');
-    setFormError('');
-  };
-
   const validateForm = (): boolean => {
     if (!draft?.uri) return setFormError('Bạn cần chụp ảnh trước khi đăng.'), false;
+    if (!restaurantId && returnTo === 'spin-check-in') {
+      return setFormError('Không xác định được nhà hàng từ Spin. Bạn quay lại và chọn quán lại nhé.'), false;
+    }
+    if (restaurantId && !isMockRepository && !isBackendRestaurantId(restaurantId)) {
+      return setFormError('Nhà hàng từ Spin chưa có mã hợp lệ để liên kết. Bạn thử lại từ dữ liệu nhà hàng thật nhé.'), false;
+    }
     if (!Number.isFinite(draft.latitude) || !Number.isFinite(draft.longitude)) {
       return setFormError('Cần vị trí để đăng Taste Board.'), false;
     }
-    if (!dishName.trim()) return setFormError('Bạn nhập tên món nhé.'), false;
     if (dishName.trim().length > 80) return setFormError('Tên món tối đa 80 ký tự.'), false;
-    if (restaurantName.trim().length > 120) return setFormError('Tên nhà hàng tối đa 120 ký tự.'), false;
-    if (rating < 1 || rating > 5) return setFormError('Rating phải từ 1 đến 5.'), false;
     if (note.length > MAX_CAPTION_LENGTH) {
       return setFormError(`Note tối đa ${MAX_CAPTION_LENGTH} ký tự.`), false;
     }
@@ -212,20 +210,23 @@ export default function CaptureLocketScreen() {
           // Continue in guest mode
         }
       }
-      await createLocket.mutateAsync({
+      const created = await createLocket.mutateAsync({
         localImageUri: draft.uri,
         mimeType: 'image/jpeg',
-        dishName: dishName.trim(),
-        restaurantName: restaurantName.trim() || undefined,
+        dishName: restaurantId ? dishName.trim() || undefined : undefined,
+        restaurantName: restaurantId ? (routeRestaurantName || undefined) : undefined,
+        restaurantId: restaurantId || undefined,
         note: note.trim() || undefined,
-        rating,
-        tags,
         visibility,
         capturedAt: draft.capturedAt,
         location: { latitude: draft.latitude, longitude: draft.longitude },
         deviceHash: draft.deviceHash,
       });
-      router.replace('/(tabs)/lockets' as any);
+      if (returnTo === 'spin-check-in') {
+        router.replace({ pathname: '/spin/check-in', params: { tasteBoardId: created.id } });
+      } else {
+        router.replace('/(tabs)/lockets' as any);
+      }
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Không thể đăng Taste Board. Bạn thử lại nhé.');
     }
@@ -274,77 +275,39 @@ export default function CaptureLocketScreen() {
 
             <Image source={{ uri: draft.uri }} className="w-full aspect-square rounded-3xl bg-secondary-100" />
 
-            <Field label="Tên món *">
-              <TextInput
-                value={dishName}
-                onChangeText={setDishName}
-                placeholder="Ví dụ: Bún bò Huế"
-                placeholderTextColor="#9C8B7A"
-                maxLength={80}
-                className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900"
-              />
-            </Field>
+            {restaurantId ? (
+              <>
+                <View className="bg-primary-50 border border-primary-200 rounded-xl p-4">
+                  <Text className="text-secondary-500 text-sm">Đang review tại</Text>
+                  <Text className="text-lg font-bold text-secondary-900">
+                    {routeRestaurantName || 'Nhà hàng đã chọn'}
+                  </Text>
+                </View>
 
-            <Field label="Nhà hàng">
-              <TextInput
-                value={restaurantName}
-                onChangeText={setRestaurantName}
-                placeholder="Tên nhà hàng"
-                placeholderTextColor="#9C8B7A"
-                maxLength={120}
-                className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900"
-              />
-            </Field>
+                <Field label="Món ăn (không bắt buộc)">
+                  <TextInput
+                    value={dishName}
+                    onChangeText={setDishName}
+                    placeholder="Ví dụ: Bún bò Huế"
+                    placeholderTextColor="#9C8B7A"
+                    maxLength={80}
+                    className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900"
+                  />
+                </Field>
+              </>
+            ) : null}
 
-            <Field label="Rating">
-              <View className="flex-row gap-3">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <TouchableOpacity key={value} onPress={() => setRating(value)} accessibilityLabel={`${value} sao`}>
-                    <Text className={`text-3xl ${value <= rating ? 'text-primary' : 'text-secondary-200'}`}>★</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </Field>
-
-            <Field label={`Note · ${note.length}/${MAX_CAPTION_LENGTH}`}>
+            <Field label={`Review · ${note.length}/${MAX_CAPTION_LENGTH}`}>
               <TextInput
                 value={note}
                 onChangeText={setNote}
-                placeholder="Món này có gì đáng nhớ?"
+                placeholder={restaurantId ? 'Cảm nhận của bạn về món ăn này?' : 'Chia sẻ khoảnh khắc này với bạn bè nhé.'}
                 placeholderTextColor="#9C8B7A"
                 maxLength={MAX_CAPTION_LENGTH}
                 multiline
                 textAlignVertical="top"
                 className="min-h-24 bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900"
               />
-            </Field>
-
-            <Field label="Tags">
-              <View className="flex-row gap-2">
-                <TextInput
-                  value={tagInput}
-                  onChangeText={setTagInput}
-                  onSubmitEditing={addTag}
-                  placeholder="Thêm tag"
-                  placeholderTextColor="#9C8B7A"
-                  maxLength={25}
-                  className="flex-1 bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900"
-                />
-                <TouchableOpacity onPress={addTag} className="bg-secondary-800 rounded-xl px-5 items-center justify-center">
-                  <Text className="text-white font-semibold">Thêm</Text>
-                </TouchableOpacity>
-              </View>
-              <View className="flex-row flex-wrap gap-2 mt-2">
-                {tags.map((tag) => (
-                  <TouchableOpacity
-                    key={tag.toLocaleLowerCase('vi')}
-                    onPress={() => setTags((current) => current.filter((item) => item !== tag))}
-                    className="bg-primary-50 border border-primary-200 rounded-full px-3 py-2"
-                  >
-                    <Text className="text-primary-800">#{tag} ×</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
             </Field>
 
             <Field label="Ai có thể xem?">
