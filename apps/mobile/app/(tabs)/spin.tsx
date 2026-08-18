@@ -7,6 +7,7 @@ import { RewardCard, RewardCardEmpty } from '../../src/components/RewardCard';
 import { FoodRoulette } from '../../src/features/spin/components/FoodRoulette';
 import { SpinFilterSheet } from '../../src/features/spin/components/SpinFilterSheet';
 import { useSpinStore } from '../../src/stores/spinStore';
+import { restaurantApi, Restaurant as ApiRestaurant } from '../../src/api/endpoints/restaurants';
 import type { Restaurant } from '../../src/features/spin/types';
 
 interface Reward {
@@ -24,9 +25,26 @@ const MOCK_REWARDS: Reward[] = [
   { id: '2', type: 'item', title: 'Trà đá Free', description: 'Mỗi check-in', expiresIn: 'Hôm nay', icon: '🥤', variant: 'green' },
 ];
 
+const FALLBACK_IMAGE_URL =
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400';
+
+const toSpinRestaurant = (r: ApiRestaurant): Restaurant => {
+  const priceLevel = r.priceLevel && r.priceLevel >= 1 && r.priceLevel <= 4 ? r.priceLevel : 1;
+  return {
+    id: r.id,
+    name: r.name,
+    category: r.category ?? 'Ẩm thực',
+    rating: r.ratingAvg ?? 0,
+    totalReviews: r.ratingCount ?? 0,
+    distance: (r.distance ?? 0) * 1000,
+    priceLevel: priceLevel as 1 | 2 | 3 | 4,
+    imageUrl: r.photos?.[0] ?? FALLBACK_IMAGE_URL,
+  };
+};
+
 export default function SpinScreen() {
   const router = useRouter();
-  const { candidates, filters, customCandidates, setFilters, addCustomCandidate, removeCustomCandidate, setCurrentResult, resetStore, fetchNearbyCandidates, spin, currentResult } = useSpinStore();
+  const { candidates, filters, customCandidates, setFilters, setCandidates, addCustomCandidate, removeCustomCandidate, setCurrentResult, resetStore, fetchNearbyCandidates, spin, currentResult } = useSpinStore();
   const [rewards] = useState<Reward[]>(MOCK_REWARDS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
@@ -42,6 +60,29 @@ export default function SpinScreen() {
     addCustomCandidate(newFoodInput.trim());
     setNewFoodInput('');
   };
+
+  const isMockRepository = process.env.EXPO_PUBLIC_USE_MOCK_REPOSITORIES === 'true';
+
+  useEffect(() => {
+    if (isMockRepository) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await restaurantApi.list({ status: 'APPROVED' });
+        if (cancelled) return;
+        setCandidates(list.map(toSpinRestaurant));
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Load spin candidates failed:', error);
+        setCandidates([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isMockRepository, setCandidates]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {

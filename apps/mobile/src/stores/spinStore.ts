@@ -6,12 +6,14 @@ import { mapBackendRestaurantToSpinCandidate } from '../features/spin/utils/mapp
 
 interface SpinState {
   filters: SpinFilters;
+  baseCandidates: Restaurant[];
   candidates: Restaurant[];
   customCandidates: Restaurant[];
   currentResult: Restaurant | null;
   luckySpinCount: number;
   checkedInRestaurantIds: string[];
   setFilters: (filters: Partial<SpinFilters>) => void;
+  setCandidates: (items: Restaurant[]) => void;
   addCustomCandidate: (item: string | { name: string; category?: string; imageUrl?: string }) => void;
   removeCustomCandidate: (id: string) => void;
   setCurrentResult: (restaurant: Restaurant | null) => void;
@@ -35,10 +37,8 @@ const MOCK_RESTAURANTS: Restaurant[] = [
   { id: '8', name: 'Trà sữa KOI', category: 'Đồ uống', rating: 4.8, totalReviews: 900, distance: 800, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400', dietary: ['Ăn chay'] },
 ];
 
-let API_CANDIDATES: Restaurant[] = [...MOCK_RESTAURANTS];
-
-const applyFilters = (filters: SpinFilters, custom: Restaurant[], apiData: Restaurant[]) => {
-  const filtered = apiData.filter(r => {
+const applyFilters = (filters: SpinFilters, base: Restaurant[], custom: Restaurant[]) => {
+  const filtered = base.filter(r => {
     if (r.distance > filters.maxDistance) return false;
     if (r.priceLevel > filters.maxPrice) return false;
     if (filters.categories.length > 0 && !filters.categories.includes(r.category)) return false;
@@ -59,7 +59,8 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     dietary: [],
   },
   customCandidates: [],
-  candidates: [],
+  baseCandidates: MOCK_RESTAURANTS,
+  candidates: MOCK_RESTAURANTS,
   currentResult: null,
   luckySpinCount: 1,
   checkedInRestaurantIds: [],
@@ -76,9 +77,14 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     const updatedFilters = { ...state.filters, ...newFilters };
     return {
       filters: updatedFilters,
-      candidates: applyFilters(updatedFilters, state.customCandidates, API_CANDIDATES),
+      candidates: applyFilters(updatedFilters, state.baseCandidates, state.customCandidates),
     };
   }),
+
+  setCandidates: (items) => set((state) => ({
+    baseCandidates: items,
+    candidates: applyFilters(state.filters, items, state.customCandidates),
+  })),
 
   addCustomCandidate: (item) => set((state) => {
     let candidateName = 'Món ăn';
@@ -106,7 +112,7 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     const newCustoms = [...state.customCandidates, newCustom];
     return {
       customCandidates: newCustoms,
-      candidates: applyFilters(state.filters, newCustoms, API_CANDIDATES),
+      candidates: applyFilters(state.filters, state.baseCandidates, newCustoms),
     };
   }),
 
@@ -114,7 +120,7 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     const newCustoms = state.customCandidates.filter(c => c.id !== id);
     return {
       customCandidates: newCustoms,
-      candidates: applyFilters(state.filters, newCustoms, API_CANDIDATES),
+      candidates: applyFilters(state.filters, state.baseCandidates, newCustoms),
     };
   }),
 
@@ -124,9 +130,9 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     try {
       // Simulate network delay for Mock Data
       await new Promise(resolve => setTimeout(resolve, 800));
-      API_CANDIDATES = [...MOCK_RESTAURANTS];
       set((state) => ({
-        candidates: applyFilters(state.filters, state.customCandidates, API_CANDIDATES)
+        baseCandidates: MOCK_RESTAURANTS,
+        candidates: applyFilters(state.filters, MOCK_RESTAURANTS, state.customCandidates)
       }));
     } catch (error) {
       console.error('Failed to fetch nearby restaurants:', error);
@@ -147,6 +153,6 @@ export const useSpinStore = create<SpinState>((set, get) => ({
 
   resetStore: () => set((state) => ({
     customCandidates: [],
-    candidates: applyFilters(state.filters, [], API_CANDIDATES),
+    candidates: applyFilters(state.filters, state.baseCandidates, []),
   })),
 }));
