@@ -38,6 +38,6 @@ jobs:
       - name: 🚀 Publish Preview
         uses: expo/expo-github-action/preview@v8
         with:
-          command: expo export --platform all
+          command: eas update --auto
           working-directory: apps/mobile
           comment: true
