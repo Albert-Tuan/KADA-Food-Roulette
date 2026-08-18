@@ -23,7 +23,7 @@ RUN npm run build
 
 FROM builder AS migrator
 
-CMD ["npm", "run", "db:migrate"]
+CMD ["npx", "prisma", "db", "push", "--accept-data-loss"]
 
 FROM builder AS production-deps
 

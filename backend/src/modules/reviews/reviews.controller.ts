@@ -116,6 +116,22 @@ export const reviewsController = {
     }
   },
 
+  // POST /api/v1/reviews/upload
+  // Upload a photo for a review
+  uploadPhoto: async (req: AuthRequest, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'Không tìm thấy file ảnh' });
+      }
+      // Return the relative URL so frontend can store it
+      const photoUrl = `/uploads/${req.file.filename}`;
+      return res.status(200).json({ success: true, url: photoUrl });
+    } catch (error: any) {
+      console.error('[REVIEWS] uploadPhoto error:', error);
+      return res.status(500).json({ success: false, error: 'Lỗi upload ảnh' });
+    }
+  },
+
   // POST /api/v1/reviews
   // Create a new review (requires auth)
   create: async (req: AuthRequest, res: Response) => {

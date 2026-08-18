@@ -1,8 +1,3 @@
-// Food Roulette - Prisma Schema v5.0 REVIEWED & OPTIMIZED
-// Generated from: docs/food_roulette_erd_v5.0_reviewed.xml
-// Version: 5.0 | Date: 2026-08-06 | 15 entities
-// BCNF/4NF compliant | Critical Issues Fixed
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,66 +7,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================================
-// P0 - CORE TABLES (13 tables)
-// ============================================================
-
-// User - Authentication and Profile
-// v5.0: Added phone, isOnboarded, lastActiveAt
 model User {
-  id                 String    @id @default(uuid())
-  email              String    @unique @db.VarChar(255)
-  passwordHash       String    @map("password_hash") @db.VarChar(255)
-  passwordVersion    Int       @default(1) @map("password_version")
-  displayNamePrivate String    @map("display_name_private") @db.VarChar(50)
-  displayNamePublic  String    @map("display_name_public") @db.VarChar(50)
-  publicId           String    @unique @map("public_id") @db.VarChar(20)
-  avatarUrl          String?   @map("avatar_url") @db.VarChar(500)
-  bio                String?   @db.VarChar(160)
-  phone              String?   @map("phone") @db.VarChar(20) // v5.0: SMS auth future
-  role               UserRole  @default(USER)
-  subscriptionTier   SubTier   @default(FREE) @map("subscription_tier")
-  isOnboarded        Boolean   @default(false) @map("is_onboarded") // v5.0: onboarding progress
-  lastActiveAt       DateTime? @map("last_active_at") // v5.0: inactive detection
-  savedRestaurants   Json?     @map("saved_restaurants") // P2: TasteBoard
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-  deletedAt          DateTime? @map("deleted_at")
-
-  friendshipsRequested  Friendship[]      @relation("FriendshipRequester")
+  id                    String            @id @default(uuid())
+  email                 String            @unique @db.VarChar(255)
+  passwordHash          String            @map("password_hash") @db.VarChar(255)
+  passwordVersion       Int               @default(1) @map("password_version")
+  displayNamePrivate    String            @map("display_name_private") @db.VarChar(50)
+  displayNamePublic     String            @map("display_name_public") @db.VarChar(50)
+  publicId              String            @unique @map("public_id") @db.VarChar(20)
+  avatarUrl             String?           @map("avatar_url") @db.VarChar(500)
+  bio                   String?           @db.VarChar(160)
+  phone                 String?           @map("phone") @db.VarChar(20)
+  role                  UserRole          @default(USER)
+  subscriptionTier      SubTier           @default(FREE) @map("subscription_tier")
+  isOnboarded           Boolean           @default(false) @map("is_onboarded")
+  lastActiveAt          DateTime?         @map("last_active_at")
+  savedRestaurants      Json?             @map("saved_restaurants")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+  deletedAt             DateTime?         @map("deleted_at")
+  checkIns              CheckIn[]
+  corporateMemberships  CorporateMember?
   friendshipsReceived   Friendship[]      @relation("FriendshipAddressee")
+  friendshipsRequested  Friendship[]      @relation("FriendshipRequester")
   groupMemberships      GroupMember[]
+  lockets               Locket[]
+  menusCaptured         Menu[]            @relation("MenuCapturer")
+  notifications         Notification[]
+  photosUploaded        RestaurantPhoto[] @relation("PhotoUploader")
+  partnerVisits         RestaurantVisit[]
   spinSessionsInitiated SpinSession[]     @relation("SpinInitiator")
   spinSessionsPersonal  SpinSession[]     @relation("SpinPersonal")
-  votes                 Vote[]
   spinWallet            SpinWallet?
-  lockets               Locket[]
-  checkIns              CheckIn[]
-  photosUploaded        RestaurantPhoto[] @relation("PhotoUploader")
-  menusCaptured         Menu[]            @relation("MenuCapturer")
   preference            UserPreference?
-  partnerVisits          RestaurantVisit[] // B2B: Restaurant visits
-  corporateMemberships   CorporateMember[] // B2B: Corporate memberships
-  notifications          Notification[]
+  votes                 Vote[]
+  reviews               Review[]
 
   @@index([subscriptionTier])
-  @@index([deletedAt]) // v5.0: soft delete filter
-  @@index([lastActiveAt]) // v5.0: inactive user queries
+  @@index([deletedAt])
+  @@index([lastActiveAt])
   @@map("users")
 }
 
-enum UserRole {
-  USER
-  STEWARD
-  ADMIN
-}
-
-enum SubTier {
-  FREE
-  PREMIUM
-}
-
-// Friendship - Social Foundation
 model Friendship {
   id          String           @id @default(uuid())
   requesterId String           @map("requester_id")
@@ -79,205 +56,151 @@ model Friendship {
   status      FriendshipStatus @default(PENDING)
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @updatedAt @map("updated_at")
-
-  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
-  addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  addressee   User             @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  requester   User             @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
 
   @@unique([requesterId, addresseeId])
   @@index([requesterId, status])
   @@index([addresseeId, status])
-  @@index([status]) // v5.0: Find pending requests
+  @@index([status])
   @@map("friendships")
 }
 
-enum FriendshipStatus {
-  PENDING
-  ACCEPTED
-  BLOCKED
-}
-
-// Restaurant - Main entity with geo support
-// v5.0: Added googlePlaceId, rating, phone, Decimal lat/lng
 model Restaurant {
-  id            String           @id @default(uuid())
-  name          String           @db.VarChar(255)
-  address       String?          @db.VarChar(500)
-  googlePlaceId String?          @unique @map("google_place_id") // v5.0: Google Places sync
-  lat           Decimal?         @db.Decimal(10, 8) // v5.0: Fixed precision (was Float)
-  lng           Decimal?         @db.Decimal(11, 8) // v5.0: Fixed precision (was Float)
-  source        RestaurantSource @default(USER_SUBMITTED)
-  category      String?          @db.VarChar(100)
-  priceLevel    Int?             @map("price_level")
-  rating        Float?           @default(0) // v5.0: Display rating
-  phone         String?          @map("phone") @db.VarChar(20) // v5.0: Contact info
-  status        RestaurantStatus @default(PENDING)
-  createdAt     DateTime         @default(now()) @map("created_at")
-  updatedAt     DateTime         @updatedAt @map("updated_at")
-  deletedAt     DateTime?        @map("deleted_at")
-
-  hours          RestaurantHours[]
-  photos         RestaurantPhoto[]
-  lockets        Locket[]
+  id             String                 @id @default(uuid())
+  name           String                 @db.VarChar(255)
+  address        String?                @db.VarChar(500)
+  googlePlaceId  String?                @unique @map("google_place_id")
+  lat            Decimal?               @db.Decimal(10, 8)
+  lng            Decimal?               @db.Decimal(11, 8)
+  source         RestaurantSource       @default(USER_SUBMITTED)
+  category       String?                @db.VarChar(100)
+  priceLevel     Int?                   @map("price_level")
+  rating         Float?                 @default(0)
+  phone          String?                @map("phone") @db.VarChar(20)
+  status         RestaurantStatus       @default(PENDING)
+  createdAt      DateTime               @default(now()) @map("created_at")
+  updatedAt      DateTime               @updatedAt @map("updated_at")
+  deletedAt      DateTime?              @map("deleted_at")
   checkIns       CheckIn[]
-  spinResults    SpinSession[]          @relation("SpinResult")
-  spinCandidates SpinSessionCandidate[]
+  lockets        Locket[]
   menus          Menu[]
-  partner           RestaurantPartner? // B2B: Restaurant Partner relation
+  hours          RestaurantHours[]
+  partner        RestaurantPartner?
+  photos         RestaurantPhoto[]
+  spinCandidates SpinSessionCandidate[]
+  spinResults    SpinSession[]          @relation("SpinResult")
+  reviews        Review[]
 
   @@index([status])
   @@index([status, category])
-  @@index([source]) // v5.0: Filter by Google Places vs User Submitted
-  @@index([deletedAt]) // v5.0: Soft delete filter
-  // Note: For geo queries, use application-level Haversine formula
-  // or MySQL 8.0+ spatial indexes with generated POINT column
+  @@index([source])
+  @@index([deletedAt])
   @@map("restaurants")
 }
 
-enum RestaurantSource {
-  GOOGLE_PLACES
-  USER_SUBMITTED
-}
-
-enum RestaurantStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-// RestaurantHours - 4NF normalized
-// v5.0: Fixed DateTime -> VARCHAR(5) for MySQL compatibility
 model RestaurantHours {
-  id           String  @id @default(uuid())
-  restaurantId String  @map("restaurant_id")
-  dayOfWeek    Int     @map("day_of_week") // 0=Sunday, 6=Saturday
-  openTime     String? @db.VarChar(5) // v5.0: Fixed - "HH:MM" format (was DateTime)
-  closeTime    String? @db.VarChar(5) // v5.0: Fixed - "HH:MM" format (was DateTime)
-  isClosed     Boolean @default(false) @map("is_closed")
-
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  id           String     @id @default(uuid())
+  restaurantId String     @map("restaurant_id")
+  dayOfWeek    Int        @map("day_of_week")
+  openTime     String?    @db.VarChar(5)
+  closeTime    String?    @db.VarChar(5)
+  isClosed     Boolean    @default(false) @map("is_closed")
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   @@unique([restaurantId, dayOfWeek])
   @@index([restaurantId])
   @@map("restaurant_hours")
 }
 
-// RestaurantPhoto - 4NF normalized
 model RestaurantPhoto {
-  id           String    @id @default(uuid())
-  restaurantId String    @map("restaurant_id")
-  photoUrl     String    @db.VarChar(500)
-  displayOrder Int       @default(0) @map("display_order")
-  caption      String?   @db.VarChar(255)
-  uploadedBy   String?   @map("uploaded_by")
-  uploadedAt   DateTime? @map("uploaded_at")
-
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  uploader   User?      @relation("PhotoUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
+  id           String     @id @default(uuid())
+  restaurantId String     @map("restaurant_id")
+  photoUrl     String     @db.VarChar(500)
+  displayOrder Int        @default(0) @map("display_order")
+  caption      String?    @db.VarChar(255)
+  uploadedBy   String?    @map("uploaded_by")
+  uploadedAt   DateTime?  @map("uploaded_at")
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  uploader     User?      @relation("PhotoUploader", fields: [uploadedBy], references: [id])
 
   @@unique([restaurantId, photoUrl])
   @@index([restaurantId, displayOrder])
+  @@index([uploadedBy], map: "restaurant_photos_uploaded_by_fkey")
   @@map("restaurant_photos")
 }
 
-// Group - For group spin sessions
 model Group {
-  id         String      @id @default(uuid())
-  name       String?     @db.VarChar(100)
-  maxMembers Int         @default(20) @map("max_members")
-  status     GroupStatus @default(WAITING)
-  createdAt  DateTime    @default(now()) @map("created_at")
-  updatedAt  DateTime    @updatedAt @map("updated_at")
-  deletedAt  DateTime?   @map("deleted_at")
-
+  id              String                 @id @default(uuid())
+  name            String?                @db.VarChar(100)
+  maxMembers      Int                    @default(20) @map("max_members")
+  status          GroupStatus            @default(WAITING)
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+  deletedAt       DateTime?              @map("deleted_at")
+  recommendations CircleRecommendation[]
   members         GroupMember[]
   spinSessions    SpinSession[]
-  recommendations CircleRecommendation[]
 
-  @@index([status]) // v5.0: Active groups
-  @@index([deletedAt]) // v5.0: Soft delete
+  @@index([status])
+  @@index([deletedAt])
   @@map("groups")
 }
 
-enum GroupStatus {
-  WAITING
-  SPINNING
-  VOTING
-  DONE
-  CANCELLED
-}
-
-// GroupMember - Membership with host role
-// v5.0: Added invitedBy field
 model GroupMember {
   id        String       @id @default(uuid())
   groupId   String       @map("group_id")
   userId    String       @map("user_id")
-  invitedBy String?      @map("invited_by") // v5.0: Invitation tracking
+  invitedBy String?      @map("invited_by")
   role      GroupRole    @default(MEMBER)
   status    MemberStatus @default(PENDING)
   joinedAt  DateTime     @default(now()) @map("joined_at")
   updatedAt DateTime     @updatedAt @map("updated_at")
-
-  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group     Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId])
   @@index([groupId, status])
-  @@index([userId]) // v5.0: User's groups lookup
+  @@index([userId])
   @@map("group_members")
 }
 
-enum GroupRole {
-  MEMBER
-  HOST
-}
-
-enum MemberStatus {
-  PENDING
-  ACCEPTED
-  VETO
-}
-
-// SpinSession - Individual or group spin
-// v5.0: Added categoryFilter, status index, createdAt index
 model SpinSession {
-  id             String     @id @default(uuid())
-  groupId        String?    @map("group_id")
-  userId         String?    @map("user_id")
-  initiatorId    String     @map("initiator_id")
-  categoryFilter String?    @map("category_filter") @db.VarChar(100) // v5.0: Filter restaurants
-  resultId       String?    @map("result_id")
-  status         SpinStatus @default(ACTIVE)
-  createdAt      DateTime   @default(now()) @map("created_at")
-  completedAt    DateTime?  @map("completed_at")
-
-  group          Group?                 @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  user           User?                  @relation("SpinPersonal", fields: [userId], references: [id], onDelete: SetNull)
-  initiator      User                   @relation("SpinInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
-  result         Restaurant?            @relation("SpinResult", fields: [resultId], references: [id], onDelete: SetNull)
-  votes          Vote[]
-  candidates     SpinSessionCandidate[] // v5.0: Junction table
+  id             String                 @id @default(uuid())
+  groupId        String?                @map("group_id")
+  userId         String?                @map("user_id")
+  initiatorId    String                 @map("initiator_id")
+  categoryFilter String?                @map("category_filter") @db.VarChar(100)
+  resultId       String?                @map("result_id")
+  status         SpinStatus             @default(ACTIVE)
+  createdAt      DateTime               @default(now()) @map("created_at")
+  completedAt    DateTime?              @map("completed_at")
   recommendation CircleRecommendation?
+  candidates     SpinSessionCandidate[]
+  group          Group?                 @relation(fields: [groupId], references: [id])
+  initiator      User                   @relation("SpinInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  result         Restaurant?            @relation("SpinResult", fields: [resultId], references: [id])
+  user           User?                  @relation("SpinPersonal", fields: [userId], references: [id])
+  votes          Vote[]
 
   @@index([groupId])
   @@index([userId])
   @@index([initiatorId])
-  @@index([status]) // v5.0: Active sessions
-  @@index([createdAt]) // v5.0: Time-based queries
+  @@index([status])
+  @@index([createdAt])
+  @@index([resultId], map: "spin_sessions_result_id_fkey")
   @@map("spin_sessions")
 }
 
-// SpinSessionCandidate - v5.0 NEW: Junction table replaces candidateIds JSON
 model SpinSessionCandidate {
-  id            String   @id @default(uuid())
-  spinSessionId String   @map("spin_session_id")
-  restaurantId  String   @map("restaurant_id")
-  displayOrder  Int      @default(0) @map("display_order")
-  isSelected    Boolean  @default(false) @map("is_selected") // Winner flag
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  spinSession SpinSession @relation(fields: [spinSessionId], references: [id], onDelete: Cascade)
-  restaurant  Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  id            String      @id @default(uuid())
+  spinSessionId String      @map("spin_session_id")
+  restaurantId  String      @map("restaurant_id")
+  displayOrder  Int         @default(0) @map("display_order")
+  isSelected    Boolean     @default(false) @map("is_selected")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  restaurant    Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  spinSession   SpinSession @relation(fields: [spinSessionId], references: [id], onDelete: Cascade)
 
   @@unique([spinSessionId, restaurantId])
   @@index([spinSessionId])
@@ -285,102 +208,66 @@ model SpinSessionCandidate {
   @@map("spin_session_candidates")
 }
 
-enum SpinStatus {
-  ACTIVE
-  VOTING
-  COMPLETED
-  CANCELLED
-}
-
-// Vote - Group voting on spin result
-// v5.0: Added [spinSessionId, value] index for vote tally
 model Vote {
-  id            String    @id @default(uuid())
-  spinSessionId String    @map("spin_session_id")
-  userId        String    @map("user_id")
+  id            String      @id @default(uuid())
+  spinSessionId String      @map("spin_session_id")
+  userId        String      @map("user_id")
   value         VoteValue
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-
-  spinSession SpinSession @relation(fields: [spinSessionId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  spinSession   SpinSession @relation(fields: [spinSessionId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([spinSessionId, userId])
-  @@index([spinSessionId, value]) // v5.0: Vote tally optimization
+  @@index([spinSessionId, value])
+  @@index([userId], map: "votes_user_id_fkey")
   @@map("votes")
 }
 
-enum VoteValue {
-  ACCEPT
-  VETO
-}
-
-// SpinWallet - User's spin balance (1:1 with User)
-// v5.0: Fixed Int -> BigInt for overflow, added version for optimistic locking
 model SpinWallet {
-  id        String   @id @default(uuid())
-  userId    String   @unique @map("user_id")
-  balance   BigInt   @default(0) // v5.0: Fixed - BigInt for overflow (was Int)
-  version   Int      @default(0) @map("version") // v5.0: Optimistic locking
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id        String    @id @default(uuid())
+  userId    String    @unique @map("user_id")
+  balance   BigInt    @default(0)
+  version   Int       @default(0) @map("version")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  logs      SpinLog[]
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  logs SpinLog[]
-
-  // DB TRIGGER: balance >= 0 (see docs/DB_SCHEMA_REVIEW_v5.0.md)
   @@map("spin_wallets")
 }
 
-// SpinLog - Transaction history
-// v5.0: Fixed Int -> BigInt for amount
 model SpinLog {
   id           String     @id @default(uuid())
   walletId     String     @map("wallet_id")
-  amount       BigInt // v5.0: Fixed - BigInt for overflow (was Int)
+  amount       BigInt
   source       SpinSource
   purchaseId   String?    @map("purchase_id")
   adWatchLogId String?    @map("ad_watch_log_id")
   giftId       String?    @map("gift_id")
   referralId   String?    @map("referral_id")
   createdAt    DateTime   @default(now()) @map("created_at")
-
-  wallet   SpinWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  purchase SpinPack?  @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  purchase     SpinPack?  @relation(fields: [purchaseId], references: [id])
+  wallet       SpinWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId, createdAt])
   @@index([purchaseId])
   @@map("spin_logs")
 }
 
-enum SpinSource {
-  PURCHASE
-  AD_WATCH
-  REFERRAL
-  REWARD
-}
-
-// SpinPack - Revenue model
 model SpinPack {
-  id        String   @id @default(uuid())
-  name      String   @db.VarChar(100)
+  id        String    @id @default(uuid())
+  name      String    @db.VarChar(100)
   spins     Int
-  priceVND  Int      @map("price_vnd")
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-
+  priceVND  Int       @map("price_vnd")
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
   purchases SpinLog[]
 
   @@index([isActive])
   @@map("spin_packs")
 }
 
-// ============================================================
-// P1 - IMPORTANT TABLES (2 tables)
-// ============================================================
-
-// Locket - Camera-only photo capture
-// v5.0: Added exifStripped, Decimal lat/lng, visibility index
 model Locket {
   id             String           @id @default(uuid())
   userId         String           @map("user_id")
@@ -395,55 +282,330 @@ model Locket {
   restaurantName String?          @map("restaurant_name") @db.VarChar(120)
   note           String?          @db.VarChar(280)
   rating         Int?
-  tags           Json             @default("[]")
+  tags           Json?
   deviceHash     String           @map("device_hash") @db.VarChar(64)
   capturedAt     DateTime         @map("captured_at")
-  exifStripped   Boolean          @default(false) @map("exif_stripped") // v5.0: Audit trail
-  lat            Decimal?         @db.Decimal(10, 8) // v5.0: Fixed precision (was Float)
-  lng            Decimal?         @db.Decimal(11, 8) // v5.0: Fixed precision (was Float)
+  exifStripped   Boolean          @default(false) @map("exif_stripped")
+  lat            Decimal?         @db.Decimal(10, 8)
+  lng            Decimal?         @db.Decimal(11, 8)
   visibility     LocketVisibility @default(FRIENDS)
   createdAt      DateTime         @default(now()) @map("created_at")
   updatedAt      DateTime         @updatedAt @map("updated_at")
   deletedAt      DateTime?        @map("deleted_at")
-
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  restaurant Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: SetNull)
-  checkIns   CheckIn[]
+  checkIns       CheckIn[]
+  restaurant     Restaurant?      @relation(fields: [restaurantId], references: [id])
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, capturedAt])
-  @@index([visibility, capturedAt]) // v5.0: Feed queries
-  @@index([restaurantId]) // v5.0: Restaurant lockets
+  @@index([visibility, capturedAt])
+  @@index([restaurantId])
   @@index([deletedAt])
-  // DB TRIGGER: capturedAt within 60s (see docs/DB_SCHEMA_REVIEW_v5.0.md)
   @@map("lockets")
+}
+
+model CheckIn {
+  id                 String        @id @default(uuid())
+  userId             String        @map("user_id")
+  restaurantId       String        @map("restaurant_id")
+  locketId           String?       @map("locket_id")
+  verificationMethod CheckInMethod @default(GPS) @map("verification_method")
+  accuracy           Float?        @map("accuracy")
+  status             CheckInStatus @default(ACTIVE)
+  createdAt          DateTime      @default(now()) @map("created_at")
+  expiresAt          DateTime      @map("expires_at")
+  locket             Locket?       @relation(fields: [locketId], references: [id])
+  restaurant         Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, expiresAt])
+  @@index([restaurantId, createdAt])
+  @@index([locketId], map: "check_ins_locket_id_fkey")
+  @@map("check_ins")
+}
+
+model Menu {
+  id            String     @id @default(uuid())
+  restaurantId  String     @map("restaurant_id")
+  imageUrl      String     @map("image_url") @db.VarChar(500)
+  extractedText String?    @map("extracted_text") @db.Text
+  confidence    Float?     @default(0)
+  capturedBy    String     @map("captured_by")
+  capturedAt    DateTime   @default(now()) @map("captured_at")
+  status        MenuStatus @default(PENDING)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  items         MenuItem[]
+  capturer      User       @relation("MenuCapturer", fields: [capturedBy], references: [id], onDelete: Cascade)
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, status])
+  @@index([capturedBy])
+  @@map("menus")
+}
+
+model MenuItem {
+  id        String  @id @default(uuid())
+  menuId    String  @map("menu_id")
+  name      String  @db.VarChar(200)
+  priceVND  Int?    @map("price_vnd")
+  category  String? @db.VarChar(50)
+  tags      Json
+  sortOrder Int     @default(0) @map("sort_order")
+  menu      Menu    @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@index([menuId])
+  @@map("menu_items")
+}
+
+model UserPreference {
+  id                  String   @id @default(uuid())
+  userId              String   @unique @map("user_id")
+  cuisineScores       Json     @map("cuisine_scores")
+  priceRange          Int      @default(2) @map("price_range")
+  dietaryRestrictions Json     @map("dietary_restrictions")
+  spiceTolerance      String   @default("medium") @map("spice_tolerance") @db.VarChar(10)
+  dislikedIngredients Json?    @map("disliked_ingredients")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model CircleRecommendation {
+  id            String       @id @default(uuid())
+  groupId       String       @map("group_id")
+  spinSessionId String?      @unique @map("spin_session_id")
+  menuId        String?      @map("menu_id")
+  memberScores  Json         @map("member_scores")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  group         Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  spinSession   SpinSession? @relation(fields: [spinSessionId], references: [id])
+
+  @@index([groupId])
+  @@map("circle_recommendations")
+}
+
+model RestaurantPartner {
+  id                String            @id @default(uuid())
+  restaurantId      String            @unique @map("restaurant_id")
+  ownerName         String            @map("owner_name") @db.VarChar(100)
+  ownerEmail        String            @map("owner_email") @db.VarChar(255)
+  ownerPhone        String?           @map("owner_phone") @db.VarChar(20)
+  tier              PartnerTier       @default(BASIC)
+  fixedFeeVND       Int               @default(0) @map("fixed_fee_vnd")
+  ppvRateVND        Int               @default(0) @map("ppv_rate_vnd")
+  status            PartnerStatus     @default(ACTIVE)
+  referralCode      String?           @unique @map("referral_code") @db.VarChar(20)
+  subscriptionStart DateTime?         @map("subscription_start")
+  subscriptionEnd   DateTime?         @map("subscription_end")
+  analytics         Json?
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  promoCodes        PromoCode[]
+  restaurant        Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  visits            RestaurantVisit[]
+
+  @@index([tier])
+  @@index([status])
+  @@index([subscriptionEnd])
+  @@map("restaurant_partners")
+}
+
+model RestaurantVisit {
+  id           String            @id @default(uuid())
+  partnerId    String            @map("partner_id")
+  userId       String            @map("user_id")
+  checkInId    String?           @map("check_in_id")
+  lat          Decimal           @map("lat") @db.Decimal(10, 8)
+  lng          Decimal           @map("lng") @db.Decimal(11, 8)
+  accuracy     Float?            @map("accuracy")
+  verifiedAt   DateTime          @default(now()) @map("verified_at")
+  billingMonth String            @map("billing_month") @db.VarChar(7)
+  billed       Boolean           @default(false)
+  billedAt     DateTime?         @map("billed_at")
+  partner      RestaurantPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId, billingMonth])
+  @@index([billed])
+  @@index([userId], map: "restaurant_visits_user_id_fkey")
+  @@map("restaurant_visits")
+}
+
+model PromoCode {
+  id            String            @id @default(uuid())
+  partnerId     String            @map("partner_id")
+  code          String            @unique @db.VarChar(20)
+  description   String?           @db.VarChar(255)
+  discountType  DiscountType      @default(PERCENTAGE)
+  discountValue Int               @map("discount_value")
+  minOrderVND   Int               @default(0) @map("min_order_vnd")
+  maxUses       Int               @default(100) @map("max_uses")
+  usedCount     Int               @default(0) @map("used_count")
+  validFrom     DateTime          @map("valid_from")
+  validUntil    DateTime          @map("valid_until")
+  status        PromoStatus       @default(ACTIVE)
+  createdAt     DateTime          @default(now()) @map("created_at")
+  partner       RestaurantPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@index([partnerId])
+  @@index([status])
+  @@map("promo_codes")
+}
+
+model CorporateAccount {
+  id                String            @id @default(uuid())
+  companyName       String            @map("company_name") @db.VarChar(255)
+  companyEmail      String            @map("company_email") @db.VarChar(255)
+  companyPhone      String?           @map("company_phone") @db.VarChar(20)
+  taxId             String?           @unique @map("tax_id") @db.VarChar(20)
+  address           String?           @db.VarChar(500)
+  tier              CorporateTier     @default(BASIC)
+  maxSeats          Int               @default(10) @map("max_seats")
+  status            CorporateStatus   @default(TRIAL)
+  subscriptionStart DateTime?         @map("subscription_start")
+  subscriptionEnd   DateTime?         @map("subscription_end")
+  billingMonthly    Int               @default(0) @map("billing_monthly")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  members           CorporateMember[]
+
+  @@index([status])
+  @@map("corporate_accounts")
+}
+
+model CorporateMember {
+  id        String             @id @default(uuid())
+  accountId String             @map("account_id")
+  userId    String             @unique @map("user_id")
+  role      CorporateUserRole  @default(USER)
+  status    CorporateMemStatus @default(ACTIVE)
+  joinedAt  DateTime           @default(now()) @map("joined_at")
+  expiresAt DateTime?          @map("expires_at")
+  account   CorporateAccount   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, status])
+  @@map("corporate_members")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String           @db.VarChar(255)
+  message   String           @db.Text
+  data      Json?
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model Review {
+  id               String   @id @default(uuid())
+  restaurantId     String   @map("restaurant_id")
+  userId           String   @map("user_id")
+  
+  overallRating    Float    @map("overall_rating")
+  tasteRating      Float?   @map("taste_rating")
+  serviceRating    Float?   @map("service_rating")
+  ambienceRating   Float?   @map("ambience_rating")
+  valueRating      Float?   @map("value_rating")
+  
+  content          String?  @db.Text
+  photoUrls        Json?    @map("photo_urls")
+  tags             Json?
+  isVerifiedVisit  Boolean  @default(false) @map("is_verified_visit")
+  
+  helpfulCount     Int      @default(0) @map("helpful_count")
+  
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  restaurant       Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([restaurantId])
+  @@index([userId])
+  @@map("reviews")
+}
+
+enum UserRole {
+  USER
+  STEWARD
+  ADMIN
+}
+
+enum SubTier {
+  FREE
+  PREMIUM
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+enum RestaurantSource {
+  GOOGLE_PLACES
+  USER_SUBMITTED
+}
+
+enum RestaurantStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum GroupStatus {
+  WAITING
+  SPINNING
+  VOTING
+  DONE
+  CANCELLED
+}
+
+enum GroupRole {
+  MEMBER
+  HOST
+}
+
+enum MemberStatus {
+  PENDING
+  ACCEPTED
+  VETO
+}
+
+enum SpinStatus {
+  ACTIVE
+  VOTING
+  COMPLETED
+  CANCELLED
+}
+
+enum VoteValue {
+  ACCEPT
+  VETO
+}
+
+enum SpinSource {
+  PURCHASE
+  AD_WATCH
+  REFERRAL
+  REWARD
 }
 
 enum LocketVisibility {
   PRIVATE
   FRIENDS
   PUBLIC
-}
-
-// CheckIn - Location verification
-// v5.0: Added verificationMethod, accuracy, fixed index
-model CheckIn {
-  id                 String        @id @default(uuid())
-  userId             String        @map("user_id")
-  restaurantId       String        @map("restaurant_id")
-  locketId           String?       @map("locket_id")
-  verificationMethod CheckInMethod @default(GPS) @map("verification_method") // v5.0
-  accuracy           Float?        @map("accuracy") // v5.0: GPS accuracy in meters
-  status             CheckInStatus @default(ACTIVE)
-  createdAt          DateTime      @default(now()) @map("created_at")
-  expiresAt          DateTime      @map("expires_at")
-
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  locket     Locket?    @relation(fields: [locketId], references: [id], onDelete: SetNull)
-
-  @@index([userId, status, expiresAt]) // v5.0: Fixed - Critical query index
-  @@index([restaurantId, createdAt]) // v5.0: Restaurant check-ins
-  @@map("check_ins")
 }
 
 enum CheckInStatus {
@@ -458,117 +620,10 @@ enum CheckInMethod {
   LOCKET
 }
 
-// ============================================================
-// P2 - MENU CAPTURE & AI PERSONALIZATION (v1.1)
-// ============================================================
-
-// Menu - Captured menu image + OCR result
-model Menu {
-  id            String     @id @default(uuid())
-  restaurantId  String     @map("restaurant_id")
-  imageUrl      String     @map("image_url") @db.VarChar(500)
-  extractedText String?    @map("extracted_text") @db.Text
-  confidence    Float?     @default(0)
-  capturedBy    String     @map("captured_by")
-  capturedAt    DateTime   @default(now()) @map("captured_at")
-  status        MenuStatus @default(PENDING)
-  createdAt     DateTime   @default(now()) @map("created_at")
-  updatedAt     DateTime   @updatedAt @map("updated_at")
-
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  capturer   User       @relation("MenuCapturer", fields: [capturedBy], references: [id], onDelete: Cascade)
-  items      MenuItem[]
-
-  @@index([restaurantId, status])
-  @@index([capturedBy])
-  @@map("menus")
-}
-
 enum MenuStatus {
   PENDING
   VERIFIED
   REJECTED
-}
-
-// MenuItem - Individual dish parsed from menu
-model MenuItem {
-  id        String  @id @default(uuid())
-  menuId    String  @map("menu_id")
-  name      String  @db.VarChar(200)
-  priceVND  Int?    @map("price_vnd")
-  category  String? @db.VarChar(50)
-  tags      Json    @default("[]")
-  sortOrder Int     @default(0) @map("sort_order")
-
-  menu Menu @relation(fields: [menuId], references: [id], onDelete: Cascade)
-
-  @@index([menuId])
-  @@map("menu_items")
-}
-
-// UserPreference - AI-learned taste profile (1:1 with User)
-model UserPreference {
-  id                  String   @id @default(uuid())
-  userId              String   @unique @map("user_id")
-  cuisineScores       Json     @default("{}") @map("cuisine_scores")
-  priceRange          Int      @default(2) @map("price_range")
-  dietaryRestrictions Json     @default("[]") @map("dietary_restrictions")
-  spiceTolerance      String   @default("medium") @map("spice_tolerance") @db.VarChar(10)
-  dislikedIngredients Json     @default("[]") @map("disliked_ingredients")
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_preferences")
-}
-
-// CircleRecommendation - AI match results for group spin
-model CircleRecommendation {
-  id            String   @id @default(uuid())
-  groupId       String   @map("group_id")
-  spinSessionId String?  @unique @map("spin_session_id")
-  menuId        String?  @map("menu_id")
-  memberScores  Json     @map("member_scores")
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  group       Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  spinSession SpinSession? @relation(fields: [spinSessionId], references: [id], onDelete: SetNull)
-
-  @@index([groupId])
-  @@map("circle_recommendations")
-}
-
-// ============================================================
-// P2 - B2B RESTAURANT PARTNER (Restaurant Partner Program)
-// ============================================================
-
-// RestaurantPartner - B2B Restaurant Partnership
-model RestaurantPartner {
-  id                String           @id @default(uuid())
-  restaurantId      String           @unique @map("restaurant_id")
-  ownerName         String           @map("owner_name") @db.VarChar(100)
-  ownerEmail        String           @map("owner_email") @db.VarChar(255)
-  ownerPhone        String?          @map("owner_phone") @db.VarChar(20)
-  tier              PartnerTier      @default(BASIC)
-  fixedFeeVND       Int              @default(0) @map("fixed_fee_vnd")
-  ppvRateVND        Int              @default(0) @map("ppv_rate_vnd") // Pay-per-visit rate
-  status            PartnerStatus    @default(ACTIVE)
-  referralCode      String?          @unique @map("referral_code") @db.VarChar(20)
-  subscriptionStart DateTime?       @map("subscription_start")
-  subscriptionEnd   DateTime?       @map("subscription_end")
-  analytics         Json             @default("{}") // Denormalized analytics
-  createdAt         DateTime         @default(now()) @map("created_at")
-  updatedAt         DateTime         @updatedAt @map("updated_at")
-
-  restaurant Restaurant          @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  visits     RestaurantVisit[]
-  promoCodes PromoCode[]
-
-  @@index([tier])
-  @@index([status])
-  @@index([subscriptionEnd])
-  @@map("restaurant_partners")
 }
 
 enum PartnerTier {
@@ -585,51 +640,6 @@ enum PartnerStatus {
   TRIAL
 }
 
-// RestaurantVisit - Pay-per-visit tracking
-model RestaurantVisit {
-  id            String       @id @default(uuid())
-  partnerId     String       @map("partner_id")
-  userId        String       @map("user_id")
-  checkInId     String?      @map("check_in_id")
-  lat           Decimal      @db.Decimal(10, 8) @map("lat")
-  lng           Decimal      @db.Decimal(11, 8) @map("lng")
-  accuracy      Float?       @map("accuracy") // GPS accuracy in meters
-  verifiedAt    DateTime     @default(now()) @map("verified_at")
-  billingMonth  String       @map("billing_month") @db.VarChar(7) // YYYY-MM format
-  billed        Boolean      @default(false)
-  billedAt      DateTime?    @map("billed_at")
-
-  partner RestaurantPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([partnerId, billingMonth])
-  @@index([billed])
-  @@map("restaurant_visits")
-}
-
-// PromoCode - Partner promo codes
-model PromoCode {
-  id           String       @id @default(uuid())
-  partnerId    String       @map("partner_id")
-  code         String       @unique @db.VarChar(20)
-  description  String?      @db.VarChar(255)
-  discountType DiscountType @default(PERCENTAGE)
-  discountValue Int         @map("discount_value")
-  minOrderVND  Int          @default(0) @map("min_order_vnd")
-  maxUses      Int          @default(100) @map("max_uses")
-  usedCount    Int          @default(0) @map("used_count")
-  validFrom    DateTime     @map("valid_from")
-  validUntil   DateTime     @map("valid_until")
-  status       PromoStatus  @default(ACTIVE)
-  createdAt    DateTime     @default(now()) @map("created_at")
-
-  partner RestaurantPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-
-  @@index([partnerId])
-  @@index([status])
-  @@map("promo_codes")
-}
-
 enum DiscountType {
   PERCENTAGE
   FIXED_VND
@@ -639,29 +649,6 @@ enum PromoStatus {
   ACTIVE
   EXPIRED
   DEPLETED
-}
-
-// CorporateAccount - B2B Corporate Partnership
-model CorporateAccount {
-  id               String           @id @default(uuid())
-  companyName      String           @map("company_name") @db.VarChar(255)
-  companyEmail     String           @map("company_email") @db.VarChar(255)
-  companyPhone     String?          @map("company_phone") @db.VarChar(20)
-  taxId            String?          @unique @map("tax_id") @db.VarChar(20)
-  address          String?          @db.VarChar(500)
-  tier             CorporateTier    @default(BASIC)
-  maxSeats         Int              @default(10) @map("max_seats")
-  status           CorporateStatus  @default(TRIAL)
-  subscriptionStart DateTime?       @map("subscription_start")
-  subscriptionEnd  DateTime?       @map("subscription_end")
-  billingMonthly   Int              @default(0) @map("billing_monthly")
-  createdAt        DateTime         @default(now()) @map("created_at")
-  updatedAt        DateTime         @updatedAt @map("updated_at")
-
-  members CorporateMember[]
-
-  @@index([status])
-  @@map("corporate_accounts")
 }
 
 enum CorporateTier {
@@ -677,23 +664,6 @@ enum CorporateStatus {
   CANCELLED
 }
 
-// CorporateMember - B2B Corporate Seats
-model CorporateMember {
-  id           String             @id @default(uuid())
-  accountId    String             @map("account_id")
-  userId       String             @unique @map("user_id")
-  role         CorporateUserRole  @default(USER)
-  status       CorporateMemStatus @default(ACTIVE)
-  joinedAt     DateTime           @default(now()) @map("joined_at")
-  expiresAt    DateTime?          @map("expires_at")
-
-  account CorporateAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([accountId, status])
-  @@map("corporate_members")
-}
-
 enum CorporateUserRole {
   USER
   ADMIN
@@ -706,33 +676,6 @@ enum CorporateMemStatus {
   REMOVED
 }
 
-// ============================================================
-// P2 - DEFERRED TABLES (not implemented yet)
-// ============================================================
-// The following will be added in future versions:
-// - TasteBoard / TasteBoardItem (replaces User.savedRestaurants)
-// - Review
-// - Commitment
-// - AdWatchLog (referenced in SpinLog)
-
-// Notification System (v5.2)
-model Notification {
-  id        String           @id @default(uuid())
-  userId    String           @map("user_id")
-  type      NotificationType
-  title     String           @db.VarChar(255)
-  message   String           @db.Text
-  data      Json?
-  isRead    Boolean          @default(false) @map("is_read")
-  createdAt DateTime         @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, isRead])
-  @@index([userId, createdAt])
-  @@map("notifications")
-}
-
 enum NotificationType {
   FRIEND_REQUEST
   FRIEND_ACCEPTED
@@ -740,42 +683,3 @@ enum NotificationType {
   LOCKET_NEW
   SYSTEM
 }
-
-// ============================================================
-// IMPLEMENTATION NOTES
-// ============================================================
-// See docs/DB_SCHEMA_REVIEW_v5.0.md for complete implementation details
-//
-// 1. MySQL Triggers Required:
-//    - SpinWallet: balance >= 0 (BEFORE UPDATE/INSERT)
-//    - GroupMember: count <= 20 (BEFORE INSERT)
-//    - Locket: capturedAt within 60s (BEFORE INSERT)
-//    - CheckIn: auto-expiration EVENT (SCHEDULED)
-//
-// 2. Missing Indexes Summary:
-//    - CheckIn: [userId, status, expiresAt] - CRITICAL
-//    - Locket: [visibility, capturedAt] - CRITICAL
-//    - Vote: [spinSessionId, value] - IMPORTANT
-//    - Friendship: [status] - IMPORTANT
-//
-// 3. Data Type Fixes:
-//    - RestaurantHours.openTime/closeTime: VARCHAR(5) not DateTime
-//    - SpinWallet.balance: BigInt not Int
-//    - SpinLog.amount: BigInt not Int
-//    - Restaurant.lat/lng: Decimal(10,8)/Decimal(11,8) not Float
-//    - Locket.lat/lng: Decimal(10,8)/Decimal(11,8) not Float
-//
-// 4. New Fields Added:
-//    - User: phone, isOnboarded, lastActiveAt
-//    - Restaurant: googlePlaceId, rating, phone
-//    - GroupMember: invitedBy
-//    - SpinSession: categoryFilter
-//    - SpinWallet: version
-//    - Locket: exifStripped
-//    - CheckIn: verificationMethod, accuracy
-//    - SpinSessionCandidate: NEW TABLE (replaces candidateIds JSON)
-//
-// 5. Soft Deletes:
-//    - User.deletedAt
-//    - Restaurant.deletedAt
-//    - Group.deletedAt
