@@ -49,6 +49,7 @@ export interface FoodRouletteRef {
 
 export interface FoodRouletteProps {
   candidates: Restaurant[];
+  onSpinStart?: () => Promise<number | undefined>;
   onSpinEnd?: (winner: Restaurant, index: number) => void;
   onMultiSpinEnd?: (winners: Restaurant[]) => void;
   multiSpinMode?: 1 | 2 | 3;
@@ -57,7 +58,7 @@ export interface FoodRouletteProps {
 }
 
 export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
-  ({ candidates, onSpinEnd, onMultiSpinEnd, multiSpinMode = 1, disabled = false, showSpinButton = true }, ref) => {
+  ({ candidates, onSpinStart, onSpinEnd, onMultiSpinEnd, multiSpinMode = 1, disabled = false, showSpinButton = true }, ref) => {
     const rotation = useSharedValue(0);
     const [spinning, setSpinning] = React.useState(false);
 
@@ -74,13 +75,40 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
       [onSpinEnd, onMultiSpinEnd]
     );
 
-    const spin = useCallback(() => {
+    const spin = useCallback(async () => {
       if (spinning || disabled || candidates.length === 0) return;
 
       setSpinning(true);
 
+      let targetIndex: number | undefined = undefined;
+      if (onSpinStart) {
+        try {
+          targetIndex = await onSpinStart();
+        } catch (e) {
+          console.error('Spin start failed:', e);
+          setSpinning(false);
+          return;
+        }
+      }
+
       const extraSpins = (Math.floor(Math.random() * 4) + 4) * 360;
-      const randomSegment = Math.floor(Math.random() * 360);
+      let randomSegment = Math.floor(Math.random() * 360);
+      const sliceAngle = 360 / candidates.length;
+
+      if (targetIndex !== undefined && targetIndex >= 0 && targetIndex < candidates.length) {
+         // Calculate the exact angle to land on targetIndex
+         // primaryIndex = Math.floor(((360 - (normalizedRot % 360)) % 360) / sliceAngle)
+         // We want primaryIndex = targetIndex
+         const targetAngleStart = targetIndex * sliceAngle;
+         // aim for the middle of the slice + some random noise
+         const noise = (Math.random() * (sliceAngle * 0.8)) - (sliceAngle * 0.4);
+         const targetAngle = targetAngleStart + (sliceAngle / 2) + noise;
+         
+         // 360 - (normalizedRot % 360) = targetAngle
+         // normalizedRot % 360 = 360 - targetAngle
+         randomSegment = 360 - targetAngle;
+      }
+
       const newRotation = rotation.value + extraSpins + randomSegment;
 
       rotation.value = withTiming(
@@ -124,7 +152,7 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
           }
         }
       );
-    }, [spinning, disabled, rotation, candidates, multiSpinMode, handleSpinEnd]);
+    }, [spinning, disabled, rotation, candidates, multiSpinMode, handleSpinEnd, onSpinStart]);
 
     useImperativeHandle(ref, () => ({
       spin,

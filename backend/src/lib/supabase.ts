@@ -6,6 +6,8 @@ export interface SupabaseStorageConfig {
   bucket: string;
 }
 
+const PLACEHOLDER_PATTERN = /your-|changeme|replace( |-)me|\.env\.example/i;
+
 export function readSupabaseStorageConfig(): SupabaseStorageConfig | null {
   const url = process.env.SUPABASE_URL?.trim();
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
@@ -15,6 +17,7 @@ export function readSupabaseStorageConfig(): SupabaseStorageConfig | null {
   if (!url || !serviceRoleKey || !bucket) {
     throw new Error('SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and SUPABASE_STORAGE_BUCKET must be configured together');
   }
+  if (PLACEHOLDER_PATTERN.test(url) || PLACEHOLDER_PATTERN.test(serviceRoleKey)) return null;
 
   const parsedUrl = new URL(url);
   const isLocalHttp = parsedUrl.protocol === 'http:'

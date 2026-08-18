@@ -16,12 +16,20 @@ export default function LuckySpinScreen() {
   const router = useRouter();
   const { luckySpinCount, consumeLuckySpin, currentResult, isCheckedIn } = useSpinStore();
   const [wonPrize, setWonPrize] = useState<PrizeSegment | null>(null);
+  const [isSpinning, setIsSpinning] = useState(false);
 
   const canCheckIn = currentResult ? !isCheckedIn(currentResult.id) : false;
 
   const handleCheckInCta = () => {
     if (canCheckIn) {
-      router.push('/spin/check-in');
+      router.push({
+        pathname: '/locket/capture',
+        params: {
+          restaurantId: currentResult?.id,
+          restaurantName: currentResult?.name,
+          returnTo: 'spin-check-in',
+        },
+      });
     } else {
       router.replace('/(tabs)/spin');
     }
@@ -35,10 +43,15 @@ export default function LuckySpinScreen() {
     }
   };
 
-  const handleSpinEnd = useCallback((prize: PrizeSegment) => {
-    setWonPrize(prize);
+  const handleSpinStart = useCallback(() => {
+    setIsSpinning(true);
     consumeLuckySpin();
   }, [consumeLuckySpin]);
+
+  const handleSpinEnd = useCallback((prize: PrizeSegment) => {
+    setIsSpinning(false);
+    setWonPrize(prize);
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -77,11 +90,18 @@ export default function LuckySpinScreen() {
 
         {/* Spin Wheel Card Wrapper */}
         <View style={styles.wheelCard}>
-          <SpinWheel onSpinEnd={handleSpinEnd} disabled={luckySpinCount <= 0} />
+          <SpinWheel
+            onSpinStart={handleSpinStart}
+            onSpinEnd={handleSpinEnd}
+            disabled={luckySpinCount <= 0 || isSpinning}
+            buttonTitle="QUAY THƯỞNG!"
+            spinningTitle="Đang quay thưởng..."
+            resultPrefixLabel="Voucher nhận được:"
+          />
         </View>
 
         {/* Out of spins warning banner */}
-        {luckySpinCount <= 0 && (
+        {(luckySpinCount <= 0 && !isSpinning) && (
           <View style={styles.noSpinsCard}>
             <Text style={styles.noSpinsTitle}>⚠️ Bạn đã dùng hết lượt quay!</Text>
             <Text style={styles.noSpinsSubtitle}>

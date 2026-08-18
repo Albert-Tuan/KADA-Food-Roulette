@@ -11,12 +11,13 @@ import { Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocketFeed, type Locket, type LocketFeedFilter } from '@/features/lockets';
 import { formatRelativeTime } from '@/lib';
+import { Ionicons } from '@expo/vector-icons';
 
-const FILTERS: { value: LocketFeedFilter; label: string }[] = [
-  { value: 'ALL', label: 'Tất cả' },
-  { value: 'MINE', label: 'Của tôi' },
-  { value: 'FRIENDS', label: 'Bạn bè' },
-  { value: 'DISCOVER', label: 'Khám phá' },
+const FILTERS: { value: LocketFeedFilter; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { value: 'ALL', label: 'Tất cả', icon: 'grid' },
+  { value: 'MINE', label: 'Của tôi', icon: 'person' },
+  { value: 'FRIENDS', label: 'Bạn bè', icon: 'people' },
+  { value: 'DISCOVER', label: 'Khám phá', icon: 'compass' },
 ];
 
 export default function LocketsScreen() {
@@ -43,7 +44,7 @@ export default function LocketsScreen() {
               data={FILTERS}
               keyExtractor={(item) => item.value}
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 14, gap: 8 }}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 14, gap: 12 }}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => setFilter(item.value)}
@@ -51,8 +52,13 @@ export default function LocketsScreen() {
                     backgroundColor: filter === item.value ? '#b52330' : '#ffffff',
                     borderColor: filter === item.value ? '#b52330' : '#e2bebc',
                   }}
-                  className="rounded-2xl border-1.5 px-4.5 py-2.5 shadow-xs"
+                  className="rounded-2xl border-1.5 px-5 py-3 shadow-xs flex-row items-center gap-2"
                 >
+                  <Ionicons 
+                    name={item.icon} 
+                    size={16} 
+                    color={filter === item.value ? '#ffffff' : '#b52330'} 
+                  />
                   <Text style={{ color: filter === item.value ? '#ffffff' : '#b52330' }} className="font-extrabold text-sm">
                     {item.label}
                   </Text>

@@ -19,24 +19,22 @@ jobs:
       - name: 🏗 Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: '20'
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
 
       - name: 📦 Install dependencies
         run: |
           cd apps/mobile
-          npm ci
+          npm ci --legacy-peer-deps
 
       - name: 🏗 Setup Expo
         uses: expo/expo-github-action@v8
         with:
           expo-version: latest
+          eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: 🚀 Publish Preview
-        uses: expo/expo-github-action/preview@v8
-        with:
-          command: expo export --platform all
-          working-directory: apps/mobile
-          comment: true
+      - name: 🚀 Export Preview Bundle
+        run: npx expo export --platform all
+        working-directory: apps/mobile
