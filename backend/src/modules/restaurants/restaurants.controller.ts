@@ -79,6 +79,7 @@ export const restaurantsController = {
 
       return res.json(list);
     } catch (error: any) {
+      console.error('getNearby Error:', error);
       return res.status(500).json({ error: 'Lỗi máy chủ khi lấy danh sách quán ăn.' });
     }
   },
