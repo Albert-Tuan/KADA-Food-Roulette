@@ -3,12 +3,14 @@ import type { Restaurant, SpinFilters } from '../features/spin/types';
 
 interface SpinState {
   filters: SpinFilters;
+  baseCandidates: Restaurant[];
   candidates: Restaurant[];
   customCandidates: Restaurant[];
   currentResult: Restaurant | null;
   luckySpinCount: number;
   checkedInRestaurantIds: string[];
   setFilters: (filters: Partial<SpinFilters>) => void;
+  setCandidates: (items: Restaurant[]) => void;
   addCustomCandidate: (item: string | { name: string; category?: string; imageUrl?: string }) => void;
   removeCustomCandidate: (id: string) => void;
   setCurrentResult: (restaurant: Restaurant | null) => void;
@@ -29,8 +31,8 @@ const MOCK_RESTAURANTS: Restaurant[] = [
   { id: '6', name: 'Bánh Mì Huỳnh Hoa', category: 'Bánh mì', rating: 4.8, totalReviews: 4500, distance: 1500, priceLevel: 1, imageUrl: 'https://images.unsplash.com/photo-1509722747041-616f39b57569?auto=format&fit=crop&q=80&w=400', dietary: ['Không cay'] },
 ];
 
-const applyFilters = (filters: SpinFilters, custom: Restaurant[]) => {
-  const filtered = MOCK_RESTAURANTS.filter(r => {
+const applyFilters = (filters: SpinFilters, base: Restaurant[], custom: Restaurant[]) => {
+  const filtered = base.filter(r => {
     if (r.distance > filters.maxDistance) return false;
     if (r.priceLevel > filters.maxPrice) return false;
     if (filters.categories.length > 0 && !filters.categories.includes(r.category)) return false;
@@ -51,6 +53,7 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     dietary: [],
   },
   customCandidates: [],
+  baseCandidates: MOCK_RESTAURANTS,
   candidates: MOCK_RESTAURANTS,
   currentResult: null,
   luckySpinCount: 1,
@@ -68,9 +71,14 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     const updatedFilters = { ...state.filters, ...newFilters };
     return {
       filters: updatedFilters,
-      candidates: applyFilters(updatedFilters, state.customCandidates),
+      candidates: applyFilters(updatedFilters, state.baseCandidates, state.customCandidates),
     };
   }),
+
+  setCandidates: (items) => set((state) => ({
+    baseCandidates: items,
+    candidates: applyFilters(state.filters, items, state.customCandidates),
+  })),
 
   addCustomCandidate: (item) => set((state) => {
     let candidateName = 'Món ăn';
@@ -98,7 +106,7 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     const newCustoms = [...state.customCandidates, newCustom];
     return {
       customCandidates: newCustoms,
-      candidates: applyFilters(state.filters, newCustoms),
+      candidates: applyFilters(state.filters, state.baseCandidates, newCustoms),
     };
   }),
 
@@ -106,7 +114,7 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     const newCustoms = state.customCandidates.filter(c => c.id !== id);
     return {
       customCandidates: newCustoms,
-      candidates: applyFilters(state.filters, newCustoms),
+      candidates: applyFilters(state.filters, state.baseCandidates, newCustoms),
     };
   }),
 
@@ -121,6 +129,6 @@ export const useSpinStore = create<SpinState>((set, get) => ({
 
   resetStore: () => set((state) => ({
     customCandidates: [],
-    candidates: applyFilters(state.filters, []),
+    candidates: applyFilters(state.filters, state.baseCandidates, []),
   })),
 }));

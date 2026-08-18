@@ -1,67 +1,65 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../../shared/middleware/auth.middleware';
+import { prisma } from '../../shared/utils/prisma';
 import { PreferenceLearnerService } from '../../shared/services/preferenceLearner.service';
 
 export const rouletteController = {
   // POST /api/spin/personal
   spinPersonal: async (req: AuthRequest, res: Response) => {
     try {
-      const { price, cuisine, isSpicy, isVegetarian, radiusKm } = req.body;
+      const { cuisine } = req.body;
 
-      const candidateRestaurants = [
-        {
-          id: 'rest-1',
-          name: 'Cơm Tấm Ba Cường',
-          address: '123 Nguyễn Trãi, Quận 1, TP.HCM',
-          rating: 4.8,
-          priceLevel: '$$',
-          cuisineType: 'Cơm Tấm',
-          photoUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600',
-        },
-        {
-          id: 'rest-2',
-          name: 'Phở Thìn Hà Nội',
-          address: '45 Võ Văn Tần, Quận 3, TP.HCM',
-          rating: 4.7,
-          priceLevel: '$$$',
-          cuisineType: 'Phở',
-          photoUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=600',
-        },
-        {
-          id: 'rest-3',
-          name: 'Bún Bò Huế Chị Mây',
-          address: '88 Nguyễn Đình Chiểu, Quận 3, TP.HCM',
-          rating: 4.9,
-          priceLevel: '$$',
-          cuisineType: 'Bún Bò',
-          photoUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&q=80&w=600',
-        },
-        {
-          id: 'rest-4',
-          name: 'Bánh Mì Huỳnh Hoa',
-          address: '26 Lê Thị Riêng, Quận 1, TP.HCM',
-          rating: 4.6,
-          priceLevel: '$$',
-          cuisineType: 'Bánh Mì',
-          photoUrl: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=600',
-        },
-      ];
+      const restaurants = await prisma.restaurant.findMany({
+        where: { status: 'APPROVED', deletedAt: null },
+        include: { photos: { orderBy: { displayOrder: 'asc' }, take: 5 } },
+      });
 
-      // Pick random restaurant weighted by filter preferences
-      const selectedRestaurant = candidateRestaurants[Math.floor(Math.random() * candidateRestaurants.length)];
+      if (restaurants.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Chưa có nhà hàng nào để quay. Vui lòng thử lại sau.',
+        });
+      }
 
-      const spinSession = {
-        sessionId: `spin_${Date.now()}`,
-        userId: req.user?.id || 'guest',
-        selectedRestaurant,
-        spinDurationMs: 3000,
-        spinDegree: Math.floor(Math.random() * 360) + 1440,
-        spunAt: new Date().toISOString(),
-      };
+      let candidates = restaurants;
+      if (typeof cuisine === 'string' && cuisine) {
+        candidates = candidates.filter((r) =>
+          (r.category ?? '').toLowerCase().includes(cuisine.toLowerCase())
+        );
+      }
+      if (candidates.length === 0) {
+        candidates = restaurants;
+      }
 
-      return res.json(spinSession);
+      const selected = candidates[Math.floor(Math.random() * candidates.length)];
+
+      return res.json({
+        success: true,
+        data: {
+          sessionId: `spin_${Date.now()}`,
+          restaurant: {
+            id: selected.id,
+            name: selected.name,
+            address: selected.address ?? undefined,
+            lat: selected.lat != null ? Number(selected.lat) : undefined,
+            lng: selected.lng != null ? Number(selected.lng) : undefined,
+            phone: selected.phone ?? undefined,
+            source: selected.source,
+            status: selected.status,
+            ratingAvg: selected.rating ?? 0,
+            ratingCount: 0,
+            category: selected.category ?? undefined,
+            priceLevel: selected.priceLevel ?? undefined,
+            photos: selected.photos.map((p) => p.photoUrl),
+            distance: 0,
+            createdAt: selected.createdAt.toISOString(),
+          },
+          xpEarned: 10,
+          coinsEarned: 5,
+        },
+      });
     } catch (error: any) {
-      return res.status(500).json({ error: 'Lỗi thực hiện quay chọn quán.' });
+      return res.status(500).json({ success: false, error: 'Lỗi thực hiện quay chọn quán.' });
     }
   },
 
