@@ -8,6 +8,7 @@ import {
   TextInput,
   Pressable,
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 import type { SpinFilters } from '../types';
 
 const CUISINE_MAP: { name: string; emoji: string }[] = [
@@ -31,8 +32,6 @@ const DIETARY_MAP: { name: string; emoji: string }[] = [
   { name: 'Ăn kiêng', emoji: '🥗' },
 ];
 
-const PRICE_LEVELS = [1, 2, 3, 4] as const;
-
 interface SpinFilterSheetProps {
   visible: boolean;
   onClose: () => void;
@@ -53,7 +52,7 @@ export function SpinFilterSheet({
   onRemoveCustom,
 }: SpinFilterSheetProps) {
   const [localDistance, setLocalDistance] = useState(filters.maxDistance);
-  const [localPrice, setLocalPrice] = useState(filters.maxPrice);
+  const [localPriceVND, setLocalPriceVND] = useState(filters.maxPriceVND);
   const [localCategories, setLocalCategories] = useState<string[]>(filters.categories);
   const [localDietary, setLocalDietary] = useState<string[]>(filters.dietary);
   const [newCustomFood, setNewCustomFood] = useState('');
@@ -61,7 +60,7 @@ export function SpinFilterSheet({
   useEffect(() => {
     if (visible) {
       setLocalDistance(filters.maxDistance);
-      setLocalPrice(filters.maxPrice);
+      setLocalPriceVND(filters.maxPriceVND);
       setLocalCategories(filters.categories);
       setLocalDietary(filters.dietary);
     }
@@ -88,7 +87,7 @@ export function SpinFilterSheet({
     }
     onApply({
       maxDistance: localDistance,
-      maxPrice: localPrice,
+      maxPriceVND: localPriceVND,
       categories: localCategories,
       dietary: localDietary,
     });
@@ -97,7 +96,7 @@ export function SpinFilterSheet({
 
   const handleReset = () => {
     setLocalDistance(5000);
-    setLocalPrice(4);
+    setLocalPriceVND(1000000);
     setLocalCategories([]);
     setLocalDietary([]);
     customCandidates.forEach(c => onRemoveCustom(c.id));
@@ -155,28 +154,21 @@ export function SpinFilterSheet({
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionLabel}>💰 Mức giá tối đa</Text>
-              <Text style={styles.sectionValue}>{'$'.repeat(localPrice)}</Text>
+              <Text style={styles.sectionValue}>
+                {localPriceVND === 1000000 ? '1.000.000 đ' : `${(localPriceVND / 1000).toLocaleString('vi-VN')}k đ`}
+              </Text>
             </View>
-            <View style={styles.priceRow}>
-              {PRICE_LEVELS.map(level => (
-                <TouchableOpacity
-                  key={level}
-                  onPress={() => setLocalPrice(level)}
-                  activeOpacity={0.8}
-                  style={[
-                    styles.priceChip,
-                    localPrice >= level && styles.priceChipActive,
-                  ]}
-                >
-                  <Text style={[
-                    styles.priceChipText,
-                    localPrice >= level && styles.priceChipTextActive,
-                  ]}>
-                    {'$'.repeat(level)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <Slider
+              style={{ width: '100%', height: 40 }}
+              minimumValue={0}
+              maximumValue={1000000}
+              step={50000}
+              value={localPriceVND}
+              onValueChange={setLocalPriceVND}
+              minimumTrackTintColor="#9A3324"
+              maximumTrackTintColor="#f0e6d2"
+              thumbTintColor="#9A3324"
+            />
           </View>
 
           {/* Cuisines */}

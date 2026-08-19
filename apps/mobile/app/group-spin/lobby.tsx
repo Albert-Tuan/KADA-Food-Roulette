@@ -8,11 +8,7 @@ export default function GroupSpinLobbyScreen() {
   const router = useRouter();
 
   const handleBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.push('/(tabs)/spin');
-    }
+    router.replace('/(tabs)/spin');
   };
 
   return (

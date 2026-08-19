@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
@@ -30,6 +30,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
     removeCustomCandidate,
     setCurrentResult,
     resetStore,
+    currentResult,
   } = useSpinStore();
   const [step, setStep] = useState<GroupSpinStep>('LOBBY');
   const [newFoodInput, setNewFoodInput] = useState('');
@@ -78,7 +79,13 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
           }}
           onRespin={() => setStep('LOBBY')}
           onDirections={() => {
-            Alert.alert('🧭 Chỉ đường', 'Đang mở bản đồ chỉ đường đến quán...');
+            const resultData = currentResult || candidates[0];
+            if (resultData) {
+              const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(resultData.name)}`;
+              Linking.openURL(url).catch(() => Alert.alert('Lỗi', 'Không thể mở bản đồ'));
+            } else {
+              Alert.alert('🧭 Chỉ đường', 'Đang mở bản đồ chỉ đường đến quán...');
+            }
           }}
         />
       </View>
