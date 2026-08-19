@@ -343,15 +343,11 @@ class LocketsService {
     if (!userExists) throw new LocketApiError('AUTH_USER_NOT_FOUND', 'Không tìm thấy tài khoản.', 401);
 
     if (input.restaurantId) {
-      try {
-        const restaurant = await prisma.restaurant.findFirst({
-          where: { id: input.restaurantId, deletedAt: null },
-          select: { id: true },
-        });
-        if (!restaurant) throw new LocketApiError('RESTAURANT_NOT_FOUND', 'Không tìm thấy nhà hàng.', 404);
-      } catch {
-        // Continue if DB check fails
-      }
+      const restaurant = await prisma.restaurant.findFirst({
+        where: { id: input.restaurantId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!restaurant) throw new LocketApiError('RESTAURANT_NOT_FOUND', 'Không tìm thấy nhà hàng.', 404);
     }
 
     const locketId = randomUUID();
@@ -461,22 +457,13 @@ class LocketsService {
   }
 
   async getPublicForUser(userId: string) {
-    const memoryLockets = Array.from(inMemoryLocketStore.values()).filter(
-      (l) => l.userId === userId && (l.visibility === LocketVisibility.PUBLIC || l.visibility === LocketVisibility.FRIENDS)
-    );
-    let records: LocketRecord[] = [];
-    try {
-      records = await prisma.locket.findMany({
-        where: { userId, visibility: LocketVisibility.PUBLIC, deletedAt: null },
-        include: locketInclude,
-        orderBy: [{ capturedAt: 'desc' }, { id: 'desc' }],
-        take: 20,
-      });
-    } catch {
-      console.log('[Lockets] DB getPublicForUser notice');
-    }
-    const combined = [...memoryLockets, ...records];
-    return Promise.all(combined.map((record) => serializeLocket(record, undefined, this.storage)));
+    const records = await prisma.locket.findMany({
+      where: { userId, visibility: LocketVisibility.PUBLIC, deletedAt: null },
+      include: locketInclude,
+      orderBy: [{ capturedAt: 'desc' }, { id: 'desc' }],
+      take: 20,
+    });
+    return Promise.all(records.map((record) => serializeLocket(record, undefined, this.storage)));
   }
 
   async delete(id: string, userId: string): Promise<void> {

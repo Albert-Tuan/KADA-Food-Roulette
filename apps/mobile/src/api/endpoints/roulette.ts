@@ -3,21 +3,23 @@ import apiClient from '../client';
 import { Restaurant } from './restaurants';
 
 export interface SpinResult {
-  success: boolean;
-  data?: {
-    sessionId: string;
-    restaurant: Restaurant;
-    xpEarned: number;
-    coinsEarned: number;
-  };
-  error?: string;
+  sessionId: string;
+  userId?: string;
+  selectedRestaurant: any; // Using any here because it's the backend format, we will map it
+  spinDurationMs?: number;
+  spinDegree?: number;
+  spunAt?: string;
+  xpEarned?: number;
+  coinsEarned?: number;
 }
 
 export interface SpinRequest {
-  category?: string;
-  lat?: number;
-  lng?: number;
-  radius?: number;
+  lat: number;
+  lng: number;
+  radiusKm?: number;
+  cuisine?: string;
+  isSpicy?: boolean;
+  isVegetarian?: boolean;
 }
 
 export const rouletteApi = {

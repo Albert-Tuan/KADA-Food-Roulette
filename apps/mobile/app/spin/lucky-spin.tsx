@@ -14,8 +14,26 @@ interface PrizeSegment {
 
 export default function LuckySpinScreen() {
   const router = useRouter();
-  const { luckySpinCount, consumeLuckySpin } = useSpinStore();
+  const { luckySpinCount, consumeLuckySpin, currentResult, isCheckedIn } = useSpinStore();
   const [wonPrize, setWonPrize] = useState<PrizeSegment | null>(null);
+  const [isSpinning, setIsSpinning] = useState(false);
+
+  const canCheckIn = currentResult ? !isCheckedIn(currentResult.id) : false;
+
+  const handleCheckInCta = () => {
+    if (canCheckIn) {
+      router.push({
+        pathname: '/locket/capture',
+        params: {
+          restaurantId: currentResult?.id,
+          restaurantName: currentResult?.name,
+          returnTo: 'spin-check-in',
+        },
+      });
+    } else {
+      router.replace('/(tabs)/spin');
+    }
+  };
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -25,10 +43,15 @@ export default function LuckySpinScreen() {
     }
   };
 
-  const handleSpinEnd = useCallback((prize: PrizeSegment) => {
-    setWonPrize(prize);
+  const handleSpinStart = useCallback(() => {
+    setIsSpinning(true);
     consumeLuckySpin();
   }, [consumeLuckySpin]);
+
+  const handleSpinEnd = useCallback((prize: PrizeSegment) => {
+    setIsSpinning(false);
+    setWonPrize(prize);
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -67,22 +90,33 @@ export default function LuckySpinScreen() {
 
         {/* Spin Wheel Card Wrapper */}
         <View style={styles.wheelCard}>
-          <SpinWheel onSpinEnd={handleSpinEnd} disabled={luckySpinCount <= 0} />
+          <SpinWheel
+            onSpinStart={handleSpinStart}
+            onSpinEnd={handleSpinEnd}
+            disabled={luckySpinCount <= 0 || isSpinning}
+            buttonTitle="QUAY THƯỞNG!"
+            spinningTitle="Đang quay thưởng..."
+            resultPrefixLabel="Voucher nhận được:"
+          />
         </View>
 
         {/* Out of spins warning banner */}
-        {luckySpinCount <= 0 && (
+        {(luckySpinCount <= 0 && !isSpinning) && (
           <View style={styles.noSpinsCard}>
             <Text style={styles.noSpinsTitle}>⚠️ Bạn đã dùng hết lượt quay!</Text>
             <Text style={styles.noSpinsSubtitle}>
-              Hãy check-in thêm món ăn tại quán để tích lũy lượt quay mới!
+              {canCheckIn
+                ? 'Hãy check-in thêm món ăn tại quán để tích lũy lượt quay mới!'
+                : 'Hãy quay vòng mới để khám phá quán khác và nhận lượt quay!'}
             </Text>
             <TouchableOpacity
               style={styles.checkInCtaBtn}
               activeOpacity={0.88}
-              onPress={() => router.push('/spin/check-in')}
+              onPress={handleCheckInCta}
             >
-              <Text style={styles.checkInCtaBtnText}>📸 CHECK-IN MÓN NGAY ĐỂ NHẬN LƯỢT</Text>
+              <Text style={styles.checkInCtaBtnText}>
+                {canCheckIn ? '📸 CHECK-IN MÓN NGAY ĐỂ NHẬN LƯỢT' : '🎡 QUAY QUÁN MỚI'}
+              </Text>
             </TouchableOpacity>
           </View>
         )}

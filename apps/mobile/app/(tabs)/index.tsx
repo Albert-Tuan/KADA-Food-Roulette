@@ -108,29 +108,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* 4. Quick Category Filter Chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filtersScroll}
-          contentContainerStyle={styles.filtersContent}
-        >
-          <TouchableOpacity style={styles.filterChipActive}>
-            <Text style={styles.filterTextActive}>📍 Gần tôi (&lt;2km)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterChip}>
-            <Text style={styles.filterText}>💰 Dưới 100k</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterChip}>
-            <Text style={styles.filterText}>⭐ 4.5+ sao</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterChip}>
-            <Text style={styles.filterText}>🍜 Phở & Bún</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterChip}>
-            <Text style={styles.filterText}>🧋 Trà Sữa</Text>
-          </TouchableOpacity>
-        </ScrollView>
 
         {/* 5. Taste Board Live Carousel */}
         <View style={styles.section}>
