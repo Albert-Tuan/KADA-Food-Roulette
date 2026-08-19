@@ -37,10 +37,18 @@ const MOCK_RESTAURANTS: Restaurant[] = [
   { id: '8', name: 'Trà sữa KOI', category: 'Đồ uống', rating: 4.8, totalReviews: 900, distance: 800, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400', dietary: ['Ăn chay'] },
 ];
 
+const getPriceLevel = (priceVND: number) => {
+  if (priceVND <= 100000) return 1;
+  if (priceVND <= 300000) return 2;
+  if (priceVND <= 500000) return 3;
+  return 4;
+};
+
 const applyFilters = (filters: SpinFilters, base: Restaurant[], custom: Restaurant[]) => {
   const filtered = base.filter(r => {
     if (r.distance > filters.maxDistance) return false;
-    if (r.priceLevel > filters.maxPrice) return false;
+    const maxAllowedLevel = getPriceLevel(filters.maxPriceVND);
+    if (r.priceLevel > maxAllowedLevel) return false;
     if (filters.categories.length > 0 && !filters.categories.includes(r.category)) return false;
     if (filters.dietary.length > 0) {
       const hasAllDietary = filters.dietary.every(d => r.dietary?.includes(d));
@@ -54,7 +62,7 @@ const applyFilters = (filters: SpinFilters, base: Restaurant[], custom: Restaura
 export const useSpinStore = create<SpinState>((set, get) => ({
   filters: {
     maxDistance: 5000,
-    maxPrice: 4,
+    maxPriceVND: 1000000,
     categories: [],
     dietary: [],
   },
