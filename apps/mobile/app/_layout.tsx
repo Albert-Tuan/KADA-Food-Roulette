@@ -18,7 +18,22 @@ const queryClient = new QueryClient({
   },
 });
 
+import { useEffect } from 'react';
+import { DeviceEventEmitter } from 'react-native';
+import { useAuthStore } from '@/stores/authStore';
+import { router } from 'expo-router';
+
 export default function RootLayout() {
+  const { logout } = useAuthStore();
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('AUTH_EXPIRED', () => {
+      logout();
+      router.replace('/auth/login');
+    });
+    return () => sub.remove();
+  }, [logout]);
+
   const [fontsLoaded] = useFonts({
     ...Ionicons.font,
   });
