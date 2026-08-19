@@ -44,15 +44,23 @@ export default function RestaurantDetailScreen() {
   const openMaps = () => {
     if (!restaurant?.lat || !restaurant?.lng) {
       // Open Google Maps web for demo
-      Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant?.name + ' ' + restaurant?.address)}`);
+      Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant?.name + ' ' + (restaurant?.address || ''))}`);
       return;
     }
-    const scheme = Platform.select({ ios: 'maps:', android: 'geo:' });
+    
     const url = Platform.select({
-      ios: `${scheme}?q=${restaurant.lat},${restaurant.lng}`,
-      android: `${scheme}${restaurant.lat},${restaurant.lng}?q=${restaurant.lat},${restaurant.lng}(${restaurant.name})`,
+      ios: `maps:?q=${restaurant.lat},${restaurant.lng}`,
+      android: `geo:${restaurant.lat},${restaurant.lng}?q=${restaurant.lat},${restaurant.lng}(${encodeURIComponent(restaurant.name)})`,
+      web: `https://www.google.com/maps/search/?api=1&query=${restaurant.lat},${restaurant.lng}`,
+      default: `https://www.google.com/maps/search/?api=1&query=${restaurant.lat},${restaurant.lng}`
     });
-    if (url) Linking.openURL(url);
+    
+    if (url) {
+      Linking.openURL(url).catch(() => {
+        // Fallback if the native app is not installed
+        Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${restaurant.lat},${restaurant.lng}`);
+      });
+    }
   };
 
   const callRestaurant = () => {
