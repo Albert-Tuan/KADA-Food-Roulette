@@ -21,6 +21,7 @@ import { useCreateLocket, type LocketVisibility } from '@/features/lockets';
 import { useAuthStore, useSpinStore } from '@/stores';
 import { LOCKET_TIMESTAMP_TOLERANCE_SECONDS, MAX_CAPTION_LENGTH } from '@/lib/constants';
 import { getInstallationDeviceHash } from '@/lib/installationIdentity';
+import { Ionicons } from '@expo/vector-icons';
 
 interface CaptureDraft {
   uri: string;
@@ -92,8 +93,10 @@ export default function CaptureLocketScreen() {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [cameraFacing, setCameraFacing] = useState<'front' | 'back'>('back');
   const [draft, setDraft] = useState<CaptureDraft | null>(null);
+  const [step, setStep] = useState<'caption_overlay' | 'details_form'>('caption_overlay');
   const [dishName, setDishName] = useState('');
   const [note, setNote] = useState('');
+  const [rating, setRating] = useState(5);
   const [visibility, setVisibility] = useState<LocketVisibility>('FRIENDS');
   const [isCapturing, setIsCapturing] = useState(false);
   const [isLocating, setIsLocating] = useState(true);
@@ -165,6 +168,7 @@ export default function CaptureLocketScreen() {
         latitude: currentLocation.coords.latitude,
         longitude: currentLocation.coords.longitude,
       });
+      setStep('caption_overlay');
     } catch (error) {
       setLocation(null);
       setPermissionError(error instanceof Error ? error.message : 'Không thể chụp ảnh. Bạn thử lại nhé.');
@@ -205,18 +209,19 @@ export default function CaptureLocketScreen() {
       setFormError('');
       if (!useAuthStore.getState().isAuthenticated) {
         try {
-          await useAuthStore.getState().login('demo@foodroulette.app', '123456');
+          await useAuthStore.getState().login('locket-test@foodroulette.app', 'password123');
         } catch {
           // Continue in guest mode
         }
       }
-      const created = await createLocket.mutateAsync({
+      await createLocket.mutateAsync({
         localImageUri: draft.uri,
         mimeType: 'image/jpeg',
-        dishName: restaurantId ? dishName.trim() || undefined : undefined,
-        restaurantName: restaurantId ? (routeRestaurantName || undefined) : undefined,
+        dishName: dishName.trim() || undefined,
+        restaurantName: routeRestaurantName || undefined,
         restaurantId: restaurantId || undefined,
         note: note.trim() || undefined,
+        rating,
         visibility,
         capturedAt: draft.capturedAt,
         location: { latitude: draft.latitude, longitude: draft.longitude },
@@ -264,89 +269,209 @@ export default function CaptureLocketScreen() {
     );
   }
 
-  if (draft) {
+  // STEP 1: CAPTION OVERLAY ON PHOTO (DARK CAMERA BACKGROUND)
+  if (draft && step === 'caption_overlay') {
     return (
-      <SafeAreaView className="flex-1 bg-background">
+      <SafeAreaView className="flex-1 bg-black" edges={['top', 'bottom']}>
         <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <ScrollView contentContainerStyle={styles.formContent} keyboardShouldPersistTaps="handled">
-            <View className="flex-row items-center justify-between mb-4">
-              <TouchableOpacity onPress={() => setDraft(null)} className="px-3 py-2">
-                <Text className="text-secondary-700">Chụp lại</Text>
-              </TouchableOpacity>
-              <Text className="text-xl font-bold text-secondary-900">{returnTo === 'spin-check-in' ? '📸 Check-in & Nhận Spin' : 'Taste Board mới'}</Text>
-              <View className="w-20" />
+          {/* Top Bar */}
+          <View className="flex-row items-center justify-between px-5 py-3">
+            <TouchableOpacity 
+              onPress={() => { setDraft(null); setNote(''); }} 
+              className="px-4 py-2 rounded-full bg-black/60 border border-white/20"
+            >
+              <Text className="text-white font-bold text-xs">‹ Chụp lại</Text>
+            </TouchableOpacity>
+            
+            <Text className="text-white font-black text-sm">Viết Review Cảm Nhận</Text>
+
+            <TouchableOpacity 
+              onPress={() => router.back()} 
+              className="w-8 h-8 rounded-full bg-black/60 items-center justify-center border border-white/20"
+            >
+              <Ionicons name="close" size={18} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Central Photo with Direct Overlay Caption Input */}
+          <View className="flex-1 items-center justify-center px-6">
+            <View className="relative w-full aspect-square rounded-3xl overflow-hidden shadow-2xl border-2 border-white/30 bg-stone-900">
+              <Image source={{ uri: draft.uri }} className="w-full h-full" resizeMode="cover" />
+
+              {/* Top-Left GPS Verified Pill Badge */}
+              <View 
+                className="absolute top-3 left-3 flex-row items-center gap-1.5 px-3.5 py-1.5 rounded-full shadow-md"
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
+              >
+                <Ionicons name="time-outline" size={13} color="#ffffff" />
+                <Text className="text-white font-bold text-xs">
+                  {new Date(draft.capturedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+                <Text className="text-white/60 text-xs">•</Text>
+                <Ionicons name="shield-checkmark" size={13} color="#4ade80" />
+                <Text className="text-white font-bold text-xs">Đã xác minh GPS</Text>
+              </View>
+
+              {/* Bottom Photo Overlay: Direct Caption Input */}
+              <View 
+                className="absolute bottom-3 left-3 right-3 p-2.5 rounded-2xl border border-white/25 shadow-lg"
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.72)' }}
+              >
+                <TextInput
+                  value={note}
+                  onChangeText={setNote}
+                  placeholder="Chạm để viết cảm nhận về món ăn..."
+                  placeholderTextColor="rgba(255, 255, 255, 0.7)"
+                  maxLength={MAX_CAPTION_LENGTH}
+                  multiline
+                  className="text-white font-medium text-xs leading-5 min-h-12 max-h-24 px-2"
+                />
+              </View>
             </View>
 
-            <Image source={{ uri: draft.uri }} className="w-full aspect-square rounded-3xl bg-secondary-100" />
+            <Text className="text-white/60 text-xs mt-3 font-medium text-center">
+              Chạm vào khung đen dưới ảnh để viết cảm nhận ({note.length}/{MAX_CAPTION_LENGTH})
+            </Text>
+          </View>
 
-            {restaurantId ? (
-              <>
-                <View className="bg-primary-50 border border-primary-200 rounded-xl p-4">
-                  <Text className="text-secondary-500 text-sm">Đang review tại</Text>
-                  <Text className="text-lg font-bold text-secondary-900">
-                    {routeRestaurantName || 'Nhà hàng đã chọn'}
-                  </Text>
-                </View>
+          {/* Bottom Action: Next to details */}
+          <View className="p-6">
+            <TouchableOpacity
+              onPress={() => setStep('details_form')}
+              style={{ backgroundColor: '#b52330', borderBottomColor: '#61000e' }}
+              className="w-full rounded-2xl py-4 items-center justify-center border-b-4 shadow-xl flex-row gap-2 active:translate-y-0.5"
+            >
+              <Ionicons name="arrow-forward-outline" size={18} color="#ffffff" />
+              <Text className="text-white font-black text-base">Tiếp tục thông tin món</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
 
-                <Field label="Món ăn (không bắt buộc)">
-                  <TextInput
-                    value={dishName}
-                    onChangeText={setDishName}
-                    placeholder="Ví dụ: Bún bò Huế"
-                    placeholderTextColor="#9C8B7A"
-                    maxLength={80}
-                    className="bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900"
-                  />
-                </Field>
-              </>
+  // STEP 2: DETAILS & DISH INFO FORM (WARM LIGHT BACKGROUND)
+  if (draft && step === 'details_form') {
+    return (
+      <SafeAreaView className="flex-1 bg-surface" edges={['top', 'bottom']}>
+        <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView contentContainerStyle={styles.formContent} keyboardShouldPersistTaps="handled">
+            {/* Top Bar */}
+            <View className="flex-row items-center justify-between mb-4">
+              <TouchableOpacity 
+                onPress={() => setStep('caption_overlay')} 
+                className="px-4 py-2 rounded-full bg-white border border-outline-variant flex-row items-center gap-1"
+              >
+                <Ionicons name="chevron-back" size={14} color="#8e4e14" />
+                <Text className="text-secondary font-bold text-xs">Sửa review</Text>
+              </TouchableOpacity>
+              <Text className="text-base font-black text-primary">
+                {returnTo === 'spin-check-in' ? 'Xác Nhận Check-in' : 'Thông Tin Món Ăn'}
+              </Text>
+              <View className="w-16" />
+            </View>
+
+            {/* Mini Photo Preview Card */}
+            <View className="flex-row items-center p-3 rounded-2xl bg-white border-1.5 border-outline-variant shadow-xs gap-3">
+              <Image source={{ uri: draft.uri }} className="w-16 h-16 rounded-xl bg-stone-100" resizeMode="cover" />
+              <View className="flex-1">
+                <Text className="text-xs font-bold text-primary">
+                  {note ? `“${note}”` : 'Chưa có caption review'}
+                </Text>
+                <Text className="text-[11px] text-on-surface-variant mt-1">
+                  🕒 {new Date(draft.capturedAt).toLocaleTimeString('vi-VN')} • 🛡️ Đã xác minh GPS
+                </Text>
+              </View>
+            </View>
+
+            {/* Restaurant Info (if Spin Check-in) */}
+            {restaurantId || routeRestaurantName ? (
+              <View className="bg-white border-1.5 border-outline-variant rounded-2xl p-4 mt-3 shadow-xs">
+                <Text className="text-on-surface-variant text-xs font-semibold">Địa điểm thưởng thức</Text>
+                <Text className="text-base font-black text-primary mt-0.5">
+                  📍 {routeRestaurantName || 'Nhà hàng đã chọn từ Spin'}
+                </Text>
+              </View>
             ) : null}
 
-            <Field label={`Review · ${note.length}/${MAX_CAPTION_LENGTH}`}>
+            {/* Dish Name Input */}
+            <Field label="Tên món ăn (Bắt buộc)">
               <TextInput
-                value={note}
-                onChangeText={setNote}
-                placeholder={restaurantId ? 'Cảm nhận của bạn về món ăn này?' : 'Chia sẻ khoảnh khắc này với bạn bè nhé.'}
+                value={dishName}
+                onChangeText={setDishName}
+                placeholder="Ví dụ: Phở Bò Tái Nạm, Bún Chả, Cà Phê..."
                 placeholderTextColor="#9C8B7A"
-                maxLength={MAX_CAPTION_LENGTH}
-                multiline
-                textAlignVertical="top"
-                className="min-h-24 bg-white border border-secondary-200 rounded-xl px-4 py-3 text-secondary-900"
+                maxLength={80}
+                className="bg-white border-1.5 border-outline-variant rounded-2xl px-4 py-3.5 text-on-surface font-bold text-sm"
               />
             </Field>
 
-            <Field label="Ai có thể xem?">
-              <View className="gap-2">
-                {VISIBILITY_OPTIONS.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    onPress={() => setVisibility(option.value)}
-                    className={`rounded-xl border p-4 ${
-                      visibility === option.value ? 'border-primary bg-primary-50' : 'border-secondary-200 bg-white'
-                    }`}
-                  >
-                    <Text className="font-semibold text-secondary-900">{option.label}</Text>
-                    <Text className="text-secondary-500 text-sm mt-1">{option.description}</Text>
+            {/* Rating Stars Selector */}
+            <Field label="Đánh giá của bạn">
+              <View className="flex-row items-center justify-around bg-white border-1.5 border-outline-variant rounded-2xl py-3 px-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity key={star} onPress={() => setRating(star)} className="p-1">
+                    <Ionicons 
+                      name={star <= rating ? "star" : "star-outline"} 
+                      size={28} 
+                      color={star <= rating ? "#FFC107" : "#e2bebc"} 
+                    />
                   </TouchableOpacity>
                 ))}
               </View>
             </Field>
 
-            <View className="bg-secondary-50 rounded-xl p-4 gap-1">
-              <Text className="text-secondary-700 text-sm">GPS: {draft.latitude.toFixed(5)}, {draft.longitude.toFixed(5)}</Text>
-              <Text className="text-secondary-700 text-sm">Chụp lúc: {new Date(draft.capturedAt).toLocaleString('vi-VN')}</Text>
-            </View>
+            {/* Visibility Selector */}
+            <Field label="Ai có thể xem bài viết?">
+              <View className="gap-2">
+                {VISIBILITY_OPTIONS.map((option) => {
+                  const isSelected = visibility === option.value;
+                  return (
+                    <TouchableOpacity
+                      key={option.value}
+                      onPress={() => setVisibility(option.value)}
+                      style={{
+                        backgroundColor: isSelected ? '#fff8ef' : '#ffffff',
+                        borderColor: isSelected ? '#b52330' : '#e2bebc',
+                      }}
+                      className="rounded-2xl border-1.5 p-3.5 shadow-xs"
+                    >
+                      <View className="flex-row items-center justify-between">
+                        <Text className={`font-black text-xs ${isSelected ? 'text-primary' : 'text-on-surface'}`}>
+                          {option.label}
+                        </Text>
+                        {isSelected ? <Ionicons name="checkmark-circle" size={16} color="#b52330" /> : null}
+                      </View>
+                      <Text className="text-on-surface-variant text-[11px] mt-0.5">{option.description}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </Field>
 
-            {formError ? <Text className="text-red-700 text-sm">{formError}</Text> : null}
+            {formError ? <Text className="text-red-700 text-xs font-bold text-center mt-2">{formError}</Text> : null}
 
+            {/* Final Submit Button */}
             <TouchableOpacity
+              testID="locket-submit-button"
               onPress={handleSubmit}
               disabled={createLocket.isPending}
-              className="bg-primary rounded-xl py-4 items-center disabled:opacity-50"
+              style={{ backgroundColor: '#b52330', borderBottomColor: '#61000e' }}
+              className="rounded-2xl py-4 items-center justify-center flex-row gap-2 border-b-4 shadow-md mt-5 active:translate-y-0.5 disabled:opacity-50"
             >
               {createLocket.isPending ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text className="text-white font-bold text-base">{returnTo === 'spin-check-in' ? '🎉 Đăng Locket & Quay May Mắn' : 'Đăng Taste Board'}</Text>
+                <>
+                  <Ionicons 
+                    name={returnTo === 'spin-check-in' ? "gift-outline" : "checkmark-circle-outline"} 
+                    size={20} 
+                    color="#ffffff" 
+                  />
+                  <Text className="text-white font-black text-base">
+                    {returnTo === 'spin-check-in' ? 'Hoàn Tất & Nhận Lượt Quay' : 'Đăng Taste Board'}
+                  </Text>
+                </>
               )}
             </TouchableOpacity>
           </ScrollView>
@@ -355,48 +480,70 @@ export default function CaptureLocketScreen() {
     );
   }
 
+  // STEP 0: LIVE CAMERA VIEW
   return (
     <View className="flex-1 bg-black">
       <CameraView ref={cameraRef} style={styles.camera} facing={cameraFacing}>
         <SafeAreaView className="flex-1">
+          {/* Top Control Bar */}
           <View className="flex-row justify-between items-center p-4">
-            <TouchableOpacity className="rounded-full bg-black/60 px-4 py-3" onPress={() => router.back()}>
-              <Text className="text-white font-semibold">Đóng</Text>
+            <TouchableOpacity 
+              className="w-10 h-10 rounded-full bg-black/60 items-center justify-center border border-white/20" 
+              onPress={() => router.back()}
+            >
+              <Ionicons name="close" size={22} color="#ffffff" />
             </TouchableOpacity>
-            <View className="rounded-full bg-black/60 px-4 py-3">
-              <Text className="text-white text-sm">{getLocationStatusLabel(isLocating, location)}</Text>
+            
+            {/* Rounded-full GPS Pill Badge */}
+            <View 
+              testID="locket-location-status"
+              className="flex-row items-center gap-1.5 rounded-full px-4 py-2 border border-white/20"
+              style={{ backgroundColor: 'rgba(0, 0, 0, 0.65)' }}
+            >
+              <View className={`w-2 h-2 rounded-full ${isLocating ? 'bg-amber-400' : location ? 'bg-green-400' : 'bg-red-400'}`} />
+              <Text className="text-white font-bold text-xs">
+                {isLocating ? 'Đang định vị...' : location ? 'GPS Sẵn sàng' : 'Chưa có vị trí'}
+              </Text>
             </View>
           </View>
 
+          {/* Central Viewfinder */}
           <View className="flex-1 items-center justify-center px-8">
-            <View className="w-full aspect-square rounded-3xl border-2 border-white/70" />
+            <View className="w-full aspect-square rounded-3xl border-2 border-white/60 overflow-hidden" />
             {permissionError ? (
-              <View className="bg-black/70 rounded-xl px-4 py-3 mt-4">
-                <Text className="text-white text-center">{permissionError}</Text>
+              <View className="bg-black/75 rounded-2xl px-4 py-3 mt-4 border border-white/20">
+                <Text className="text-white text-center font-medium text-xs">{permissionError}</Text>
               </View>
             ) : null}
           </View>
 
-          <View className="items-center p-7">
+          {/* Bottom Shutter Controls */}
+          <View className="items-center pb-8 pt-4">
             <View className="flex-row items-center gap-10">
               <View className="w-14" />
               <TouchableOpacity
+                testID="locket-capture-button"
                 accessibilityLabel="Chụp ảnh"
-                className="w-20 h-20 rounded-full bg-white border-4 border-primary items-center justify-center disabled:opacity-50"
+                className="w-20 h-20 rounded-full bg-white border-4 items-center justify-center disabled:opacity-50 shadow-2xl active:scale-95"
+                style={{ borderColor: '#b52330' }}
                 onPress={handleCapture}
                 disabled={isCapturing || isLocating}
               >
-                {isCapturing ? <ActivityIndicator color="#C68E17" /> : <View className="w-14 h-14 rounded-full bg-primary" />}
+                {isCapturing ? (
+                  <ActivityIndicator color="#b52330" />
+                ) : (
+                  <View className="w-14 h-14 rounded-full" style={{ backgroundColor: '#b52330' }} />
+                )}
               </TouchableOpacity>
               <TouchableOpacity
                 accessibilityLabel="Đổi camera"
-                className="w-14 h-14 rounded-full bg-black/60 items-center justify-center"
+                className="w-14 h-14 rounded-full bg-black/60 border border-white/20 items-center justify-center active:bg-black/80"
                 onPress={() => setCameraFacing((current) => (current === 'back' ? 'front' : 'back'))}
               >
-                <Text className="text-white text-xl">↻</Text>
+                <Ionicons name="camera-reverse-outline" size={24} color="#ffffff" />
               </TouchableOpacity>
             </View>
-            <Text className="text-white/80 text-sm mt-4">Chỉ chụp trực tiếp từ camera</Text>
+            <Text className="text-white/80 font-bold text-xs mt-4">Chỉ chụp trực tiếp từ camera</Text>
           </View>
         </SafeAreaView>
       </CameraView>
@@ -406,8 +553,8 @@ export default function CaptureLocketScreen() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <View className="mt-5">
-      <Text className="text-secondary-800 font-semibold mb-2">{label}</Text>
+    <View className="mt-3">
+      <Text className="text-secondary font-bold text-xs mb-1">{label}</Text>
       {children}
     </View>
   );
@@ -431,18 +578,22 @@ function CenteredState({
   onSecondaryAction?: () => void | Promise<void>;
 }) {
   return (
-    <SafeAreaView className="flex-1 bg-background items-center justify-center px-8">
-      {loading ? <ActivityIndicator color="#C68E17" size="large" /> : null}
-      {title ? <Text className="text-2xl font-bold text-secondary-900 text-center">{title}</Text> : null}
-      <Text className="text-secondary-600 text-center mt-3">{message}</Text>
+    <SafeAreaView className="flex-1 bg-surface items-center justify-center px-8">
+      {loading ? <ActivityIndicator color="#b52330" size="large" /> : null}
+      {title ? <Text className="text-2xl font-black text-primary text-center">{title}</Text> : null}
+      <Text className="text-on-surface-variant text-center mt-2.5 font-medium">{message}</Text>
       {actionLabel && onAction ? (
-        <TouchableOpacity className="bg-primary rounded-xl px-6 py-4 mt-6" onPress={onAction}>
-          <Text className="text-white font-semibold">{actionLabel}</Text>
+        <TouchableOpacity 
+          style={{ backgroundColor: '#b52330', borderBottomColor: '#61000e' }}
+          className="rounded-2xl px-7 py-3.5 mt-6 border-b-4 shadow-md" 
+          onPress={onAction}
+        >
+          <Text className="text-white font-extrabold text-base">{actionLabel}</Text>
         </TouchableOpacity>
       ) : null}
       {secondaryLabel && onSecondaryAction ? (
         <TouchableOpacity className="px-6 py-3 mt-2" onPress={onSecondaryAction}>
-          <Text className="text-secondary-700 font-semibold">{secondaryLabel}</Text>
+          <Text className="text-secondary font-bold">{secondaryLabel}</Text>
         </TouchableOpacity>
       ) : null}
     </SafeAreaView>
@@ -451,5 +602,5 @@ function CenteredState({
 
 const styles = StyleSheet.create({
   camera: { flex: 1 },
-  formContent: { padding: 16, paddingBottom: 40 },
+  formContent: { padding: 16, paddingBottom: 50 },
 });
