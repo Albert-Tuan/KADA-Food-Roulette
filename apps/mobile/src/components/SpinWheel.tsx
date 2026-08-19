@@ -31,11 +31,22 @@ const SEGMENTS: PrizeSegment[] = [
 ];
 
 interface SpinWheelProps {
+  onSpinStart?: () => void;
   onSpinEnd?: (prize: PrizeSegment) => void;
   disabled?: boolean;
+  buttonTitle?: string;
+  spinningTitle?: string;
+  resultPrefixLabel?: string;
 }
 
-export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
+export function SpinWheel({
+  onSpinStart,
+  onSpinEnd,
+  disabled = false,
+  buttonTitle,
+  spinningTitle,
+  resultPrefixLabel,
+}: SpinWheelProps) {
   const rotation = useSharedValue(0);
   const [spinning, setSpinning] = React.useState(false);
   const [lastPrize, setLastPrize] = React.useState<PrizeSegment | null>(null);
@@ -53,6 +64,7 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
 
     setSpinning(true);
     setLastPrize(null);
+    onSpinStart?.();
 
     // Random number of full spins (3-5) plus random segment
     const extraSpins = (Math.floor(Math.random() * 3) + 3) * 360;
@@ -79,7 +91,7 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
         }
       }
     );
-  }, [spinning, disabled, rotation, segmentAngle, handleSpinEnd]);
+  }, [spinning, disabled, rotation, segmentAngle, handleSpinEnd, onSpinStart]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
@@ -174,7 +186,7 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
       {/* Spin Button */}
       <View style={styles.buttonContainer}>
         <Button
-          title={spinning ? 'Đang chọn món...' : 'QUAY MÓN NGAY!'}
+          title={spinning ? (spinningTitle || 'Đang chọn món...') : (buttonTitle || 'QUAY MÓN NGAY!')}
           onPress={spin}
           disabled={spinning || disabled}
           loading={spinning}
@@ -186,7 +198,7 @@ export function SpinWheel({ onSpinEnd, disabled = false }: SpinWheelProps) {
       {/* Last Prize */}
       {lastPrize && (
         <View style={styles.prizeContainer}>
-          <Text style={styles.prizeLabel}>Gợi ý món thèm nhất hôm nay:</Text>
+          <Text style={styles.prizeLabel}>{resultPrefixLabel || 'Gợi ý món thèm nhất hôm nay:'}</Text>
           <View style={[styles.prizeBadge, { backgroundColor: lastPrize.color }]}>
             <Text style={[styles.prizeText, { color: lastPrize.textColor || '#ffffff' }]}>
               {lastPrize.icon} {lastPrize.label}

@@ -11,12 +11,13 @@ import { Link } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocketFeed, type Locket, type LocketFeedFilter } from '@/features/lockets';
 import { formatRelativeTime } from '@/lib';
+import { Ionicons } from '@expo/vector-icons';
 
-const FILTERS: { value: LocketFeedFilter; label: string }[] = [
-  { value: 'ALL', label: 'Tất cả' },
-  { value: 'MINE', label: 'Của tôi' },
-  { value: 'FRIENDS', label: 'Bạn bè' },
-  { value: 'DISCOVER', label: 'Khám phá' },
+const FILTERS: { value: LocketFeedFilter; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { value: 'ALL', label: 'Tất cả', icon: 'grid' },
+  { value: 'MINE', label: 'Của tôi', icon: 'person' },
+  { value: 'FRIENDS', label: 'Bạn bè', icon: 'people' },
+  { value: 'DISCOVER', label: 'Khám phá', icon: 'compass' },
 ];
 
 export default function LocketsScreen() {
@@ -43,7 +44,7 @@ export default function LocketsScreen() {
               data={FILTERS}
               keyExtractor={(item) => item.value}
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 14, gap: 8 }}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 14, gap: 12 }}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => setFilter(item.value)}
@@ -51,8 +52,13 @@ export default function LocketsScreen() {
                     backgroundColor: filter === item.value ? '#b52330' : '#ffffff',
                     borderColor: filter === item.value ? '#b52330' : '#e2bebc',
                   }}
-                  className="rounded-2xl border-1.5 px-4.5 py-2.5 shadow-xs"
+                  className="rounded-2xl border-1.5 px-5 py-3 shadow-xs flex-row items-center gap-2"
                 >
+                  <Ionicons 
+                    name={item.icon} 
+                    size={16} 
+                    color={filter === item.value ? '#ffffff' : '#b52330'} 
+                  />
                   <Text style={{ color: filter === item.value ? '#ffffff' : '#b52330' }} className="font-extrabold text-sm">
                     {item.label}
                   </Text>
@@ -116,22 +122,24 @@ function LocketCard({ locket }: { locket: Locket }) {
             <Text className="font-extrabold text-flamered text-base">{locket.author.displayNamePublic}</Text>
             <Text className="text-warmgray text-xs mt-0.5">{formatRelativeTime(locket.capturedAt)}</Text>
           </View>
-          <Text className="text-gold font-extrabold text-sm">{'★'.repeat(locket.rating)}</Text>
+          <Text className="text-gold font-extrabold text-sm">{locket.rating ? '★'.repeat(locket.rating) : ''}</Text>
         </View>
 
         <Image source={{ uri: locket.imageUrl }} className="w-full aspect-square bg-cream-linen" resizeMode="cover" />
 
         <View className="p-4">
-          <Text className="text-xl font-extrabold text-flamered">{locket.dishName}</Text>
+          <Text className="text-xl font-extrabold text-flamered">{locket.dishName ?? 'Taste Board'}</Text>
           {locket.restaurantName ? <Text className="text-flameorange font-bold mt-1">📍 {locket.restaurantName}</Text> : null}
           {locket.note ? <Text className="text-gray-800 leading-5 mt-2 font-medium">{locket.note}</Text> : null}
-          <View className="flex-row flex-wrap gap-2 mt-3">
-            {locket.tags.map((tag) => (
-              <View key={tag} className="rounded-xl bg-gold-soft px-3 py-1 border border-gold-light">
-                <Text className="text-flameorange text-xs font-extrabold">#{tag}</Text>
-              </View>
-            ))}
-          </View>
+          {locket.tags && locket.tags.length > 0 ? (
+            <View className="flex-row flex-wrap gap-2 mt-3">
+              {locket.tags.map((tag) => (
+                <View key={tag} className="rounded-xl bg-gold-soft px-3 py-1 border border-gold-light">
+                  <Text className="text-flameorange text-xs font-extrabold">#{tag}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
       </TouchableOpacity>
     </Link>

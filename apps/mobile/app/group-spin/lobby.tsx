@@ -11,7 +11,7 @@ export default function GroupSpinLobbyScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)');
+      router.push('/(tabs)/spin');
     }
   };
 
@@ -50,6 +50,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1.5,
     borderBottomColor: '#e2bebc',
     backgroundColor: '#fff8ef',
+    zIndex: 10,
   },
   backButton: {
     padding: 6,

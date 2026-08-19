@@ -2,30 +2,84 @@ import { Request, Response } from 'express';
 import { prisma } from '../../shared/utils/prisma';
 import { AuthRequest } from '../../shared/middleware/auth.middleware';
 
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export const restaurantsController = {
   // GET /api/restaurants - Nearby and filter list
   getNearby: async (req: Request, res: Response) => {
     try {
-      const { category } = req.query;
+      const { category, lat, lng, radiusKm, price, cuisine, search } = req.query;
 
-      // Query real data from the database
-      const restaurants = await prisma.restaurant.findMany({
-        where: {
-          status: 'APPROVED',
-          ...(category ? { category: String(category) } : {})
-        }
+      const dbRestaurants = await prisma.restaurant.findMany({
+        where: { status: 'APPROVED', deletedAt: null },
+        include: { photos: { orderBy: { displayOrder: 'asc' }, take: 5 } },
+        orderBy: [{ rating: 'desc' }, { createdAt: 'desc' }],
       });
 
-      // Convert Decimal to Number for Mobile Map compatibility
-      const formattedRestaurants = restaurants.map(rest => ({
-        ...rest,
-        lat: rest.lat ? Number(rest.lat) : null,
-        lng: rest.lng ? Number(rest.lng) : null,
-      }));
+      if (dbRestaurants.length === 0) {
+        return res.json([]);
+      }
 
-      return res.json(formattedRestaurants);
+      const latNum = lat != null ? Number(lat) : null;
+      const lngNum = lng != null ? Number(lng) : null;
+      const radiusNum = radiusKm != null ? Number(radiusKm) : null;
+      const priceNum = price != null ? Number(price) : null;
+
+      const list = dbRestaurants
+        .filter((r) => {
+          if (priceNum != null && r.priceLevel != null && r.priceLevel > priceNum) return false;
+          if (
+            typeof cuisine === 'string' &&
+            cuisine &&
+            !(r.category ?? '').toLowerCase().includes(cuisine.toLowerCase())
+          ) {
+            return false;
+          }
+          if (
+            typeof search === 'string' &&
+            search &&
+            !r.name.toLowerCase().includes(search.toLowerCase())
+          ) {
+            return false;
+          }
+          return true;
+        })
+        .map((r) => {
+          const distance =
+            latNum != null && lngNum != null && r.lat != null && r.lng != null
+              ? haversineKm(latNum, lngNum, Number(r.lat), Number(r.lng))
+              : undefined;
+          return {
+            id: r.id,
+            name: r.name,
+            address: r.address ?? undefined,
+            lat: r.lat != null ? Number(r.lat) : undefined,
+            lng: r.lng != null ? Number(r.lng) : undefined,
+            phone: r.phone ?? undefined,
+            source: r.source,
+            status: r.status,
+            ratingAvg: r.rating ?? 0,
+            ratingCount: 0,
+            category: r.category ?? undefined,
+            priceLevel: r.priceLevel ?? undefined,
+            photos: r.photos.map((p) => p.photoUrl),
+            distance,
+            createdAt: r.createdAt.toISOString(),
+          };
+        })
+        .filter((item) => (radiusNum != null && item.distance != null ? item.distance <= radiusNum : true));
+
+      return res.json(list);
     } catch (error) {
-      console.error('Error fetching restaurants:', error);
+      console.error('getNearby Error:', error);
       return res.status(500).json({ error: 'Lỗi máy chủ khi lấy danh sách quán ăn.' });
     }
   },
