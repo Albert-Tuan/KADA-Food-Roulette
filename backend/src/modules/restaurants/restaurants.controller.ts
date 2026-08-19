@@ -24,7 +24,7 @@ export const restaurantsController = {
       }));
 
       return res.json(formattedRestaurants);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching restaurants:', error);
       return res.status(500).json({ error: 'Lỗi máy chủ khi lấy danh sách quán ăn.' });
     }
@@ -49,7 +49,7 @@ export const restaurantsController = {
       };
 
       return res.json(formattedRestaurant);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching restaurant by id:', error);
       return res.status(500).json({ error: 'Không tìm thấy quán ăn.' });
     }
@@ -116,7 +116,7 @@ export const restaurantsController = {
           lng: newRestaurant.lng ? Number(newRestaurant.lng) : null,
         },
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating restaurant:', error);
       return res.status(500).json({ error: 'Lỗi gửi đề xuất quán ăn.' });
     }
@@ -138,7 +138,7 @@ export const restaurantsController = {
       });
 
       return res.json({ message: 'Đã cập nhật trạng thái.', data: updated });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating status:', error);
       return res.status(500).json({ error: 'Lỗi cập nhật trạng thái quán ăn.' });
     }

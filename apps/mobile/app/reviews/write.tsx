@@ -114,7 +114,7 @@ export default function WriteReviewScreen() {
         valueRating: valueRating || undefined,
         content,
         tags,
-        photos,
+        imageUrl: photos[0],
       });
       Alert.alert('Cảm ơn bạn! ⭐', 'Review đã được đăng.', [
         { text: 'OK', onPress: () => router.back() },
