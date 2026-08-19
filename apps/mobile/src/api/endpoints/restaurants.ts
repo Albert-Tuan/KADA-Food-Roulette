@@ -69,7 +69,7 @@ export const restaurantApi = {
 
 export const placesApi = {
   seedNearby: async (lat: number, lng: number, radius = 5): Promise<{ added: number; skipped: number }> => {
-    // Temporary mock for seeding
-    return { added: 0, skipped: 0 };
+    const response = await apiClient.post('/places/seed', { lat, lng, radiusKm: radius });
+    return response.data.data;
   }
 };

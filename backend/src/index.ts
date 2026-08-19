@@ -27,8 +27,13 @@ const PORT = process.env.PORT || 3000
 app.use(helmet({ crossOriginResourcePolicy: false, crossOriginEmbedderPolicy: false }))
 app.use(requestContext)
 
+import path from 'path';
+
 // CORS
 app.use(corsMiddleware)
+
+// Serve uploads
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }))
@@ -65,6 +70,9 @@ app.use('/api/v1/profile', profileRoutes)
 app.use('/api/v1/profiles', profileRoutes)
 app.use('/api/v1/friends', friendsRoutes)
 app.use('/api/v1/notifications', notificationRoutes)
+
+import reviewRoutes from './modules/reviews/reviews.routes'
+app.use('/api/v1/reviews', reviewRoutes)
 
 // 404 handler
 app.use(notFoundHandler)

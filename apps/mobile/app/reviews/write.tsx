@@ -9,9 +9,11 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { reviewsApi } from '@/api';
 
 function StarPicker({
@@ -63,7 +65,22 @@ export default function WriteReviewScreen() {
   const [valueRating, setValueRating] = useState(0);
   const [content, setContent] = useState('');
   const [tags, setTags] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      selectionLimit: 3,
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      const newPhotos = result.assets.map(a => a.uri);
+      setPhotos([...photos, ...newPhotos].slice(0, 3));
+    }
+  };
 
   const toggleTag = (tag: string) => {
     if (tags.includes(tag)) {
@@ -97,6 +114,7 @@ export default function WriteReviewScreen() {
         valueRating: valueRating || undefined,
         content,
         tags,
+        imageUrl: photos[0],
       });
       Alert.alert('Cảm ơn bạn! ⭐', 'Review đã được đăng.', [
         { text: 'OK', onPress: () => router.back() },
@@ -173,6 +191,23 @@ export default function WriteReviewScreen() {
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+
+          <Text className="text-primary font-semibold mb-2">Ảnh ({photos.length}/3)</Text>
+          <View className="flex-row flex-wrap gap-2 mb-6">
+            {photos.map((uri, i) => (
+              <View key={i} className="w-20 h-20 bg-surface rounded-xl overflow-hidden">
+                <Image source={{ uri }} style={{ width: '100%', height: '100%' }} />
+              </View>
+            ))}
+            {photos.length < 3 && (
+              <TouchableOpacity
+                onPress={pickImage}
+                className="w-20 h-20 bg-surface border-2 border-dashed border-border rounded-xl items-center justify-center"
+              >
+                <Text className="text-3xl text-border">+</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <TouchableOpacity

@@ -4,7 +4,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, DeviceEventEmitter } from 'react-native';
 import { API_TIMEOUT, API_URL as ENV_API_URL } from '@/lib/constants';
 
-const API_URL = ENV_API_URL;
+let API_URL = ENV_API_URL;
+if (!process.env.EXPO_PUBLIC_API_URL && Platform.OS === 'android') {
+  API_URL = 'http://10.0.2.2:3000/api/v1';
+} else if (!process.env.EXPO_PUBLIC_API_URL) {
+  API_URL = 'http://localhost:3000/api/v1';
+}
 
 const getStorageItem = async (key: string) => {
   if (Platform.OS === 'web') {

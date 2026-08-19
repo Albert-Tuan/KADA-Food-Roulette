@@ -2,6 +2,7 @@ import { View, Text, FlatList, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Restaurant } from '@/api';
 
+
 interface RestaurantListProps {
   restaurants: Restaurant[];
   visible: boolean;
@@ -20,7 +21,13 @@ export default function RestaurantList({ restaurants, visible }: RestaurantListP
       </View>
       <FlatList
         data={restaurants}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => {
+          if (!item || !item.id) {
+             console.log("INVALID ITEM IN RESTAURANT LIST:", item);
+             return 'fallback-' + index;
+          }
+          return item.id;
+        }}
         contentContainerStyle={{ padding: 16, gap: 16 }}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => router.push(`/restaurant/${item.id}` as any)}>
