@@ -1,4 +1,0 @@
-interface:
-  display_name: "Food Roulette Feature Workflow"
-  short_description: "Plan and execute Food Roulette feature work safely"
-  default_prompt: "Use $food-roulette-feature-workflow to inspect context, plan, implement, verify, and hand off this Food Roulette feature."
