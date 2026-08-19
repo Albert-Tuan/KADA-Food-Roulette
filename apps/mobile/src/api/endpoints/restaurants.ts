@@ -45,8 +45,8 @@ export const restaurantApi = {
   },
 
   nearby: async (lat: number, lng: number, radius = 5): Promise<Restaurant[]> => {
-    const response = await apiClient.get<Restaurant[]>('/restaurants/nearby', {
-      params: { lat, lng, radius },
+    const response = await apiClient.get<Restaurant[]>('/restaurants', {
+      params: { lat, lng, radiusKm: radius },
     });
     return response.data;
   },

@@ -26,16 +26,7 @@ interface SpinState {
   resetStore: () => void;
 }
 
-const MOCK_RESTAURANTS: Restaurant[] = [
-  { id: '1', name: 'Bún đậu Tiến Hải', category: 'Món Việt', rating: 4.5, totalReviews: 320, distance: 1500, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1555126634-323283e090fa?w=400', dietary: ['Ăn mặn'] },
-  { id: '2', name: 'Bún chả Hương Liên', category: 'Món Việt', rating: 4.8, totalReviews: 512, distance: 2000, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1626804475297-41609ea264eb?w=400', dietary: ['Ăn mặn'] },
-  { id: '3', name: 'Pizza 4P\'s', category: 'Ý', rating: 4.9, totalReviews: 1024, distance: 3000, priceLevel: 4, imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', dietary: ['Ăn chay', 'Ăn mặn'] },
-  { id: '4', name: 'Gogi House', category: 'Hàn Quốc', rating: 4.6, totalReviews: 856, distance: 1200, priceLevel: 3, imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400', dietary: ['Ăn mặn'] },
-  { id: '5', name: 'Phở Hòa', category: 'Món Việt', rating: 4.7, totalReviews: 450, distance: 500, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb431?w=400', dietary: ['Ăn mặn'] },
-  { id: '6', name: 'Haidilao', category: 'Lẩu', rating: 4.9, totalReviews: 2000, distance: 4000, priceLevel: 4, imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb431?w=400', dietary: ['Ăn mặn', 'Ăn chay'] },
-  { id: '7', name: 'Cơm tấm Ba Ghiền', category: 'Món Việt', rating: 4.4, totalReviews: 300, distance: 2500, priceLevel: 1, imageUrl: 'https://images.unsplash.com/photo-1626804475297-41609ea264eb?w=400', dietary: ['Ăn mặn'] },
-  { id: '8', name: 'Trà sữa KOI', category: 'Đồ uống', rating: 4.8, totalReviews: 900, distance: 800, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400', dietary: ['Ăn chay'] },
-];
+
 
 const getPriceLevel = (priceVND: number) => {
   if (priceVND <= 100000) return 1;
@@ -67,8 +58,8 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     dietary: [],
   },
   customCandidates: [],
-  baseCandidates: MOCK_RESTAURANTS,
-  candidates: MOCK_RESTAURANTS,
+  baseCandidates: [],
+  candidates: [],
   currentResult: null,
   luckySpinCount: 1,
   checkedInRestaurantIds: [],
@@ -136,14 +127,19 @@ export const useSpinStore = create<SpinState>((set, get) => ({
 
   fetchNearbyCandidates: async (lat: number, lng: number) => {
     try {
-      // Simulate network delay for Mock Data
-      await new Promise(resolve => setTimeout(resolve, 800));
-      set((state) => ({
-        baseCandidates: MOCK_RESTAURANTS,
-        candidates: applyFilters(state.filters, MOCK_RESTAURANTS, state.customCandidates)
-      }));
+      const state = get();
+      // Radius from filters is in meters, API expects km
+      const radiusKm = state.filters.maxDistance / 1000;
+      const backendRestaurants = await restaurantApi.nearby(lat, lng, radiusKm);
+      const newBaseCandidates = backendRestaurants.map(mapBackendRestaurantToSpinCandidate);
+      
+      set({
+        baseCandidates: newBaseCandidates,
+        candidates: applyFilters(state.filters, newBaseCandidates, state.customCandidates)
+      });
     } catch (error) {
       console.error('Failed to fetch nearby restaurants:', error);
+      throw error;
     }
   },
 
