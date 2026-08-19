@@ -157,7 +157,7 @@ export default function SpinScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={styles.contextChip}>
                     <Text style={styles.contextChipText}>
-                      💰 {filters.maxPrice === 1 ? 'Bình dân' : filters.maxPrice === 2 ? 'Trung bình' : filters.maxPrice === 3 ? 'Hơi sang' : 'Sang trọng'}
+                      💰 {filters.maxPriceVND === 1000000 ? 'Tất cả giá' : `Dưới ${(filters.maxPriceVND / 1000).toLocaleString('vi-VN')}k`}
                     </Text>
                   </TouchableOpacity>
                   {filters.categories.length > 0 && (
