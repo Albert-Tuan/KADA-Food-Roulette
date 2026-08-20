@@ -50,6 +50,16 @@ export function getLatestCapturedMenu(): MenuCaptureResponse | null {
 
 export const menuApi = {
   captureMenu: async (restaurantId: string, imageUris: string[]): Promise<MenuCaptureResponse> => {
+    // Warm up the server first (Render free tier sleeps after 15min inactivity)
+    try {
+      const baseURL = apiClient.defaults.baseURL || '';
+      // Strip /api/v1 to get base server URL for /health
+      const serverBase = baseURL.replace(/\/api\/v1\/?$/, '');
+      await fetch(`${serverBase}/health`, { method: 'GET', signal: AbortSignal.timeout(60000) });
+    } catch {
+      // Server might still be waking up, proceed anyway
+    }
+
     const formData = new FormData();
     formData.append('restaurantId', restaurantId);
 

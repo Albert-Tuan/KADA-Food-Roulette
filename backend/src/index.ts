@@ -36,13 +36,11 @@ app.use(corsMiddleware)
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Body parsing
-app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 
-// Logging (dev mode)
-if (process.env.NODE_ENV !== 'production') {
-  app.use(morgan('dev'))
-}
+// Logging
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
