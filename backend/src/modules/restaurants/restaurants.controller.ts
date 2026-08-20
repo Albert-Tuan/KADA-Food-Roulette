@@ -13,25 +13,31 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 }
 
 export const restaurantsController = {
-  // GET /api/restaurants - Nearby and filter list
+  // GET /api/restaurants - Nearby and filter list directly from MySQL Database
   getNearby: async (req: Request, res: Response) => {
     try {
-      const { category, lat, lng, radiusKm, price, cuisine, search } = req.query;
+      const { category, lat, lng, radiusKm, price, cuisine, search, status } = req.query;
+
+      const filterStatus = typeof status === 'string' && status ? status : 'APPROVED';
 
       const dbRestaurants = await prisma.restaurant.findMany({
-        where: { status: 'APPROVED', deletedAt: null },
-        include: { photos: { orderBy: { displayOrder: 'asc' }, take: 5 } },
+        where: {
+          status: filterStatus as any,
+          deletedAt: null,
+        },
+        include: {
+          photos: {
+            orderBy: { displayOrder: 'asc' },
+            take: 5,
+          },
+        },
         orderBy: [{ rating: 'desc' }, { createdAt: 'desc' }],
       });
 
-      if (dbRestaurants.length === 0) {
-        return res.json([]);
-      }
-
-      const latNum = lat != null ? Number(lat) : null;
-      const lngNum = lng != null ? Number(lng) : null;
-      const radiusNum = radiusKm != null ? Number(radiusKm) : null;
-      const priceNum = price != null ? Number(price) : null;
+      const latNum = lat != null && lat !== '' ? Number(lat) : null;
+      const lngNum = lng != null && lng !== '' ? Number(lng) : null;
+      const radiusNum = radiusKm != null && radiusKm !== '' ? Number(radiusKm) : null;
+      const priceNum = price != null && price !== '' ? Number(price) : null;
 
       const list = dbRestaurants
         .filter((r) => {
@@ -40,6 +46,13 @@ export const restaurantsController = {
             typeof cuisine === 'string' &&
             cuisine &&
             !(r.category ?? '').toLowerCase().includes(cuisine.toLowerCase())
+          ) {
+            return false;
+          }
+          if (
+            typeof category === 'string' &&
+            category &&
+            !(r.category ?? '').toLowerCase().includes(category.toLowerCase())
           ) {
             return false;
           }
@@ -53,16 +66,23 @@ export const restaurantsController = {
           return true;
         })
         .map((r) => {
+          const rLat = r.lat != null ? Number(r.lat) : null;
+          const rLng = r.lng != null ? Number(r.lng) : null;
           const distance =
-            latNum != null && lngNum != null && r.lat != null && r.lng != null
-              ? haversineKm(latNum, lngNum, Number(r.lat), Number(r.lng))
+            latNum != null && lngNum != null && rLat != null && rLng != null
+              ? haversineKm(latNum, lngNum, rLat, rLng)
               : undefined;
+
+          const photos = Array.isArray(r.photos)
+            ? r.photos.map((p) => p.photoUrl)
+            : [];
+
           return {
             id: r.id,
             name: r.name,
             address: r.address ?? undefined,
-            lat: r.lat != null ? Number(r.lat) : undefined,
-            lng: r.lng != null ? Number(r.lng) : undefined,
+            lat: rLat ?? undefined,
+            lng: rLng ?? undefined,
             phone: r.phone ?? undefined,
             source: r.source,
             status: r.status,
@@ -70,7 +90,7 @@ export const restaurantsController = {
             ratingCount: 0,
             category: r.category ?? undefined,
             priceLevel: r.priceLevel ?? undefined,
-            photos: r.photos.map((p) => p.photoUrl),
+            photos,
             distance,
             createdAt: r.createdAt.toISOString(),
           };
@@ -78,9 +98,13 @@ export const restaurantsController = {
         .filter((item) => (radiusNum != null && item.distance != null ? item.distance <= radiusNum : true));
 
       return res.json(list);
-    } catch (error) {
-      console.error('getNearby Error:', error);
-      return res.status(500).json({ error: 'Lỗi máy chủ khi lấy danh sách quán ăn.' });
+    } catch (error: any) {
+      console.error('[Restaurants] getNearby Database Error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Lỗi máy chủ khi lấy danh sách quán ăn từ cơ sở dữ liệu.',
+        details: error?.message,
+      });
     }
   },
 
@@ -89,7 +113,12 @@ export const restaurantsController = {
     try {
       const { id } = req.params;
       const restaurant = await prisma.restaurant.findUnique({
-        where: { id: id as string }
+        where: { id: id as string },
+        include: {
+          photos: {
+            orderBy: { displayOrder: 'asc' },
+          },
+        },
       });
 
       if (!restaurant) {
@@ -103,9 +132,9 @@ export const restaurantsController = {
       };
 
       return res.json(formattedRestaurant);
-    } catch (error) {
-      console.error('Error fetching restaurant by id:', error);
-      return res.status(500).json({ error: 'Không tìm thấy quán ăn.' });
+    } catch (error: any) {
+      console.error('[Restaurants] getById Database Error:', error);
+      return res.status(500).json({ error: 'Lỗi máy chủ khi truy vấn quán ăn.', details: error?.message });
     }
   },
 
@@ -126,20 +155,22 @@ export const restaurantsController = {
         where: {
           lat: { not: null },
           lng: { not: null },
-        }
+        },
       });
 
       const EARTH_RADIUS_KM = 6371;
       const toRad = (d: number) => (d * Math.PI) / 180;
-      
+
       const isDuplicate = existingRestaurants.some((rest) => {
         const restLat = Number(rest.lat);
         const restLng = Number(rest.lng);
         const dLat = toRad(restLat - numLat);
         const dLng = toRad(restLng - numLng);
-        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(numLat)) * Math.cos(toRad(restLat)) * Math.sin(dLng / 2) ** 2;
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRad(numLat)) * Math.cos(toRad(restLat)) * Math.sin(dLng / 2) ** 2;
         const distanceKm = 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(a));
-        
+
         return distanceKm <= 0.05; // 50 meters
       });
 
@@ -147,7 +178,6 @@ export const restaurantsController = {
         return res.status(409).json({ error: 'Đã có quán ăn khác tồn tại trong vòng bán kính 50m.' });
       }
 
-      // Save to database
       const newRestaurant = await prisma.restaurant.create({
         data: {
           name,
@@ -158,8 +188,8 @@ export const restaurantsController = {
           priceLevel: typeof priceLevel === 'number' ? priceLevel : 2,
           status: 'PENDING',
           source: 'USER_SUBMITTED',
-          rating: 0
-        }
+          rating: 0,
+        },
       });
 
       return res.status(201).json({
@@ -170,9 +200,9 @@ export const restaurantsController = {
           lng: newRestaurant.lng ? Number(newRestaurant.lng) : null,
         },
       });
-    } catch (error) {
-      console.error('Error creating restaurant:', error);
-      return res.status(500).json({ error: 'Lỗi gửi đề xuất quán ăn.' });
+    } catch (error: any) {
+      console.error('[Restaurants] create Error:', error);
+      return res.status(500).json({ error: 'Lỗi gửi đề xuất quán ăn.', details: error?.message });
     }
   },
 
@@ -188,13 +218,13 @@ export const restaurantsController = {
 
       const updated = await prisma.restaurant.update({
         where: { id: id as string },
-        data: { status }
+        data: { status },
       });
 
       return res.json({ message: 'Đã cập nhật trạng thái.', data: updated });
-    } catch (error) {
-      console.error('Error updating status:', error);
-      return res.status(500).json({ error: 'Lỗi cập nhật trạng thái quán ăn.' });
+    } catch (error: any) {
+      console.error('[Restaurants] updateStatus Error:', error);
+      return res.status(500).json({ error: 'Lỗi cập nhật trạng thái quán ăn.', details: error?.message });
     }
   },
 };

@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import * as Location from 'expo-location';
 import { restaurantApi, Restaurant, placesApi } from '@/api';
 
@@ -160,6 +160,57 @@ export default function DiscoverScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-cream">
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Unified Top Navigation Bar */}
+      <View className="flex-row items-center justify-between px-4 py-3 bg-cream-beige border-b border-borderbrown z-10">
+        {/* Back / Home Button */}
+        <TouchableOpacity
+          className="w-10 h-10 rounded-full bg-white border border-borderbrown items-center justify-center shadow-sm"
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <Text className="text-espresso font-bold text-base">←</Text>
+        </TouchableOpacity>
+
+        {/* Center Title */}
+        <View className="items-center">
+          <Text className="text-espresso font-extrabold text-lg">
+            {showList ? 'Danh sách Quán ăn' : 'Bản đồ Khám Phá'}
+          </Text>
+          <Text className="text-warmgray text-xs">
+            {filtered.length} địa điểm
+          </Text>
+        </View>
+
+        {/* Right Actions */}
+        <View className="flex-row items-center gap-2">
+          {/* Toggle Map / List */}
+          <TouchableOpacity
+            className="w-10 h-10 rounded-full bg-white border border-borderbrown items-center justify-center shadow-sm"
+            onPress={() => setShowList(!showList)}
+            activeOpacity={0.7}
+          >
+            <Text className="text-base">{showList ? '🗺️' : '📋'}</Text>
+          </TouchableOpacity>
+
+          {/* Add Restaurant */}
+          <TouchableOpacity
+            className="w-10 h-10 rounded-full bg-espresso border border-gold items-center justify-center shadow-sm"
+            onPress={() => router.push('/discover/add-restaurant' as any)}
+            activeOpacity={0.7}
+          >
+            <Text className="text-cream text-base font-bold">➕</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Map or Web fallback */}
       <View className="flex-1">
         {Platform.OS !== 'web' ? (
@@ -203,41 +254,6 @@ export default function DiscoverScreen() {
 
         {/* List View Overlay */}
         <RestaurantList restaurants={filtered} visible={showList} />
-
-        {/* Top controls */}
-        <View className="absolute top-4 left-4 right-4 flex-row justify-between">
-          <TouchableOpacity
-            className="bg-cream-beige border border-borderbrown rounded-full w-12 h-12 items-center justify-center shadow-lg"
-            onPress={() => setShowList(!showList)}
-          >
-            <Text className="text-xl">{showList ? '🗺️' : '📋'}</Text>
-          </TouchableOpacity>
-
-          <View className="flex-row gap-2">
-            {/* Add Restaurant button */}
-            <TouchableOpacity
-              className="bg-cream-beige border border-borderbrown rounded-full w-12 h-12 items-center justify-center shadow-lg"
-              onPress={() => router.push('/discover/add-restaurant' as any)}
-            >
-              <Text className="text-xl">➕</Text>
-            </TouchableOpacity>
-
-            {/* Seed button */}
-            {!showList && (
-              <TouchableOpacity
-                className="bg-espresso border border-gold rounded-full px-5 py-2.5 shadow-lg items-center justify-center"
-                onPress={handleSeedGooglePlaces}
-                disabled={seeding}
-              >
-                {seeding ? (
-                  <ActivityIndicator color="#FDF5E6" size="small" />
-                ) : (
-                  <Text className="text-cream font-bold text-sm">🌐 Seed</Text>
-                )}
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
 
         {/* Selected restaurant card */}
         {selected && (

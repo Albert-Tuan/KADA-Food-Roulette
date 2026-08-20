@@ -18,3 +18,5 @@ export { reviewsApi } from './endpoints/reviews';
 export type { Review, CreateReviewDto, ReviewsListResponse, ReviewFilters } from './endpoints/reviews';
 export { stewardApi } from './endpoints/steward';
 export type { PendingRestaurant, DuplicateCheckResult, StewardStats } from './endpoints/steward';
+export { friendsApi } from './endpoints/friends';
+export type { FriendUser, PendingFriendRequests } from './endpoints/friends';

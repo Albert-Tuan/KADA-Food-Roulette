@@ -1,9 +1,11 @@
 import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { Link, useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import { usePublicProfile } from '@/features/profile';
 
 export default function PublicProfileScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams<{ public_id: string }>();
   const profile = usePublicProfile(params.public_id);
 
@@ -14,14 +16,27 @@ export default function PublicProfileScreen() {
     return (
       <SafeAreaView className="flex-1 bg-background items-center justify-center px-8">
         <Text className="text-xl font-bold text-secondary-900">Không tìm thấy profile</Text>
-        <TouchableOpacity onPress={() => profile.refetch()} className="bg-primary rounded-xl px-6 py-3 mt-5"><Text className="text-white font-semibold">Thử lại</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()} className="bg-primary rounded-xl px-6 py-3 mt-5"><Text className="text-white font-semibold">Quay lại</Text></TouchableOpacity>
       </SafeAreaView>
     );
   }
 
   const data = profile.data;
   return (
-    <SafeAreaView testID="profile-public-screen" className="flex-1 bg-background" edges={['bottom']}>
+    <SafeAreaView testID="profile-public-screen" className="flex-1 bg-background" edges={['top', 'bottom']}>
+      <Stack.Screen options={{ headerShown: false }} />
+      {/* Top Header */}
+      <View className="flex-row items-center justify-between px-5 py-3 border-b border-secondary-100 bg-surface-white">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="p-2 rounded-xl border border-secondary-200"
+          activeOpacity={0.7}
+        >
+          <Feather name="arrow-left" size={20} color="#b52330" />
+        </TouchableOpacity>
+        <Text className="text-lg font-bold text-secondary-900">Profile công khai</Text>
+        <View style={{ width: 36 }} />
+      </View>
       <FlatList
         testID="profile-public-locket-list"
         data={data.publicLockets}

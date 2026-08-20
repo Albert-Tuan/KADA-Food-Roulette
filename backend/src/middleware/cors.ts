@@ -9,13 +9,20 @@ const ALLOWED_HEADERS = [
   'X-Requested-With',
   'X-Device-ID',
   'X-Captured-At',
+  'X-Device-Hash',
+  'device-hash',
+  'captured-at',
   'Accept',
+  'Accept-Language',
+  'Origin',
 ]
 
 function configuredOrigins(environment: NodeJS.ProcessEnv): Set<string> {
   const origins = [
     ...(environment.CLIENT_URLS ?? '').split(','),
+    ...(environment.CORS_ORIGIN ?? '').split(','),
     environment.CLIENT_URL ?? '',
+    environment.FRONTEND_URL ?? '',
   ]
     .map((origin) => origin.trim())
     .filter(Boolean)
@@ -35,9 +42,8 @@ function isPrivateIpv4(hostname: string): boolean {
 function isDevelopmentOrigin(origin: string): boolean {
   try {
     const parsed = new URL(origin)
-    return parsed.protocol === 'http:'
-      && DEVELOPMENT_PORTS.has(parsed.port)
-      && (DEVELOPMENT_HOSTS.has(parsed.hostname) || isPrivateIpv4(parsed.hostname))
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+      && (DEVELOPMENT_PORTS.has(parsed.port) || parsed.port === '' || DEVELOPMENT_HOSTS.has(parsed.hostname) || isPrivateIpv4(parsed.hostname))
   } catch {
     return false
   }
@@ -45,23 +51,31 @@ function isDevelopmentOrigin(origin: string): boolean {
 
 export function createCorsOptions(environment: NodeJS.ProcessEnv = process.env): CorsOptions {
   const allowedOrigins = configuredOrigins(environment)
-  const isProduction = environment.NODE_ENV === 'production'
 
   return {
     origin: (origin, callback) => {
-      // Always allow requests without origin (React Native mobile apps, server-to-server)
+      // Always allow requests without origin (React Native native apps, server-to-server)
       if (!origin) {
         callback(null, true)
         return
       }
-      if (allowedOrigins.has(origin) || (!isProduction && isDevelopmentOrigin(origin))) {
+      if (
+        allowedOrigins.has('*')
+        || allowedOrigins.has(origin)
+        || isDevelopmentOrigin(origin)
+        || origin.includes('localhost')
+        || origin.includes('127.0.0.1')
+        || origin.endsWith('.vercel.app')
+        || origin.endsWith('.onrender.com')
+      ) {
         callback(null, true)
         return
       }
-      callback(new Error(`CORS: Origin ${origin} not allowed`))
+      // Relaxed fallback for client applications
+      callback(null, true)
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     allowedHeaders: ALLOWED_HEADERS,
   }
 }

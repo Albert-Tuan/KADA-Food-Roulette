@@ -24,7 +24,14 @@ export default function GroupSpinLobbyScreen() {
           <Feather name="arrow-left" size={24} color="#b52330" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nhóm Quay Roulette</Text>
-        <View style={{ width: 36 }} />
+        <TouchableOpacity
+          onPress={() => router.replace('/(tabs)')}
+          style={styles.homeButton}
+          activeOpacity={0.7}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Feather name="home" size={22} color="#b52330" />
+        </TouchableOpacity>
       </View>
 
       <GroupLobby />
@@ -55,5 +62,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     color: '#b52330',
+  },
+  homeButton: {
+    padding: 6,
   },
 });

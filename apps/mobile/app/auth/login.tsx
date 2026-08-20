@@ -22,9 +22,10 @@ export default function LoginScreen() {
       setIsSubmitting(true);
       setError('');
       await login(email.trim(), password);
-      router.replace('/(tabs)');
+      // Auth gate in _layout.tsx will handle routing based on isOnboarded
     } catch (err: any) {
-      setError(err.message || 'Đăng nhập thất bại');
+      const message = err?.response?.data?.error || err.message || 'Đăng nhập thất bại';
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }

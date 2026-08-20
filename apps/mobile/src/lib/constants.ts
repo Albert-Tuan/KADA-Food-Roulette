@@ -3,7 +3,7 @@
 export const APP_NAME = 'Food Roulette';
 export const APP_TAGLINE = 'Không biết ăn gì? Để vòng quyết định.';
 
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://food-roulette-api-backend.onrender.com/api/v1';
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://kada-food-roulette.onrender.com/api/v1';
 export const API_TIMEOUT = 120000; // 2 minutes timeout for AI Processing
 
 // Pagination

@@ -117,13 +117,23 @@ export default function ProfileScreen() {
             </Text>
           ) : null}
 
-        {/* Quick Preference Config Link */}
-        <Link href="/profile/taste-preferences" asChild>
-          <TouchableOpacity className="mt-3 px-4 py-2 rounded-full bg-amber-100/90 border border-amber-300 flex-row items-center justify-center gap-1.5 shadow-xs">
-            <Ionicons name="options-outline" size={14} color="#78350f" />
-            <Text className="text-amber-900 font-bold text-xs">Tùy Chỉnh Khẩu Vị AI</Text>
+        {/* Quick Actions Row */}
+        <View className="flex-row items-center gap-2 mt-3">
+          <Link href="/profile/taste-preferences" asChild>
+            <TouchableOpacity className="flex-1 px-3 py-2 rounded-full bg-amber-100/90 border border-amber-300 flex-row items-center justify-center gap-1.5 shadow-xs">
+              <Ionicons name="options-outline" size={14} color="#78350f" />
+              <Text className="text-amber-900 font-bold text-xs">Khẩu Vị AI</Text>
+            </TouchableOpacity>
+          </Link>
+
+          <TouchableOpacity
+            onPress={() => router.push('/friends' as any)}
+            className="flex-1 px-3 py-2 rounded-full bg-red-100/90 border border-red-300 flex-row items-center justify-center gap-1.5 shadow-xs"
+          >
+            <Ionicons name="people-outline" size={14} color="#b52330" />
+            <Text className="text-primary font-bold text-xs">Bạn Bè & Lời Mời</Text>
           </TouchableOpacity>
-        </Link>
+        </View>
 
         {/* Stats Bar */}
         <View className="flex-row w-full justify-around bg-white border-1.5 rounded-3xl py-4 mt-5 shadow-xs" style={{ borderColor: '#e2bebc' }}>

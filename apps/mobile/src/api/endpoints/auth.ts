@@ -36,6 +36,7 @@ export interface UserProfile {
   streakDays: number;
   coins: number;
   role: 'USER' | 'STEWARD' | 'ADMIN';
+  isOnboarded?: boolean;
   createdAt?: string;
 }
 

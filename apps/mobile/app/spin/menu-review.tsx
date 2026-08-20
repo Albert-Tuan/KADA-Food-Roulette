@@ -182,21 +182,29 @@ export default function MenuReviewScreen() {
       >
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
           {/* Top Header */}
-          <View className="flex-row items-center mb-4 pt-2">
-            <TouchableOpacity
-              onPress={() => router.back()}
-              className="p-2 rounded-full bg-white border border-amber-200 shadow-sm mr-3"
-            >
-              <Feather name="arrow-left" size={20} color="#44403C" />
-            </TouchableOpacity>
-            <View>
-              <Text className="text-xl font-bold text-stone-800">
-                📋 Xác Nhận Menu
-              </Text>
-              <Text className="text-xs text-stone-500 mt-1">
-                AI đã quét được {items.length} món ăn từ menu
-              </Text>
+          <View className="flex-row items-center justify-between mb-4 pt-2">
+            <View className="flex-row items-center flex-1 mr-2">
+              <TouchableOpacity
+                onPress={() => router.back()}
+                className="p-2 rounded-full bg-white border border-amber-200 shadow-sm mr-3"
+              >
+                <Feather name="arrow-left" size={20} color="#44403C" />
+              </TouchableOpacity>
+              <View>
+                <Text className="text-xl font-bold text-stone-800">
+                  📋 Xác Nhận Menu
+                </Text>
+                <Text className="text-xs text-stone-500 mt-1">
+                  AI đã quét được {items.length} món ăn từ menu
+                </Text>
+              </View>
             </View>
+            <TouchableOpacity
+              onPress={() => router.replace('/(tabs)')}
+              className="p-2 rounded-full bg-white border border-amber-200 shadow-sm"
+            >
+              <Feather name="home" size={20} color="#b52330" />
+            </TouchableOpacity>
           </View>
 
           {/* Confidence Badge */}

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'rea
 import Animated, { FadeInDown, BounceIn } from 'react-native-reanimated';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import { useSpinStore } from '../../../stores/spinStore';
+import { useRouter } from 'expo-router';
 import { CircleAiSuggestion } from './CircleAiSuggestion';
 import type { MemberScore } from '../types';
 
@@ -27,9 +28,11 @@ interface GroupVoteResultProps {
   onCreatePact: () => void;
   onRespin: () => void;
   onDirections: () => void;
+  onGoHome?: () => void;
 }
 
-export function GroupVoteResult({ onCreatePact, onRespin, onDirections }: GroupVoteResultProps) {
+export function GroupVoteResult({ onCreatePact, onRespin, onDirections, onGoHome }: GroupVoteResultProps) {
+  const router = useRouter();
   const { members, votes } = useGroupSpinStore();
   const { currentResult, candidates } = useSpinStore();
 
@@ -38,6 +41,14 @@ export function GroupVoteResult({ onCreatePact, onRespin, onDirections }: GroupV
   const resultData = currentResult || candidates[0];
 
   if (!resultData) return null;
+
+  const handleGoHome = () => {
+    if (onGoHome) {
+      onGoHome();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -96,6 +107,10 @@ export function GroupVoteResult({ onCreatePact, onRespin, onDirections }: GroupV
         )}
         <TouchableOpacity onPress={onDirections} style={styles.directionsButton}>
           <Text style={styles.directionsButtonText}>🧭 Chỉ đường</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={handleGoHome} style={styles.homeButton} activeOpacity={0.85}>
+          <Text style={styles.homeButtonText}>🏠 Về Trang Chủ</Text>
         </TouchableOpacity>
       </Animated.View>
 
@@ -242,6 +257,19 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: '#b52330',
+  },
+  homeButton: {
+    backgroundColor: '#fff8ef',
+    paddingVertical: 14,
+    borderRadius: 18,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+  },
+  homeButtonText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#8e4e14',
   },
   footnote: {
     fontSize: 12,

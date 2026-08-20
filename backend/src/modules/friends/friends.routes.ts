@@ -4,6 +4,7 @@ import { friendsController } from './friends.controller';
 
 const router = Router();
 
+router.get('/search', authenticate, friendsController.searchUsers);
 router.post('/request', authenticate, friendsController.sendRequest);
 router.post('/:friendshipId/accept', authenticate, friendsController.acceptRequest);
 router.post('/:friendshipId/reject', authenticate, friendsController.rejectRequest);

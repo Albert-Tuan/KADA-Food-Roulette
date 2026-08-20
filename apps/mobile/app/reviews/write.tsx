@@ -12,7 +12,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { reviewsApi } from '@/api';
 
@@ -128,12 +128,18 @@ export default function WriteReviewScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
+      <Stack.Screen options={{ headerShown: false }} />
+      <View className="px-5 py-3 flex-row items-center border-b border-border bg-card">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+          <Text className="text-primary text-xl font-bold">←</Text>
+        </TouchableOpacity>
+        <Text className="text-lg font-bold text-primary">Viết review</Text>
+      </View>
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
-          <Text className="text-2xl font-bold text-primary mb-1">✍️ Viết review</Text>
           <Text className="text-text-muted text-sm mb-6">
             Chia sẻ trải nghiệm của bạn để giúp cộng đồng
           </Text>

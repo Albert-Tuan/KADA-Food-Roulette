@@ -15,10 +15,6 @@ export default function RestaurantList({ restaurants, visible }: RestaurantListP
 
   return (
     <View className="absolute inset-0 bg-cream">
-      <View className="px-6 py-4 border-b border-borderbrown bg-cream-beige">
-        <Text className="text-espresso font-extrabold text-xl">Danh sách Quán ăn</Text>
-        <Text className="text-warmgray text-sm">{restaurants.length} địa điểm gần bạn</Text>
-      </View>
       <FlatList
         data={restaurants}
         keyExtractor={(item, index) => {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import { useSpinStore } from '../../../stores/spinStore';
+import { useAuthStore } from '../../../stores/authStore';
 import type { VoteDecision } from '../types';
 
 interface GroupVoteVetoProps {
@@ -10,7 +11,8 @@ interface GroupVoteVetoProps {
 
 export function GroupVoteVeto({ onVote }: GroupVoteVetoProps) {
   const [timeLeft, setTimeLeft] = useState(9 * 60 + 42);
-  const { members, votes, hostId } = useGroupSpinStore();
+  const currentUser = useAuthStore((s) => s.user);
+  const { members, votes, hostId, castGroupVote, syncRoom, status: roomStatus } = useGroupSpinStore();
   const { currentResult, candidates } = useSpinStore();
 
   const resultData = currentResult || candidates[0];
@@ -18,7 +20,8 @@ export function GroupVoteVeto({ onVote }: GroupVoteVetoProps) {
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(prev => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
+      syncRoom();
+    }, 1500);
     return () => clearInterval(timer);
   }, []);
 
@@ -28,7 +31,14 @@ export function GroupVoteVeto({ onVote }: GroupVoteVetoProps) {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const handleCastVote = async (decision: 'ACCEPT' | 'RESPIN' | 'VETO') => {
+    await castGroupVote(decision);
+    onVote(decision);
+  };
+
   if (!resultData) return null;
+
+  const myVote = currentUser?.id ? votes[currentUser.id] : null;
 
   return (
     <View style={styles.container}>
@@ -63,27 +73,29 @@ export function GroupVoteVeto({ onVote }: GroupVoteVetoProps) {
         {/* Voting Progress */}
         <View style={styles.progressSection}>
           <View style={styles.progressHeader}>
-            <Text style={styles.progressLabel}>VOTING PROGRESS</Text>
+            <Text style={styles.progressLabel}>TIẾN ĐỘ BÌNH CHỌN CẢ NHÓM</Text>
             <Text style={styles.progressCount}>
-              {Object.keys(votes).length}/{members.length} Voted
+              {Object.keys(votes).length}/{members.length} Đã Vote
             </Text>
           </View>
           <View style={styles.progressBar}>
             <View style={[styles.progressFill, {
-              width: `${(Object.keys(votes).length / members.length) * 100}%`
+              width: `${(Object.keys(votes).length / Math.max(members.length, 1)) * 100}%`
             }]} />
           </View>
           <Text style={styles.progressHint}>
-            Cần &gt;50% ({Math.ceil(members.length / 2)} người) chấp nhận để chốt đơn
+            Cần &gt;50% ({Math.ceil(members.length / 2)} người) chấp nhận để chốt quán
           </Text>
         </View>
 
         {/* Members */}
         <View style={styles.membersSection}>
-          <Text style={styles.membersLabel}>SQUAD STATUS</Text>
+          <Text style={styles.membersLabel}>TRẠNG THÁI BÌNH CHỌN</Text>
           {members.map(member => {
             const hasVoted = votes[member.id] !== undefined;
             const decision = votes[member.id];
+            const isMe = currentUser?.id ? member.id === currentUser.id : false;
+            const isHost = member.id === hostId || member.role === 'HOST';
 
             return (
               <View key={member.id} style={[
@@ -94,20 +106,23 @@ export function GroupVoteVeto({ onVote }: GroupVoteVetoProps) {
                   styles.memberIndicator,
                   decision === 'ACCEPT' && styles.indicatorAccept,
                   decision === 'RESPIN' && styles.indicatorRespin,
+                  decision === 'VETO' && styles.indicatorRespin,
                 ]} />
                 <Image source={{ uri: member.avatarUrl }} style={styles.memberAvatar} />
                 <View style={styles.memberInfo}>
                   <Text style={styles.memberName}>
-                    {member.name} {member.id === hostId && '(You)'}
+                    {member.name} {isMe && '(Bạn)'} {isHost && '👑'}
                   </Text>
                   <Text style={[
                     styles.memberStatus,
                     decision === 'ACCEPT' && styles.statusAccept,
                     decision === 'RESPIN' && styles.statusRespin,
+                    decision === 'VETO' && styles.statusRespin,
                   ]}>
-                    {decision === 'ACCEPT' && '✅ Chấp nhận'}
-                    {decision === 'RESPIN' && '❌ Quay lại'}
-                    {!hasVoted && '⏳ Chưa vote'}
+                    {decision === 'ACCEPT' && '✅ Đã chấp nhận'}
+                    {decision === 'RESPIN' && '❌ Muốn quay lại'}
+                    {decision === 'VETO' && '🚫 Đã dùng Veto'}
+                    {!hasVoted && '⏳ Đang suy nghĩ...'}
                   </Text>
                 </View>
               </View>
@@ -117,7 +132,7 @@ export function GroupVoteVeto({ onVote }: GroupVoteVetoProps) {
 
         {/* Veto tokens */}
         <View style={styles.vetoTokens}>
-          <Text style={styles.vetoLabel}>Veto Tokens:</Text>
+          <Text style={styles.vetoLabel}>Quyền Veto của bạn:</Text>
           <Text style={styles.vetoIcons}>❌ ❌ ❌</Text>
           <Text style={styles.vetoCount}>3/3</Text>
         </View>
@@ -126,15 +141,27 @@ export function GroupVoteVeto({ onVote }: GroupVoteVetoProps) {
       {/* Bottom Actions */}
       <View style={styles.bottomActions}>
         <View style={styles.actionRow}>
-          <TouchableOpacity onPress={() => onVote('RESPIN')} style={styles.respinButton}>
+          <TouchableOpacity
+            onPress={() => handleCastVote('RESPIN')}
+            style={[styles.respinButton, myVote === 'RESPIN' && { opacity: 0.6 }]}
+            activeOpacity={0.8}
+          >
             <Text style={styles.respinText}>🔄 QUAY LẠI</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => onVote('ACCEPT')} style={styles.acceptButton}>
-            <Text style={styles.acceptText}>✅ CHẤP NHẬN</Text>
+          <TouchableOpacity
+            onPress={() => handleCastVote('ACCEPT')}
+            style={[styles.acceptButton, myVote === 'ACCEPT' && { opacity: 0.6 }]}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.acceptText}>✅ CHẤP NHẬN QUÁN</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={() => onVote('VETO')} style={styles.vetoButton}>
-          <Text style={styles.vetoButtonText}>🚫 DÙNG VETO</Text>
+        <TouchableOpacity
+          onPress={() => handleCastVote('VETO')}
+          style={[styles.vetoButton, myVote === 'VETO' && { opacity: 0.6 }]}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.vetoButtonText}>🚫 DÙNG VETO (PHỦ QUYẾT)</Text>
         </TouchableOpacity>
       </View>
     </View>

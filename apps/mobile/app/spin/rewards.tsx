@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import Animated, { FadeInDown, BounceIn } from 'react-native-reanimated';
 
 export default function PersonalRewardsScreen() {
@@ -15,6 +15,7 @@ export default function PersonalRewardsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Stack.Screen options={{ headerShown: false }} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Celebration Header */}
         <Animated.View entering={BounceIn.delay(200)} style={styles.header}>

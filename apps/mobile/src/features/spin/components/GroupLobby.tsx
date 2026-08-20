@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Alert, Linking, Modal } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Alert, Linking, Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useAuthStore } from '../../../stores/authStore';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import { useSpinStore } from '../../../stores/spinStore';
 import { restaurantApi } from '../../../api/endpoints/restaurants';
@@ -10,7 +11,7 @@ import { SpinFilterSheet } from './SpinFilterSheet';
 import { InviteMembersSheet } from './InviteMembersSheet';
 import { GroupVoteVeto } from './GroupVoteVeto';
 import { GroupVoteResult } from './GroupVoteResult';
-import type { Restaurant } from '../types';
+import type { Restaurant, GroupMember } from '../types';
 
 interface GroupLobbyProps {
   onSpinEnd?: (winner: Restaurant) => void;
@@ -21,7 +22,23 @@ type GroupSpinStep = 'LOBBY' | 'VOTE_VETO' | 'VOTE_RESULT';
 export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
   const router = useRouter();
   const rouletteRef = useRef<FoodRouletteRef>(null);
-  const { members, roomCode, removeMember, joinByCode, hostId } = useGroupSpinStore();
+  const currentUser = useAuthStore((s) => s.user);
+  const {
+    members,
+    roomCode,
+    removeMember,
+    joinByCode,
+    hostId,
+    status: roomStatus,
+    fetchOrInitHostRoom,
+    createNewRoom,
+    syncRoom,
+    startGroupSpin,
+    finishGroupSpin,
+    resetGroupSpin,
+    currentResult: backendResult,
+    isLoadingRoom,
+  } = useGroupSpinStore();
   const {
     candidates,
     baseCandidates,
@@ -40,8 +57,38 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [memberToKick, setMemberToKick] = useState<GroupMember | null>(null);
   const [joinCodeInput, setJoinCodeInput] = useState('');
   const [isSpinning, setIsSpinning] = useState(false);
+
+  // Initialize room & sync realtime with backend every 1.5s
+  useEffect(() => {
+    fetchOrInitHostRoom();
+
+    const interval = setInterval(() => {
+      syncRoom();
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Listen to synchronized room status changes (Host spins -> Members automatically spin too)
+  useEffect(() => {
+    if (roomStatus === 'SPINNING' && !isSpinning) {
+      setIsSpinning(true);
+      rouletteRef.current?.spin();
+    } else if (roomStatus === 'VOTING' && step === 'LOBBY') {
+      if (backendResult) {
+        setCurrentResult(backendResult);
+      }
+      setStep('VOTE_VETO');
+    } else if (roomStatus === 'LOBBY' && step !== 'LOBBY') {
+      setStep('LOBBY');
+      setIsSpinning(false);
+    } else if (roomStatus === 'RESULT' && step !== 'VOTE_RESULT') {
+      setStep('VOTE_RESULT');
+    }
+  }, [roomStatus, isSpinning, step, backendResult]);
 
   // Load real restaurants from backend if base is small
   useEffect(() => {
@@ -78,11 +125,15 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
     ? [...storeCustomCandidates, ...candidates.slice(0, 4)]
     : candidates;
   const allReady = members.length > 0;
+  const isCurrentUserHost = currentUser?.id ? hostId === currentUser.id : true;
 
-  const handleSpinEnd = (winner: Restaurant) => {
+  const handleSpinEnd = async (winner: Restaurant) => {
     setIsSpinning(false);
     setCurrentResult(winner);
     if (onSpinEnd) onSpinEnd(winner);
+    if (isCurrentUserHost) {
+      await finishGroupSpin(winner);
+    }
     setStep('VOTE_VETO');
   };
 
@@ -96,10 +147,13 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
     return (
       <View style={styles.container}>
         <GroupVoteVeto
-          onVote={(decision) => {
+          onVote={async (decision) => {
             if (decision === 'ACCEPT') {
-              setStep('VOTE_RESULT');
+              // Voting handled by store sync
             } else {
+              if (isCurrentUserHost) {
+                await resetGroupSpin();
+              }
               setStep('LOBBY');
             }
           }}
@@ -142,11 +196,22 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
                   <TouchableOpacity
                     style={styles.roomCodeBadge}
                     onPress={() => {
-                      Alert.alert('Mã Phòng', `Mã phòng hiện tại: #${roomCode || 'PARTY2026'}`);
+                      Alert.alert('Mã Phòng', `Mã phòng hiện tại: #${roomCode}\nChia sẻ mã này cho bạn bè để cùng tham gia!`);
                     }}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.roomCodeText}>MÃ: #{roomCode || 'PARTY2026'} 📋</Text>
+                    <Text style={styles.roomCodeText}>MÃ: #{roomCode} 📋</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.createCodeBtn}
+                    onPress={async () => {
+                      const newCode = await createNewRoom();
+                      Alert.alert('Phòng Mới 🎉', `Đã tạo phòng mới với mã #${newCode}!`);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.createCodeBtnText}>🎲 Mã mới</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -157,7 +222,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
                     }}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.joinCodeBtnText}>🔑 Đổi / Nhập mã</Text>
+                    <Text style={styles.joinCodeBtnText}>🔑 Nhập mã</Text>
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.roomTitle}>Phòng Nhậu Roulette 🍻</Text>
@@ -172,36 +237,25 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
             <View style={styles.membersBar}>
               <View style={styles.membersTitleRow}>
                 <Text style={styles.membersTitle}>Thành viên ({members.length}/20 người)</Text>
-                <Text style={styles.membersHint}>Chạm ✕ để kick</Text>
+                {isCurrentUserHost && <Text style={styles.membersHint}>Chạm ✕ để kick thành viên</Text>}
               </View>
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.avatarScroll}>
-                {members.map((m, i) => {
-                  const isHost = i === 0 || m.role === 'HOST';
+                {members.map((m) => {
+                  const isHost = m.role === 'HOST' || m.id === hostId;
+                  const canKick = isCurrentUserHost && !isHost;
                   return (
                     <View key={m.id} style={styles.avatarWrapper}>
                       <Image source={{ uri: m.avatarUrl }} style={styles.avatarImage} />
-                      {isHost ? (
+                      {isHost && (
                         <View style={styles.hostCrown}>
                           <Text style={styles.hostCrownText}>👑</Text>
                         </View>
-                      ) : (
+                      )}
+                      {canKick && (
                         <TouchableOpacity
                           style={styles.kickMemberBtn}
-                          onPress={() => {
-                            Alert.alert(
-                              'Xóa thành viên',
-                              `Bạn có chắc chắn muốn xóa ${m.name} khỏi phòng quay nhóm?`,
-                              [
-                                { text: 'Hủy', style: 'cancel' },
-                                {
-                                  text: 'Xóa',
-                                  style: 'destructive',
-                                  onPress: () => removeMember(m.id),
-                                },
-                              ]
-                            );
-                          }}
+                          onPress={() => setMemberToKick(m)}
                           activeOpacity={0.8}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
@@ -330,19 +384,27 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
         {/* 5. Fixed 3D Game Action Dock */}
         <View style={styles.bottomDock}>
           <TouchableOpacity
-            style={[styles.startSpinBtn, (!allReady || isSpinning) && styles.startSpinBtnDisabled]}
-            disabled={!allReady || isSpinning}
+            style={[
+              styles.startSpinBtn,
+              (!allReady || isSpinning || !isCurrentUserHost) && styles.startSpinBtnDisabled,
+            ]}
+            disabled={!allReady || isSpinning || !isCurrentUserHost}
             activeOpacity={0.88}
-            onPress={() => {
+            onPress={async () => {
+              if (!isCurrentUserHost) return;
               setIsSpinning(true);
+              const randomPick = displayCandidates[Math.floor(Math.random() * displayCandidates.length)];
+              await startGroupSpin(randomPick);
               rouletteRef.current?.spin();
             }}
           >
             <Text style={styles.startSpinText}>
               {isSpinning
                 ? '🔄 ĐANG QUAY VÒNG NHÓM...'
+                : !isCurrentUserHost
+                ? '⏳ ĐỢI TRƯỞNG PHÒNG BẤM QUAY VÒNG...'
                 : allReady
-                ? `🎉 QUAY CHO CẢ NHÓM (${members.length} NGƯỜI SẴN SÀNG)`
+                ? `🎉 QUAY CHO CẢ NHÓM (TRƯỞNG PHÒNG 👑)`
                 : 'Đợi mọi người tham gia...'}
             </Text>
           </TouchableOpacity>
@@ -396,20 +458,71 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
 
               <TouchableOpacity
                 style={styles.modalConfirmBtn}
-                onPress={() => {
+                onPress={async () => {
                   if (!joinCodeInput.trim()) {
                     Alert.alert('Thông báo', 'Vui lòng nhập mã phòng!');
                     return;
                   }
-                  const success = joinByCode(joinCodeInput);
-                  if (success) {
-                    setIsJoinModalOpen(false);
-                    Alert.alert('Thành công 🎉', `Bạn đã vào phòng #${joinCodeInput.trim().toUpperCase()}!`);
+                  try {
+                    const success = await joinByCode(joinCodeInput);
+                    if (success) {
+                      setIsJoinModalOpen(false);
+                      Alert.alert('Thành công 🎉', `Bạn đã vào phòng #${joinCodeInput.trim().toUpperCase()}!`);
+                    }
+                  } catch (err: any) {
+                    const msg = err?.response?.data?.error || err?.message || 'Không thể vào phòng này.';
+                    Alert.alert('Lỗi vào phòng', msg);
                   }
                 }}
                 activeOpacity={0.88}
               >
                 <Text style={styles.modalConfirmText}>Vào Phòng</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Kick Member Confirmation Modal */}
+      <Modal
+        visible={!!memberToKick}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMemberToKick(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>🚫 Xóa Thành Viên</Text>
+            <Text style={styles.modalSubtitle}>
+              Bạn có chắc chắn muốn xóa thành viên <Text style={{ fontWeight: '900', color: '#b52330' }}>{memberToKick?.name}</Text> khỏi phòng quay nhóm không?
+            </Text>
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setMemberToKick(null)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalCancelText}>Hủy</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalConfirmBtn, { backgroundColor: '#b52330', borderBottomColor: '#61000e' }]}
+                onPress={async () => {
+                  if (memberToKick) {
+                    const kickedName = memberToKick.name;
+                    await removeMember(memberToKick.id);
+                    setMemberToKick(null);
+                    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                      window.alert(`Đã xóa ${kickedName} khỏi nhóm thành công!`);
+                    } else {
+                      Alert.alert('Đã xóa', `Đã xóa ${kickedName} khỏi nhóm thành công!`);
+                    }
+                  }
+                }}
+                activeOpacity={0.88}
+              >
+                <Text style={styles.modalConfirmText}>Xác nhận Xóa</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -751,8 +864,21 @@ const styles = StyleSheet.create({
   roomCodeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
     marginBottom: 6,
+  },
+  createCodeBtn: {
+    backgroundColor: '#ffdad8',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ff5a5f',
+  },
+  createCodeBtnText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#b52330',
   },
   joinCodeBtn: {
     backgroundColor: '#fff0d4',

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { LocketVisibility, Prisma } from '@prisma/client';
 import prisma from '../../shared/utils/prisma.js';
 import { inMemoryUserStore } from '../users/userStore.js';
+import { friendsService } from '../friends/friends.service.js';
 import { LocketApiError } from './lockets.errors.js';
 import { processLocketImage, type ProcessedLocketImages } from './lockets.imageProcessor.js';
 import type { CreateLocketData, UpdateLocketData } from './lockets.validation.js';
@@ -66,8 +67,8 @@ export async function serializeLocket(
     author: {
       id: record.user?.id || record.userId,
       public_id: record.user?.publicId || `u_${record.userId.substring(0, 8)}`,
-      display_name_public: record.user?.displayNamePublic || 'sau code',
-      avatar_url: record.user?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+      display_name_public: record.user?.displayNamePublic || inMemoryUserStore.get(record.userId)?.displayNamePublic || 'Thành viên',
+      avatar_url: record.user?.avatarUrl || inMemoryUserStore.get(record.userId)?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
     },
     image_url: urls.imageUrl,
     thumbnail_url: urls.thumbnailUrl,
@@ -218,6 +219,7 @@ const inMemoryLocketStore = new Map<string, LocketRecord>([
 
 async function acceptedFriendIds(userId: string): Promise<Set<string>> {
   if (!userId) return new Set<string>();
+  const idSet = new Set<string>();
   try {
     const friendships = await prisma.friendship.findMany({
       where: {
@@ -227,12 +229,21 @@ async function acceptedFriendIds(userId: string): Promise<Set<string>> {
       select: { requesterId: true, addresseeId: true },
     });
 
-    return new Set(friendships.map((friendship) => (
-      friendship.requesterId === userId ? friendship.addresseeId : friendship.requesterId
-    )));
+    for (const friendship of friendships) {
+      idSet.add(friendship.requesterId === userId ? friendship.addresseeId : friendship.requesterId);
+    }
   } catch {
-    return new Set<string>();
+    // fallback
   }
+
+  try {
+    const friends = await friendsService.getFriends(userId);
+    for (const f of friends) {
+      idSet.add(f.id);
+    }
+  } catch {}
+
+  return idSet;
 }
 
 class LocketsService {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { restaurantApi } from '@/api';
 
 export default function AddRestaurantScreen() {
@@ -45,11 +45,22 @@ export default function AddRestaurantScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-cream-beige">
-      <View className="px-6 py-4 flex-row items-center border-b border-borderbrown bg-cream">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
-          <Text className="text-espresso font-bold text-lg">←</Text>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View className="px-5 py-3.5 flex-row items-center border-b border-borderbrown bg-cream">
+        <TouchableOpacity
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/discover' as any);
+            }
+          }}
+          className="mr-3 w-9 h-9 rounded-full bg-white border border-borderbrown items-center justify-center shadow-sm"
+          activeOpacity={0.7}
+        >
+          <Text className="text-espresso font-bold text-base">←</Text>
         </TouchableOpacity>
-        <Text className="text-espresso font-extrabold text-xl">Thêm Quán Mới</Text>
+        <Text className="text-espresso font-extrabold text-lg">Thêm Quán Mới</Text>
       </View>
 
       <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
