@@ -18,6 +18,11 @@ export interface LocketPermissions {
   canEdit: boolean;
 }
 
+export interface LocketLikeState {
+  likeCount: number;
+  isLiked: boolean;
+}
+
 export interface Locket {
   id: string;
   ownerId: string;
@@ -29,6 +34,8 @@ export interface Locket {
   note?: string;
   rating?: number;
   tags?: string[];
+  likeCount: number;
+  isLiked: boolean;
   visibility: LocketVisibility;
   capturedAt: string;
   location?: LocketLocation;

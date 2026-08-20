@@ -20,6 +20,8 @@ let lockets: Locket[] = [
     note: 'Nước dùng đậm vị, rau tươi và phần ăn vừa đủ.',
     rating: 5,
     tags: ['cay nhẹ', 'món Việt'],
+    likeCount: 4,
+    isLiked: false,
     visibility: 'FRIENDS',
     capturedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
     location: { latitude: 10.7769, longitude: 106.7009 },
@@ -42,6 +44,8 @@ let lockets: Locket[] = [
     note: 'Sườn mềm, cơm nóng. Mình sẽ ghé lại.',
     rating: 4,
     tags: ['cơm', 'bình dân'],
+    likeCount: 1,
+    isLiked: true,
     visibility: 'PUBLIC',
     capturedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
     location: { latitude: 10.7626, longitude: 106.6822 },
@@ -64,6 +68,8 @@ let lockets: Locket[] = [
     note: 'Hải sản tươi, mì không bị dầu.',
     rating: 4,
     tags: ['hải sản', 'mì'],
+    likeCount: 2,
+    isLiked: false,
     visibility: 'PUBLIC',
     capturedAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
     canDisplayLocation: false,
@@ -84,6 +90,8 @@ let lockets: Locket[] = [
     note: 'Bữa sáng mình muốn giữ riêng.',
     rating: 4,
     tags: ['bữa sáng'],
+    likeCount: 0,
+    isLiked: false,
     visibility: 'PRIVATE',
     capturedAt: new Date(Date.now() - 50 * 60 * 60 * 1000).toISOString(),
     canDisplayLocation: false,
@@ -182,6 +190,8 @@ class MockLocketRepository implements LocketRepository {
       note: input.note?.trim() || undefined,
       rating: input.rating ?? undefined,
       tags: normalizedTags,
+      likeCount: 0,
+      isLiked: false,
       visibility: input.visibility,
       capturedAt: input.capturedAt,
       location: input.location,
@@ -208,6 +218,20 @@ class MockLocketRepository implements LocketRepository {
       ...(input.visibility !== undefined ? { visibility: input.visibility } : {}),
     };
     return { ...lockets[index] };
+  }
+
+  async setLiked(id: string, liked: boolean) {
+    const index = lockets.findIndex((item) => item.id === id);
+    if (index < 0) throw new Error('Không tìm thấy Taste Board.');
+    const current = lockets[index];
+    if (current.isLiked !== liked) {
+      lockets[index] = {
+        ...current,
+        isLiked: liked,
+        likeCount: Math.max(0, current.likeCount + (liked ? 1 : -1)),
+      };
+    }
+    return { likeCount: lockets[index].likeCount, isLiked: lockets[index].isLiked };
   }
 
   async delete(id: string): Promise<void> {

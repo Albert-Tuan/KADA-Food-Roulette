@@ -47,13 +47,37 @@ describe('Locket request validation', () => {
     });
   });
 
-  it('rejects captures outside the 5-minute boundary', () => {
+  it('accepts captures at the 60-second boundary', () => {
     expect(() => parseCreateLocket({
       latitude: '10', longitude: '106',
     }, {
       deviceHash,
-      capturedAt: '2026-08-09T08:54:59.000Z',
+      capturedAt: '2026-08-09T08:59:00.000Z',
+    }, now)).not.toThrow();
+  });
+
+  it('rejects captures outside the 60-second boundary', () => {
+    expect(() => parseCreateLocket({
+      latitude: '10', longitude: '106',
+    }, {
+      deviceHash,
+      capturedAt: '2026-08-09T08:58:59.000Z',
     }, now)).toThrowError(LocketApiError);
+  });
+
+  it('rejects captures without GPS coordinates', () => {
+    expect(() => parseCreateLocket({}, {
+      deviceHash,
+      capturedAt: '2026-08-09T08:59:30.000Z',
+    }, now)).toThrowError('Latitude không hợp lệ');
+  });
+
+  it('rejects captures without a valid device hash', () => {
+    expect(() => parseCreateLocket({
+      latitude: '10', longitude: '106',
+    }, {
+      capturedAt: '2026-08-09T08:59:30.000Z',
+    }, now)).toThrowError('Định danh cài đặt không hợp lệ');
   });
 
   it('rejects a MIME declaration that does not match magic bytes', () => {

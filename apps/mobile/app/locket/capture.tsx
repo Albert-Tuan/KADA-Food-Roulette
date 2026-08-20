@@ -53,60 +53,24 @@ const VISIBILITY_OPTIONS: { value: LocketVisibility; label: string; description:
 const LOCATION_TIMEOUT_MS = 10_000;
 
 async function getFreshLocation(): Promise<Location.LocationObject> {
-  try {
-    const servicesEnabled = await Location.hasServicesEnabledAsync();
-    if (!servicesEnabled) {
-      const lastKnown = await Location.getLastKnownPositionAsync();
-      if (lastKnown) return lastKnown;
-    }
-  } catch {
-    // Ignore service check errors
+  const servicesEnabled = await Location.hasServicesEnabledAsync();
+  if (!servicesEnabled) {
+    throw new Error('Dịch vụ vị trí đang tắt. Bạn bật GPS rồi thử lại nhé.');
   }
 
-  return new Promise((resolve) => {
-    const timeoutId = setTimeout(async () => {
-      try {
-        const lastKnown = await Location.getLastKnownPositionAsync();
-        if (lastKnown) return resolve(lastKnown);
-      } catch {}
-      // Fallback location TP.HCM
-      resolve({
-        coords: {
-          latitude: 10.7769,
-          longitude: 106.7009,
-          altitude: null,
-          accuracy: 50,
-          altitudeAccuracy: null,
-          heading: null,
-          speed: null,
-        },
-        timestamp: Date.now(),
-      });
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      reject(new Error('Không nhận được vị trí mới. Bạn kiểm tra GPS rồi thử lại nhé.'));
     }, LOCATION_TIMEOUT_MS);
 
-    Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
+    Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })
       .then((currentLocation) => {
         clearTimeout(timeoutId);
         resolve(currentLocation);
       })
-      .catch(async () => {
+      .catch(() => {
         clearTimeout(timeoutId);
-        try {
-          const lastKnown = await Location.getLastKnownPositionAsync();
-          if (lastKnown) return resolve(lastKnown);
-        } catch {}
-        resolve({
-          coords: {
-            latitude: 10.7769,
-            longitude: 106.7009,
-            altitude: null,
-            accuracy: 50,
-            altitudeAccuracy: null,
-            heading: null,
-            speed: null,
-          },
-          timestamp: Date.now(),
-        });
+        reject(new Error('Không lấy được vị trí GPS mới. Bạn thử lại nhé.'));
       });
   });
 }
@@ -219,7 +183,7 @@ export default function CaptureLocketScreen() {
       !Number.isFinite(capturedAt)
       || Math.abs(Date.now() - capturedAt) > LOCKET_TIMESTAMP_TOLERANCE_SECONDS * 1000
     ) {
-      return setFormError('Ảnh đã quá thời gian xác nhận (5 phút). Bạn chụp lại nhé.'), false;
+      return setFormError('Ảnh đã quá thời gian xác nhận (60 giây). Bạn chụp lại nhé.'), false;
     }
     return true;
   };
@@ -229,11 +193,8 @@ export default function CaptureLocketScreen() {
     try {
       setFormError('');
       if (!useAuthStore.getState().isAuthenticated) {
-        try {
-          await useAuthStore.getState().login('locket-test@foodroulette.app', 'password123');
-        } catch {
-          // Continue in guest mode
-        }
+        setFormError('Bạn cần đăng nhập để đăng Taste Board.');
+        return;
       }
       await createLocket.mutateAsync({
         localImageUri: draft.uri,
@@ -245,7 +206,7 @@ export default function CaptureLocketScreen() {
         rating,
         visibility,
         capturedAt: draft.capturedAt,
-        location: { latitude: draft.latitude || 10.7769, longitude: draft.longitude || 106.7009 },
+        location: { latitude: draft.latitude, longitude: draft.longitude },
         deviceHash: draft.deviceHash,
       });
       if (returnTo === 'spin-check-in') {
@@ -257,9 +218,8 @@ export default function CaptureLocketScreen() {
       } else {
         router.replace('/(tabs)/lockets' as any);
       }
-    } catch (error: any) {
-      const serverMsg = error?.response?.data?.error?.message;
-      setFormError(serverMsg || (error instanceof Error ? error.message : 'Không thể đăng Taste Board. Bạn thử lại nhé.'));
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Không thể đăng Taste Board. Bạn thử lại nhé.');
     }
   };
 

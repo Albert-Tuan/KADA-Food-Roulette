@@ -25,6 +25,8 @@ export function mapLocketDto(dto: LocketDto): Locket {
     note: dto.note ?? undefined,
     rating: dto.rating ?? undefined,
     tags: dto.tags ?? [],
+    likeCount: dto.like_count,
+    isLiked: dto.is_liked,
     visibility: dto.visibility,
     capturedAt: dto.captured_at,
     location: dto.location ?? undefined,
