@@ -349,8 +349,16 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
               <G>{renderOuterLights()}</G>
             </Svg>
 
+            {candidates.length === 0 && (
+              <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(181, 35, 48, 0.85)', borderRadius: WHEEL_SIZE / 2, zIndex: 10 }]}>
+                <Text style={{ color: 'white', fontSize: 16, textAlign: 'center', padding: 20, fontWeight: 'bold', lineHeight: 24 }}>
+                  Không tìm thấy quán ăn gần bạn.{'\n'}Hãy mở rộng khoảng cách{'\n'}hoặc tự "Thêm món" nhé!
+                </Text>
+              </View>
+            )}
+
             {/* 3D Tactile Center Bullseye Hub */}
-            <View style={styles.centerCircle}>
+            <View style={[styles.centerCircle, { zIndex: 11 }]}>
               <View style={styles.centerInnerCircle}>
                 <Text style={styles.centerEmoji}>{spinning ? '🎲' : '🍜'}</Text>
               </View>

@@ -135,6 +135,9 @@ start_api_stack() {
   echo "Starting MySQL..."
   docker compose -f "${REPO_ROOT}/docker/docker-compose.yml" up -d mysql
 
+  echo "Applying database migrations (idempotent)..."
+  (cd "${REPO_ROOT}/backend" && npm run db:migrate)
+
   echo "Seeding the database (idempotent upsert)..."
   (cd "${REPO_ROOT}/backend" && npm run seed)
 

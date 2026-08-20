@@ -241,7 +241,13 @@ async function seed(): Promise<void> {
       await tx.userPreference.upsert({
         where: { userId },
         update: {},
-        create: { userId },
+        create: {
+          userId,
+          cuisineScores: { vietnamese: 0.9, street_food: 0.8, hotpot: 0.7, noodles: 0.85 },
+          dietaryRestrictions: ['no_peanut'],
+          priceRange: 2,
+          spiceTolerance: 'medium',
+        },
       });
     }
 

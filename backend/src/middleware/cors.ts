@@ -49,7 +49,12 @@ export function createCorsOptions(environment: NodeJS.ProcessEnv = process.env):
 
   return {
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.has(origin) || (!isProduction && isDevelopmentOrigin(origin))) {
+      // Always allow requests without origin (React Native mobile apps, server-to-server)
+      if (!origin) {
+        callback(null, true)
+        return
+      }
+      if (allowedOrigins.has(origin) || (!isProduction && isDevelopmentOrigin(origin))) {
         callback(null, true)
         return
       }

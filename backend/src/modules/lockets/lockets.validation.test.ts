@@ -47,12 +47,12 @@ describe('Locket request validation', () => {
     });
   });
 
-  it('rejects captures outside the 60 second boundary', () => {
+  it('rejects captures outside the 5-minute boundary', () => {
     expect(() => parseCreateLocket({
       latitude: '10', longitude: '106',
     }, {
       deviceHash,
-      capturedAt: '2026-08-09T08:58:59.000Z',
+      capturedAt: '2026-08-09T08:54:59.000Z',
     }, now)).toThrowError(LocketApiError);
   });
 

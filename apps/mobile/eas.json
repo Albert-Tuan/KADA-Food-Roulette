@@ -5,7 +5,10 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://food-roulette-api-backend.onrender.com/api/v1"
+      }
     },
     "preview": {
       "distribution": "internal",
@@ -14,12 +17,15 @@
       },
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://food-roulette-api-backend.onrender.com/api/v1"
       }
     },
     "production": {
       "channel": "production",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.foodroulette.vn"
+        "EXPO_PUBLIC_API_URL": "https://food-roulette-api-backend.onrender.com/api/v1"
       }
     }
   },

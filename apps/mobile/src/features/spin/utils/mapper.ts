@@ -23,7 +23,7 @@ export const mapBackendRestaurantToSpinCandidate = (backendData: any): SpinResta
     category: backendData.cuisineType || backendData.category || 'Ăn uống',
     rating: backendData.rating || backendData.ratingAvg || 0,
     totalReviews: backendData.reviewCount || backendData.ratingCount || 0,
-    distance: (backendData.distanceKm || 0) * 1000 || backendData.distance || 0,
+    distance: backendData.distanceKm !== undefined ? backendData.distanceKm * 1000 : (backendData.distance !== undefined ? backendData.distance * 1000 : 0),
     priceLevel,
     imageUrl: backendData.photoUrl || (backendData.photos && backendData.photos[0]) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400',
     dietary,

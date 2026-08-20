@@ -82,7 +82,7 @@ export default function LuckySpinScreen() {
               </Text>
             </View>
           </View>
-          <Text style={styles.title}>🎡 Vòng Quay May Mắn</Text>
+          <Text style={styles.title}>Vòng Quay May Mắn</Text>
           <Text style={styles.subtitle}>
             Mỗi lần check-in món ăn tại quán thành công, bạn sẽ nhận được đúng 1 lượt quay thưởng!
           </Text>
@@ -103,7 +103,7 @@ export default function LuckySpinScreen() {
         {/* Out of spins warning banner */}
         {(luckySpinCount <= 0 && !isSpinning) && (
           <View style={styles.noSpinsCard}>
-            <Text style={styles.noSpinsTitle}>⚠️ Bạn đã dùng hết lượt quay!</Text>
+            <Text style={styles.noSpinsTitle}>Bạn đã dùng hết lượt quay</Text>
             <Text style={styles.noSpinsSubtitle}>
               {canCheckIn
                 ? 'Hãy check-in thêm món ăn tại quán để tích lũy lượt quay mới!'
@@ -115,7 +115,7 @@ export default function LuckySpinScreen() {
               onPress={handleCheckInCta}
             >
               <Text style={styles.checkInCtaBtnText}>
-                {canCheckIn ? '📸 CHECK-IN MÓN NGAY ĐỂ NHẬN LƯỢT' : '🎡 QUAY QUÁN MỚI'}
+                {canCheckIn ? 'Check-in món để nhận lượt' : 'Quay quán mới'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -126,7 +126,7 @@ export default function LuckySpinScreen() {
           <View style={styles.prizeCard}>
             <Text style={styles.prizeEmoji}>{wonPrize.icon}</Text>
             <View style={styles.prizeTextCol}>
-              <Text style={styles.prizeTitle}>🎉 ĐÃ NHẬN: {wonPrize.label.toUpperCase()}</Text>
+              <Text style={styles.prizeTitle}>ĐÃ NHẬN: {wonPrize.label.toUpperCase()}</Text>
               <Text style={styles.prizeSubtitle}>Voucher đã tự động lưu vào ví thưởng của bạn!</Text>
             </View>
           </View>
@@ -138,7 +138,7 @@ export default function LuckySpinScreen() {
           activeOpacity={0.85}
           onPress={() => router.push('/spin/rewards')}
         >
-          <Text style={styles.rewardsBtnText}>🎟️ MỞ DANH SÁCH VOUCHER CỦA BẠN</Text>
+          <Text style={styles.rewardsBtnText}>Danh sách voucher của bạn</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

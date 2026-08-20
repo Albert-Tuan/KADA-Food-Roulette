@@ -12,7 +12,7 @@ export interface Restaurant {
 
 export interface SpinFilters {
   maxDistance: number;
-  maxPrice: number;
+  maxPriceVND: number;
   categories: string[];
   dietary: string[];
 }

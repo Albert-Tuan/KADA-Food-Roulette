@@ -3,9 +3,8 @@
 export const APP_NAME = 'Food Roulette';
 export const APP_TAGLINE = 'Không biết ăn gì? Để vòng quyết định.';
 
-// API
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
-export const API_TIMEOUT = 60000; // Increased for AI Processing
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://food-roulette-api-backend.onrender.com/api/v1';
+export const API_TIMEOUT = 120000; // 2 minutes timeout for AI Processing
 
 // Pagination
 export const DEFAULT_PAGE_SIZE = 20;
@@ -24,7 +23,7 @@ export const CHECKIN_TIMEOUT_MINUTES = 15;
 export const CHECKIN_MAX_DISTANCE_METERS = 100;
 
 // Locket
-export const LOCKET_TIMESTAMP_TOLERANCE_SECONDS = 60;
+export const LOCKET_TIMESTAMP_TOLERANCE_SECONDS = 300; // 5 phút
 export const MAX_CAPTION_LENGTH = 280;
 export const MAX_IMAGE_SIZE_MB = 10;
 

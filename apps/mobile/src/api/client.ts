@@ -1,15 +1,10 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import { Platform, DeviceEventEmitter } from 'react-native';
 import { API_TIMEOUT, API_URL as ENV_API_URL } from '@/lib/constants';
 
-let API_URL = ENV_API_URL;
-if (!process.env.EXPO_PUBLIC_API_URL && Platform.OS === 'android') {
-  API_URL = 'http://10.0.2.2:3000/api/v1';
-} else if (!process.env.EXPO_PUBLIC_API_URL) {
-  API_URL = 'http://localhost:3000/api/v1';
-}
+let API_URL = process.env.EXPO_PUBLIC_API_URL || ENV_API_URL || 'https://food-roulette-api-backend.onrender.com/api/v1';
 
 const getStorageItem = async (key: string) => {
   if (Platform.OS === 'web') {
@@ -59,7 +54,9 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
-      removeStorageItem('token');
+      // Clear token and trigger logout event
+      await removeStorageItem('token');
+      DeviceEventEmitter.emit('AUTH_EXPIRED');
     }
     return Promise.reject(error);
   }
