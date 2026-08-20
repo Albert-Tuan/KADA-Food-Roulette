@@ -108,13 +108,13 @@ export default function DiscoverScreen() {
   const handleSeedGooglePlaces = async () => {
     setSeeding(true);
     try {
-      const result = await placesApi.seedNearby(region.latitude, region.longitude, 5);
+      const result = await placesApi.seedNearby(region.latitude, region.longitude, 4);
       alert(
-        `Đã seed từ Google Places!\nThêm mới: ${result.added}\nĐã có: ${result.skipped}`
+        `Đã quét quán thực tế quanh khu vực!\n✨ Thêm mới: ${result.added} quán\n⏩ Đã có: ${result.skipped} quán`
       );
       await loadRestaurants();
     } catch (error: any) {
-      alert('Lỗi seed: ' + (error?.message || 'Unknown'));
+      alert('Lỗi quét quán: ' + (error?.message || 'Vui lòng thử lại'));
     } finally {
       setSeeding(false);
     }
@@ -191,6 +191,23 @@ export default function DiscoverScreen() {
 
         {/* Right Actions */}
         <View className="flex-row items-center gap-2">
+          {/* Scan Nearby Real Places via OpenStreetMap */}
+          <TouchableOpacity
+            className="h-10 px-3 rounded-full bg-white border border-borderbrown flex-row items-center justify-center shadow-sm"
+            onPress={handleSeedGooglePlaces}
+            activeOpacity={0.7}
+            disabled={seeding}
+          >
+            {seeding ? (
+              <ActivityIndicator size="small" color="#8e4e14" />
+            ) : (
+              <>
+                <Text className="text-sm mr-1">📡</Text>
+                <Text className="text-espresso font-bold text-xs">Quét Quán</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
           {/* Toggle Map / List */}
           <TouchableOpacity
             className="w-10 h-10 rounded-full bg-white border border-borderbrown items-center justify-center shadow-sm"

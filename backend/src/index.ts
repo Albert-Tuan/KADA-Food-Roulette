@@ -19,6 +19,7 @@ import userRoutes from './modules/users/users.routes.js'
 import profileRoutes from './modules/profile/profile.routes.js'
 import friendsRoutes from './modules/friends/friends.routes.js'
 import notificationRoutes from './modules/notifications/notifications.routes.js'
+import placesRoutes from './modules/places/places.routes.js'
 
 const app: Express = express()
 const PORT = process.env.PORT || 3000
@@ -71,6 +72,7 @@ app.use('/api/v1/notifications', notificationRoutes)
 
 import reviewRoutes from './modules/reviews/reviews.routes'
 app.use('/api/v1/reviews', reviewRoutes)
+app.use('/api/v1/places', placesRoutes)
 
 // 404 handler
 app.use(notFoundHandler)
