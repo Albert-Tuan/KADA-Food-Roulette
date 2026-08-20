@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
 import apiClient from '../client';
 
 export interface MenuItem {
@@ -51,15 +52,11 @@ export function getLatestCapturedMenu(): MenuCaptureResponse | null {
 
 export const menuApi = {
   captureMenu: async (restaurantId: string, imageUris: string[]): Promise<MenuCaptureResponse> => {
-    // Convert images to base64 and send as JSON (avoids all FormData/multipart issues)
+    // Convert images to compressed base64 and send as JSON (avoids massive payload & timeout)
     const images: Array<{ base64: string; filename: string; mimeType: string }> = [];
 
     for (const imageUri of imageUris) {
-      const filename = imageUri.split('/').pop() || 'menu.jpg';
-      const ext = filename.split('.').pop()?.toLowerCase() || 'jpg';
-      const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
-
-      let base64: string;
+      let base64: string = '';
       if (Platform.OS === 'web') {
         const response = await fetch(imageUri);
         const blob = await response.blob();
@@ -72,12 +69,25 @@ export const menuApi = {
           reader.readAsDataURL(blob);
         });
       } else {
-        base64 = await FileSystem.readAsStringAsync(imageUri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
+        try {
+          // Compress and resize image to width 1024 to drastically reduce payload size (from 10MB to ~150KB)
+          const manipResult = await ImageManipulator.manipulateAsync(
+            imageUri,
+            [{ resize: { width: 1024 } }],
+            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+          );
+          base64 = manipResult.base64 || '';
+        } catch (manipErr) {
+          console.warn('ImageManipulator failed, falling back to raw file:', manipErr);
+          base64 = await FileSystem.readAsStringAsync(imageUri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+        }
       }
 
-      images.push({ base64, filename, mimeType });
+      if (base64) {
+        images.push({ base64, filename: 'menu.jpg', mimeType: 'image/jpeg' });
+      }
     }
 
     const response = await apiClient.post<MenuCaptureResponse>('/menu/capture-base64', {
