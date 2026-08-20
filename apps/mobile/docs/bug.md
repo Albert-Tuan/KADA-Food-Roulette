@@ -17,7 +17,7 @@
 
 ## BUG #12: Tab navigation quá nhỏ (Taste Board)
 
-**Status**: `[ ] Open`
+**Status**: `[~] Fixed, awaiting verify`
 **Ngày report**: `2026-08-17`
 **Severity**: `[ ] P0 crash  [ ] P1 major  [x] P2 minor  [ ] P3 polish`
 
@@ -40,8 +40,11 @@ Screenshot: `1786967151199_image.png`
 
 ### Root cause (fill sau khi debug)
 
+Scope filter tabs được bọc trong `<FlatList horizontal ...>` tự co theo chiều rộng nội dung thay vì dùng layout chia đều 4 cột theo chiều ngang màn hình.
 
 ### Fix (fill khi AI xong)
+
+Thay `<FlatList horizontal>` bằng `<View className="flex-row items-center justify-between px-5 pt-2 pb-3 gap-2">` chia đều 4 cột (`flex-1`), đặt `minHeight: 44` đảm bảo chuẩn Accessibility HIG / Material Design, căn giữa icon và chữ cân đối.
 
 
 ### Verify steps (cho user test)

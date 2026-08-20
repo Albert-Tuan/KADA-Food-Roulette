@@ -54,24 +54,21 @@ export default function LocketsScreen() {
               </Text>
             </View>
 
-            {/* Scope Filter Tabs */}
-            <FlatList
-              horizontal
-              data={FILTERS}
-              keyExtractor={(item) => item.value}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 10, gap: 10 }}
-              renderItem={({ item }) => {
+            {/* Scope Filter Tabs - 4 Columns Equal Layout (Fix BUG #12) */}
+            <View className="flex-row items-center justify-between px-5 pt-2 pb-3 gap-2">
+              {FILTERS.map((item) => {
                 const isActive = filter === item.value;
                 return (
                   <TouchableOpacity
+                    key={item.value}
                     testID={`locket-filter-${item.value.toLowerCase()}`}
                     onPress={() => setFilter(item.value)}
                     style={{
                       backgroundColor: isActive ? '#b52330' : '#ffffff',
                       borderColor: isActive ? '#b52330' : '#e2bebc',
+                      minHeight: 44,
                     }}
-                    className="rounded-full border-1.5 px-4 py-2 shadow-xs flex-row items-center justify-center gap-1.5"
+                    className="flex-1 rounded-full border-1.5 py-2.5 px-2 shadow-xs flex-row items-center justify-center gap-1 active:translate-y-0.5"
                   >
                     <Ionicons 
                       name={item.icon} 
@@ -80,14 +77,15 @@ export default function LocketsScreen() {
                     />
                     <Text 
                       style={{ color: isActive ? '#ffffff' : '#8e4e14' }} 
-                      className="font-bold text-xs"
+                      className="font-extrabold text-xs"
+                      numberOfLines={1}
                     >
                       {item.label}
                     </Text>
                   </TouchableOpacity>
                 );
-              }}
-            />
+              })}
+            </View>
 
             {/* Trending Category Pills */}
             <FlatList
