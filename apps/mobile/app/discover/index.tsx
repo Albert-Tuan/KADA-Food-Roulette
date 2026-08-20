@@ -299,7 +299,7 @@ export default function DiscoverScreen() {
               </body>
               </html>
             ` }}
-            onMessage={(event) => {
+            onMessage={(event: any) => {
               const id = event.nativeEvent.data;
               if (id) handleMarkerPress(id);
             }}
