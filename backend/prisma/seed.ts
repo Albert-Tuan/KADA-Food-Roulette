@@ -291,6 +291,83 @@ async function seed(): Promise<void> {
         await tx.restaurant.create({ data: restaurant });
       }
     }
+
+    const sampleLockets = [
+      {
+        id: '40000000-0000-4000-8000-000000000001',
+        userId: testerId,
+        dishName: 'Phở Bò Tái Nạm Đặc Biệt',
+        restaurantName: 'Phở Hòa Pasteur',
+        restaurantId: demoRestaurants[0].id,
+        note: 'Nước dùng trong, ngọt thanh vị xương hầm, thịt bò mềm tan!',
+        rating: 5,
+        tags: ['Phở', 'Bò', 'Nước dùng thanh'],
+        imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=800&q=80',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=400&q=80',
+        deviceHash: 'a'.repeat(64),
+        visibility: 'PUBLIC' as const,
+        lat: 10.786,
+        lng: 106.691,
+        capturedAt: new Date(Date.now() - 3600 * 1000),
+      },
+      {
+        id: '40000000-0000-4000-8000-000000000002',
+        userId: friendId,
+        dishName: 'Bún Bò Huế Chả Cua',
+        restaurantName: 'Bún Bò Huế Ngọc Dung',
+        note: 'Vị sa tế cay nồng đặc trưng Huế, chả cua dai giòn sần sật.',
+        rating: 5,
+        tags: ['Bún', 'Bún Bò', 'Cay'],
+        imageUrl: 'https://images.unsplash.com/photo-1576577445504-6af96477db52?auto=format&fit=crop&w=800&q=80',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1576577445504-6af96477db52?auto=format&fit=crop&w=400&q=80',
+        deviceHash: 'b'.repeat(64),
+        visibility: 'PUBLIC' as const,
+        lat: 10.8468,
+        lng: 106.7942,
+        capturedAt: new Date(Date.now() - 2 * 3600 * 1000),
+      },
+      {
+        id: '40000000-0000-4000-8000-000000000003',
+        userId: testerId,
+        dishName: 'Bánh Mì Huỳnh Thúc Thập Cẩm',
+        restaurantName: 'Bánh mì Huỳnh Thúc',
+        restaurantId: demoRestaurants[2].id,
+        note: 'Pate béo ngậy, dưa góp chua ngọt giòn rụm.',
+        rating: 4,
+        tags: ['Bánh Mì', 'Pate', 'Ăn sáng'],
+        imageUrl: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=800&q=80',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=400&q=80',
+        deviceHash: 'a'.repeat(64),
+        visibility: 'PUBLIC' as const,
+        lat: 10.762,
+        lng: 106.682,
+        capturedAt: new Date(Date.now() - 5 * 3600 * 1000),
+      },
+      {
+        id: '40000000-0000-4000-8000-000000000004',
+        userId: friendId,
+        dishName: 'Lẩu Bò Nhúng Dấm Chua Cay',
+        restaurantName: 'Lẩu Bò Nghĩa Phát',
+        note: 'Thịt bò tươi mềm, nước lẩu đậm đà vừa miệng, đi nhóm cực vui!',
+        rating: 5,
+        tags: ['Lẩu', 'Lẩu Nướng', 'Đi Nhóm'],
+        imageUrl: 'https://images.unsplash.com/photo-1547928576-a4a33237cbc3?auto=format&fit=crop&w=800&q=80',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1547928576-a4a33237cbc3?auto=format&fit=crop&w=400&q=80',
+        deviceHash: 'b'.repeat(64),
+        visibility: 'PUBLIC' as const,
+        lat: 10.8459,
+        lng: 106.7951,
+        capturedAt: new Date(Date.now() - 12 * 3600 * 1000),
+      },
+    ];
+
+    for (const locket of sampleLockets) {
+      await tx.locket.upsert({
+        where: { id: locket.id },
+        update: locket,
+        create: locket,
+      });
+    }
   }, { timeout: 60000, maxWait: 60000 });
 
   console.info('Seed hoàn tất.');
