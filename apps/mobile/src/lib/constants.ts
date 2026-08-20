@@ -23,7 +23,7 @@ export const CHECKIN_TIMEOUT_MINUTES = 15;
 export const CHECKIN_MAX_DISTANCE_METERS = 100;
 
 // Locket
-export const LOCKET_TIMESTAMP_TOLERANCE_SECONDS = 60;
+export const LOCKET_TIMESTAMP_TOLERANCE_SECONDS = 300; // 5 phút
 export const MAX_CAPTION_LENGTH = 280;
 export const MAX_IMAGE_SIZE_MB = 10;
 

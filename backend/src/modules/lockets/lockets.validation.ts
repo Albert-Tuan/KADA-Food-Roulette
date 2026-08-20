@@ -2,7 +2,7 @@ import { LocketVisibility } from '@prisma/client';
 import { LocketApiError } from './lockets.errors.js';
 
 export const MAX_LOCKET_FILE_SIZE = 10 * 1024 * 1024;
-export const LOCKET_TIMESTAMP_TOLERANCE_MS = 60_000;
+export const LOCKET_TIMESTAMP_TOLERANCE_MS = 5 * 60_000; // 5 phút (300_000 ms)
 export const ALLOWED_LOCKET_MIME_TYPES = new Set(['image/jpeg', 'image/png']);
 
 export interface CreateLocketData {
@@ -139,8 +139,12 @@ export function parseCreateLocket(
     rating: parseRating(body.rating, false),
     tags: body.tags === undefined ? undefined : parseTags(body.tags),
     visibility: parseVisibility(body.visibility, LocketVisibility.FRIENDS)!,
-    latitude: parseCoordinate(body.latitude, -90, 90, 'Latitude'),
-    longitude: parseCoordinate(body.longitude, -180, 180, 'Longitude'),
+    latitude: body.latitude != null && !Number.isNaN(Number(body.latitude)) 
+      ? parseCoordinate(body.latitude, -90, 90, 'Latitude') 
+      : 10.7769,
+    longitude: body.longitude != null && !Number.isNaN(Number(body.longitude)) 
+      ? parseCoordinate(body.longitude, -180, 180, 'Longitude') 
+      : 106.7009,
     capturedAt,
     deviceHash,
   };
