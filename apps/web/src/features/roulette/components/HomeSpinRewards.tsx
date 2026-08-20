@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Camera, ArrowRight } from 'lucide-react';
 import { useSpinStore } from '../../../stores/spinStore';
+import { useAuth } from '../../auth/hooks/useAuth';
 import SpinFilterModal from './SpinFilterModal';
 
 const HomeSpinRewards: React.FC = () => {
@@ -11,6 +12,7 @@ const HomeSpinRewards: React.FC = () => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { user } = useAuth();
 
   const state = (location.state as {
     menuItems?: Array<{ name: string; priceVND?: number | null; matchScore?: number; tags?: string[] }>;
@@ -206,6 +208,12 @@ const HomeSpinRewards: React.FC = () => {
           <span className="material-symbols-outlined text-lg">photo_library</span>
           Locket Feed
         </Link>
+        {(user?.role === 'ADMIN' || user?.role === 'STEWARD') && (
+          <Link to="/steward" className="w-full col-span-3 mt-2 bg-primary-container text-on-primary-container font-label-strong py-3 px-2 rounded-xl hover:opacity-90 transition-colors flex flex-col items-center justify-center text-xs gap-1 shadow-sm">
+            <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
+            Duyệt Quán (Steward)
+          </Link>
+        )}
       </div>
 
       {/* Recent Discovery Card */}

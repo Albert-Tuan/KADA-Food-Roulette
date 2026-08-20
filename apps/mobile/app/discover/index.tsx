@@ -14,6 +14,7 @@ import * as Location from 'expo-location';
 import { restaurantApi, Restaurant, placesApi } from '@/api';
 
 import { MapView, Marker, PROVIDER_GOOGLE, UrlTile } from '@/components/MapProvider';
+import { WebView } from 'react-native-webview';
 import MapFilterSheet from '@/components/MapFilterSheet';
 import RestaurantList from '@/components/RestaurantList';
 
@@ -96,8 +97,28 @@ export default function DiscoverScreen() {
   const loadRestaurants = async () => {
     try {
       setLoading(true);
-      const data = await restaurantApi.list({ status: 'APPROVED' });
-      console.log(JSON.stringify(data).slice(0, 500)); setRestaurants(data);
+      let data = await restaurantApi.list({ status: 'APPROVED' });
+      
+      // Mới: Định vị bằng địa chỉ và tên quán thay vì dùng kinh độ vĩ độ cố định từ DB
+      const geocodedData = await Promise.all(data.map(async (r) => {
+        try {
+          // Thử tìm theo tên quán + địa chỉ
+          const geocodeName = await Location.geocodeAsync(`${r.name}, ${r.address}`);
+          if (geocodeName && geocodeName.length > 0) {
+            return { ...r, lat: geocodeName[0].latitude, lng: geocodeName[0].longitude };
+          }
+          // Thử tìm theo địa chỉ
+          const geocodeAddr = await Location.geocodeAsync(r.address || '');
+          if (geocodeAddr && geocodeAddr.length > 0) {
+            return { ...r, lat: geocodeAddr[0].latitude, lng: geocodeAddr[0].longitude };
+          }
+        } catch(e) {
+          console.error('[Fallback] Geocode failed for', r.name, e);
+        }
+        return r; // Fallback dùng DB nếu không tìm thấy
+      }));
+
+      setRestaurants(geocodedData);
     } catch (error) {
       console.error('Load restaurants error:', error);
     } finally {
@@ -230,24 +251,70 @@ export default function DiscoverScreen() {
 
       {/* Map or Web fallback */}
       <View className="flex-1">
-        {Platform.OS !== 'web' ? (
+        {Platform.OS === 'android' ? (
+          <WebView
+            style={{ flex: 1 }}
+            source={{ html: `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                <style>
+                  body { padding: 0; margin: 0; background-color: #FDF5E6; }
+                  html, body, #map { height: 100%; width: 100%; }
+                  .leaflet-control-attribution { display: none; }
+                </style>
+              </head>
+              <body>
+                <div id="map"></div>
+                <script>
+                  var map = L.map('map', { zoomControl: false }).setView([${region.latitude}, ${region.longitude}], 14);
+                  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19
+                  }).addTo(map);
+
+                  // User location
+                  L.circleMarker([${region.latitude}, ${region.longitude}], {
+                    color: '#4A90E2', fillColor: '#4A90E2', fillOpacity: 1, radius: 8
+                  }).addTo(map);
+
+                  // Restaurants
+                  var restaurants = ${JSON.stringify(filtered.filter(r => r.lat && r.lng).map(r => ({ id: r.id, lat: r.lat, lng: r.lng, name: r.name })))};
+                  var customIcon = L.divIcon({
+                    html: '<div style="background-color: #C68E17; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>',
+                    className: '',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                  });
+
+                  restaurants.forEach(function(r) {
+                    var m = L.marker([r.lat, r.lng], { icon: customIcon }).addTo(map);
+                    m.on('click', function() {
+                      window.ReactNativeWebView.postMessage(r.id);
+                    });
+                  });
+                </script>
+              </body>
+              </html>
+            ` }}
+            onMessage={(event) => {
+              const id = event.nativeEvent.data;
+              if (id) handleMarkerPress(id);
+            }}
+          />
+        ) : Platform.OS === 'ios' ? (
           <MapView
             ref={mapRef}
             className="w-full h-full"
-            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+            provider={undefined}
             initialRegion={region}
             onRegionChangeComplete={setRegion}
             showsUserLocation
             showsMyLocationButton
-            mapType={Platform.select({ android: 'none', ios: 'mutedStandard' }) as any}
+            mapType="mutedStandard"
           >
-            {Platform.OS === 'android' && (
-              <UrlTile
-                urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                maximumZ={19}
-                flipY={false}
-              />
-            )}
             {filtered.map((r, index) => {
               if (!r.lat || !r.lng) return null;
               return (
@@ -303,15 +370,15 @@ export default function DiscoverScreen() {
                   {selected.address}
                 </Text>
                 <View className="flex-row items-center mt-1.5 gap-2">
-                  {selected.ratingAvg && (
+                  {(selected.ratingAvg ?? 0) > 0 && (
                     <View className="bg-gold-soft px-2.5 py-1 rounded-xl border border-gold-light flex-row items-center">
                       <Text className="text-gold font-bold text-xs">★</Text>
                       <Text className="text-espresso text-xs font-bold ml-1">
-                        {selected.ratingAvg.toFixed(1)}
+                        {selected.ratingAvg!.toFixed(1)}
                       </Text>
                     </View>
                   )}
-                  {selected.category && (
+                  {!!selected.category && (
                     <Text className="text-espresso-dark font-semibold text-xs">{selected.category}</Text>
                   )}
                 </View>

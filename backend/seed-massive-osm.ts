@@ -2,9 +2,9 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const LAT = 10.845;
-const LNG = 106.794;
-const RADIUS_METERS = 5000; // 5km (giảm để tránh timeout)
+const LAT = 10.8475;
+const LNG = 106.7858;
+const RADIUS_METERS = 5000; // 5km to avoid timeout
 
 const FOOD_IMAGES = [
   "https://images.unsplash.com/photo-1582878826629-29b7ad1cb438?w=800&q=80",
@@ -42,13 +42,16 @@ async function fetchFromOverpass() {
     out skel qt;
   `;
   
-  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+  const url = `https://overpass-api.de/api/interpreter`;
   
   console.log(`Đang cào dữ liệu từ OpenStreetMap với bán kính ${RADIUS_METERS/1000}km quanh Man Thiện...`);
   console.log("Vui lòng đợi vài giây (Overpass API có thể hơi chậm)...");
   
   const response = await fetch(url, {
+    method: 'POST',
+    body: `data=${encodeURIComponent(query)}`,
     headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
       'User-Agent': 'FoodRoulette/1.0',
       'Accept': 'application/json'
     }

@@ -127,12 +127,12 @@ const StewardDashboard: React.FC = () => {
             </div>
 
             {/* Duplicate warning */}
-            {selected.nearbyDuplicates.length > 0 && (
+            {(selected.nearbyDuplicates?.length || 0) > 0 && (
               <div className="bg-warning-container/20 border border-warning rounded-xl p-3">
                 <p className="text-warning font-label-strong text-sm font-semibold mb-1">
-                  Có thể trùng ({selected.nearbyDuplicates.length} quán trong bán kính 50m):
+                  Có thể trùng ({selected.nearbyDuplicates?.length} quán trong bán kính 50m):
                 </p>
-                {selected.nearbyDuplicates.map((d) => (
+                {selected.nearbyDuplicates?.map((d) => (
                   <p key={d.id} className="text-on-surface-variant text-xs">
                     • {d.name} ({d.distanceM}m)
                   </p>
@@ -153,13 +153,13 @@ const StewardDashboard: React.FC = () => {
             </div>
 
             {/* Merge ID (shown if there are duplicates) */}
-            {selected.nearbyDuplicates.length > 0 && (
+            {(selected.nearbyDuplicates?.length || 0) > 0 && (
               <div>
                 <label className="font-label-strong text-on-background text-sm block mb-1">Merge vào quán ID</label>
                 <input
                   value={mergeId}
                   onChange={(e) => setMergeId(e.target.value)}
-                  placeholder={selected.nearbyDuplicates[0]?.id}
+                  placeholder={selected.nearbyDuplicates?.[0]?.id}
                   className="w-full border border-subtle-gray rounded-xl px-3 py-2 font-body-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
@@ -179,7 +179,7 @@ const StewardDashboard: React.FC = () => {
                 <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                 Duyệt
               </button>
-              {selected.nearbyDuplicates.length > 0 && mergeId && (
+              {((selected.nearbyDuplicates?.length || 0) > 0) && mergeId && (
                 <button
                   onClick={() => handleDecide('MERGE')}
                   disabled={decideMutation.isPending}
@@ -210,7 +210,7 @@ const RestaurantCard: React.FC<{ restaurant: PendingRestaurant; onSelect: () => 
   onSelect,
   isSelected,
 }) => {
-  const hasDuplicate = restaurant.nearbyDuplicates.length > 0;
+  const hasDuplicate = (restaurant.nearbyDuplicates?.length || 0) > 0;
 
   return (
     <div
@@ -222,7 +222,7 @@ const RestaurantCard: React.FC<{ restaurant: PendingRestaurant; onSelect: () => 
       <div className="flex gap-4 items-start">
         {/* Photo or placeholder */}
         <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-surface-container-low flex items-center justify-center">
-          {restaurant.photos[0] ? (
+          {restaurant.photos && restaurant.photos[0] ? (
             <img src={restaurant.photos[0]} alt={restaurant.name} className="w-full h-full object-cover" />
           ) : (
             <span className="material-symbols-outlined text-on-surface-variant text-3xl">restaurant</span>
