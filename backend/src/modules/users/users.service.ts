@@ -63,13 +63,14 @@ class UsersService {
           createdAt: typeof memUser.createdAt === 'string' ? new Date(memUser.createdAt) : memUser.createdAt,
         };
       } else {
+        const defaultName = `User_${userId.substring(0, 6)}`;
         user = {
           id: userId,
-          email: 'saucode@gmail.com',
-          displayNamePrivate: 'sau code',
-          displayNamePublic: 'sau code',
+          email: `${userId}@foodroulette.app`,
+          displayNamePrivate: defaultName,
+          displayNamePublic: defaultName,
           publicId: `u_${userId.substring(0, 8)}`,
-          avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+          avatarUrl: `https://api.dicebear.com/7.x/avataaars/png?seed=${userId}`,
           bio: 'Yêu thích ẩm thực đường phố và khám phá món mới!',
           createdAt: new Date(),
         };

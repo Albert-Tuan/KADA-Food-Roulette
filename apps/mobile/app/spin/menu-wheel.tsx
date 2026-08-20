@@ -178,9 +178,14 @@ export default function MenuWheelScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-            <Text style={styles.backText}>← Quay lại</Text>
-          </TouchableOpacity>
+          <View style={styles.headerNavRow}>
+            <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+              <Text style={styles.backText}>← Quay lại</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.replace('/(tabs)')} style={styles.homeNavBtn}>
+              <Text style={styles.homeNavText}>🏠 Trang Chủ</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.title}>🎰 Vòng Quay 3D Chọn Món Menu</Text>
           <Text style={styles.subtitle}>Quay chọn ngẫu nhiên 1 đến 3 món cùng lúc ({wheelDishes.length} món sẵn sàng)</Text>
         </View>
@@ -543,6 +548,16 @@ export default function MenuWheelScreen() {
                 >
                   <Text style={styles.closeModalText}>Đóng & Quay Tiếp</Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.modalHomeButton}
+                  onPress={() => {
+                    setIsModalVisible(false);
+                    router.replace('/(tabs)');
+                  }}
+                >
+                  <Text style={styles.modalHomeText}>🏠 Về Trang Chủ</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -581,13 +596,32 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 16,
   },
-  backButton: {
+  headerNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 8,
+  },
+  backButton: {
+    paddingVertical: 4,
   },
   backText: {
     fontSize: 14,
     color: '#d97706',
     fontWeight: 'bold',
+  },
+  homeNavBtn: {
+    backgroundColor: '#fffbeb',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#fde68a',
+  },
+  homeNavText: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#b52330',
   },
   title: {
     fontSize: 20,
@@ -1185,5 +1219,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: '#ffffff',
+  },
+  modalHomeButton: {
+    backgroundColor: '#ffffff',
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    alignItems: 'center',
+  },
+  modalHomeText: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#b52330',
   },
 });

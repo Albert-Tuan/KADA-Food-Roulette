@@ -1,15 +1,17 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Alert, Linking, Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useAuthStore } from '../../../stores/authStore';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import { useSpinStore } from '../../../stores/spinStore';
+import { restaurantApi } from '../../../api/endpoints/restaurants';
 import { FoodRoulette, type FoodRouletteRef } from './FoodRoulette';
 import { SpinFilterSheet } from './SpinFilterSheet';
 import { InviteMembersSheet } from './InviteMembersSheet';
 import { GroupVoteVeto } from './GroupVoteVeto';
 import { GroupVoteResult } from './GroupVoteResult';
-import type { Restaurant } from '../types';
+import type { Restaurant, GroupMember } from '../types';
 
 interface GroupLobbyProps {
   onSpinEnd?: (winner: Restaurant) => void;
@@ -20,12 +22,30 @@ type GroupSpinStep = 'LOBBY' | 'VOTE_VETO' | 'VOTE_RESULT';
 export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
   const router = useRouter();
   const rouletteRef = useRef<FoodRouletteRef>(null);
-  const { members } = useGroupSpinStore();
+  const currentUser = useAuthStore((s) => s.user);
+  const {
+    members,
+    roomCode,
+    removeMember,
+    joinByCode,
+    hostId,
+    status: roomStatus,
+    fetchOrInitHostRoom,
+    createNewRoom,
+    syncRoom,
+    startGroupSpin,
+    finishGroupSpin,
+    resetGroupSpin,
+    currentResult: backendResult,
+    isLoadingRoom,
+  } = useGroupSpinStore();
   const {
     candidates,
+    baseCandidates,
     filters,
     customCandidates: storeCustomCandidates,
     setFilters,
+    setCandidates,
     addCustomCandidate,
     removeCustomCandidate,
     setCurrentResult,
@@ -36,15 +56,84 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
   const [newFoodInput, setNewFoodInput] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [memberToKick, setMemberToKick] = useState<GroupMember | null>(null);
+  const [joinCodeInput, setJoinCodeInput] = useState('');
   const [isSpinning, setIsSpinning] = useState(false);
 
-  const displayCandidates = storeCustomCandidates.length > 0 ? storeCustomCandidates : candidates;
-  const allReady = members.length > 0;
+  // Initialize room & sync realtime with backend every 1.5s
+  useEffect(() => {
+    fetchOrInitHostRoom();
 
-  const handleSpinEnd = (winner: Restaurant) => {
+    const interval = setInterval(() => {
+      syncRoom();
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Listen to synchronized room status changes (Host spins -> Members automatically spin too)
+  useEffect(() => {
+    if (roomStatus === 'SPINNING' && !isSpinning) {
+      setIsSpinning(true);
+      rouletteRef.current?.spin();
+    } else if (roomStatus === 'VOTING' && step === 'LOBBY') {
+      if (backendResult) {
+        setCurrentResult(backendResult);
+      }
+      setStep('VOTE_VETO');
+    } else if (roomStatus === 'LOBBY' && step !== 'LOBBY') {
+      setStep('LOBBY');
+      setIsSpinning(false);
+    } else if (roomStatus === 'RESULT' && step !== 'VOTE_RESULT') {
+      setStep('VOTE_RESULT');
+    }
+  }, [roomStatus, isSpinning, step, backendResult]);
+
+  // Load real restaurants from backend if base is small
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (baseCandidates.length <= 8) {
+          const list = await restaurantApi.list({ status: 'APPROVED' });
+          if (!cancelled && list.length > 0) {
+            const mapped: Restaurant[] = list.map((r) => ({
+              id: r.id,
+              name: r.name,
+              address: r.address,
+              category: r.category ?? 'Ẩm thực',
+              rating: r.ratingAvg ?? 4.5,
+              totalReviews: r.ratingCount ?? 0,
+              distance: (r.distance ?? 0.5) * 1000,
+              priceLevel: (r.priceLevel && r.priceLevel >= 1 && r.priceLevel <= 4 ? r.priceLevel : 2) as 1 | 2 | 3 | 4,
+              imageUrl: r.photos?.[0] ?? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400',
+            }));
+            setCandidates(mapped);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load group spin restaurants:', err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const displayCandidates = storeCustomCandidates.length > 0 
+    ? [...storeCustomCandidates, ...candidates.slice(0, 4)]
+    : candidates;
+  const allReady = members.length > 0;
+  const isCurrentUserHost = currentUser?.id ? hostId === currentUser.id : true;
+
+  const handleSpinEnd = async (winner: Restaurant) => {
     setIsSpinning(false);
     setCurrentResult(winner);
     if (onSpinEnd) onSpinEnd(winner);
+    if (isCurrentUserHost) {
+      await finishGroupSpin(winner);
+    }
     setStep('VOTE_VETO');
   };
 
@@ -58,10 +147,13 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
     return (
       <View style={styles.container}>
         <GroupVoteVeto
-          onVote={(decision) => {
+          onVote={async (decision) => {
             if (decision === 'ACCEPT') {
-              setStep('VOTE_RESULT');
+              // Voting handled by store sync
             } else {
+              if (isCurrentUserHost) {
+                await resetGroupSpin();
+              }
               setStep('LOBBY');
             }
           }}
@@ -96,36 +188,84 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
     <>
       <SafeAreaView style={styles.container}>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* Room Header Banner */}
+          {/* 1. COMPACT & CLEAN ROOM HEADER */}
           <View style={styles.roomCard}>
             <View style={styles.roomHeaderRow}>
-              <View>
-                <View style={styles.roomCodeBadge}>
-                  <Text style={styles.roomCodeText}>MÃ PHÒNG: #PARTY2026 📋</Text>
+              <View style={{ flex: 1 }}>
+                <View style={styles.roomCodeRow}>
+                  <TouchableOpacity
+                    style={styles.roomCodeBadge}
+                    onPress={() => {
+                      Alert.alert('Mã Phòng', `Mã phòng hiện tại: #${roomCode}\nChia sẻ mã này cho bạn bè để cùng tham gia!`);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.roomCodeText}>MÃ: #{roomCode} 📋</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.createCodeBtn}
+                    onPress={async () => {
+                      const newCode = await createNewRoom();
+                      Alert.alert('Phòng Mới 🎉', `Đã tạo phòng mới với mã #${newCode}!`);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.createCodeBtnText}>🎲 Mã mới</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.joinCodeBtn}
+                    onPress={() => {
+                      setJoinCodeInput('');
+                      setIsJoinModalOpen(true);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.joinCodeBtnText}>🔑 Nhập mã</Text>
+                  </TouchableOpacity>
                 </View>
                 <Text style={styles.roomTitle}>Phòng Nhậu Roulette 🍻</Text>
-                <Text style={styles.roomSubtitle}>Góp món cùng nhau, chốt nhanh kèo nhậu trong 30s!</Text>
               </View>
-              <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={styles.settingsBtn}>
+
+              <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={styles.settingsBtn} activeOpacity={0.8}>
                 <Text style={styles.settingsIcon}>⚙️</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Member Avatars Bar */}
+            {/* Members Row */}
             <View style={styles.membersBar}>
-              <Text style={styles.membersTitle}>Thành viên ({members.length}):</Text>
+              <View style={styles.membersTitleRow}>
+                <Text style={styles.membersTitle}>Thành viên ({members.length}/20 người)</Text>
+                {isCurrentUserHost && <Text style={styles.membersHint}>Chạm ✕ để kick thành viên</Text>}
+              </View>
+
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.avatarScroll}>
-                {members.map((m, i) => (
-                  <View key={m.id} style={styles.avatarWrapper}>
-                    <Image source={{ uri: m.avatarUrl }} style={styles.avatarImage} />
-                    {i === 0 && (
-                      <View style={styles.hostCrown}>
-                        <Text style={styles.hostCrownText}>👑</Text>
-                      </View>
-                    )}
-                    <Text style={styles.avatarName} numberOfLines={1}>{m.name}</Text>
-                  </View>
-                ))}
+                {members.map((m) => {
+                  const isHost = m.role === 'HOST' || m.id === hostId;
+                  const canKick = isCurrentUserHost && !isHost;
+                  return (
+                    <View key={m.id} style={styles.avatarWrapper}>
+                      <Image source={{ uri: m.avatarUrl }} style={styles.avatarImage} />
+                      {isHost && (
+                        <View style={styles.hostCrown}>
+                          <Text style={styles.hostCrownText}>👑</Text>
+                        </View>
+                      )}
+                      {canKick && (
+                        <TouchableOpacity
+                          style={styles.kickMemberBtn}
+                          onPress={() => setMemberToKick(m)}
+                          activeOpacity={0.8}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Text style={styles.kickMemberText}>✕</Text>
+                        </TouchableOpacity>
+                      )}
+                      <Text style={styles.avatarName} numberOfLines={1}>{m.name}</Text>
+                    </View>
+                  );
+                })}
 
                 <TouchableOpacity
                   style={styles.addMemberBtn}
@@ -139,41 +279,47 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
             </View>
           </View>
 
-          {/* Quick AI & Input Helper Tools */}
+          {/* 2. THE HERO: THE SPIN WHEEL (Placed in prime position) */}
+          <View style={styles.wheelWrapper}>
+            <FoodRoulette
+              ref={rouletteRef}
+              showSpinButton={false}
+              candidates={displayCandidates}
+              onSpinEnd={(winner) => handleSpinEnd(winner)}
+            />
+          </View>
+
+          {/* 3. CLEAN & STREAMLINED "GÓP MÓN ĂN" SECTION */}
           <View style={styles.toolsContainer}>
-            <Text style={styles.toolsSectionTitle}>⚡ GỢI Ý MÓN ĂN NHANH</Text>
+            <View style={styles.toolsHeaderRow}>
+              <Text style={styles.toolsSectionTitle}>🍲 GÓP MÓN VÀO VÒNG QUAY</Text>
+              
+              {/* Compact AI helper pills */}
+              <View style={styles.aiPillRow}>
+                <TouchableOpacity
+                  style={styles.aiPillBtn}
+                  onPress={() => router.push('/spin/menu-capture?target=group' as any)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.aiPillIcon}>📷</Text>
+                  <Text style={styles.aiPillText}>Quét Menu</Text>
+                </TouchableOpacity>
 
-            {/* AI Shortcut Strip */}
-            <View style={styles.aiToolsRow}>
-              <TouchableOpacity
-                style={styles.aiToolBtnPink}
-                onPress={() => router.push('/spin/menu-capture?target=group' as any)}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.aiToolIcon}>📷</Text>
-                <View>
-                  <Text style={styles.aiToolTitle}>Quét Menu AI</Text>
-                  <Text style={styles.aiToolSub}>Tự bóc tách thực đơn</Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.aiToolBtnOrange}
-                onPress={() => router.push('/spin/voice-pick?target=group' as any)}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.aiToolIcon}>🎙️</Text>
-                <View>
-                  <Text style={styles.aiToolTitle}>Voice Pick</Text>
-                  <Text style={styles.aiToolSub}>Nói thèm gì AI chọn nấy</Text>
-                </View>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.aiPillBtn}
+                  onPress={() => router.push('/spin/voice-pick?target=group' as any)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.aiPillIcon}>🎙️</Text>
+                  <Text style={styles.aiPillText}>Voice Pick</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
-            {/* Unified Custom Input Bar */}
+            {/* Input Bar */}
             <View style={styles.addInputRow}>
               <TextInput
-                placeholder="Ví dụ: Bún đậu mắm tôm, Lẩu thái..."
+                placeholder="Nhập món bạn thèm (Ví dụ: Bún đậu, Gà nướng...)"
                 value={newFoodInput}
                 onChangeText={setNewFoodInput}
                 onSubmitEditing={() => handleAddDish(newFoodInput)}
@@ -189,13 +335,14 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
               </TouchableOpacity>
             </View>
 
-            {/* Fast Suggestion Chips */}
+            {/* Quick Suggestion Chips */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipScroll}>
               {['🍜 Phở Thìn', '🥩 Lẩu Gyu-Kaku', '🍕 Pizza Hut', '🧋 Trà Sữa KOI', '🍚 Cơm Tấm Ba Ghiền'].map((chip, idx) => (
                 <TouchableOpacity
                   key={idx}
                   style={styles.quickChip}
                   onPress={() => handleAddDish(chip.substring(3))}
+                  activeOpacity={0.75}
                 >
                   <Text style={styles.quickChipText}>{chip}</Text>
                 </TouchableOpacity>
@@ -203,11 +350,11 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
             </ScrollView>
           </View>
 
-          {/* Group Candidates Pool Display */}
+          {/* 4. Group Candidates Pool (Món đã đề xuất) */}
           {storeCustomCandidates.length > 0 && (
             <View style={styles.poolSection}>
               <View style={styles.poolHeader}>
-                <Text style={styles.poolTitle}>🎯 Món Nhóm Đã Đề Xuất ({storeCustomCandidates.length})</Text>
+                <Text style={styles.poolTitle}>🎯 Món Nhóm Đã Đóng Góp ({storeCustomCandidates.length})</Text>
                 <TouchableOpacity
                   onPress={() => {
                     Alert.alert('Xóa tất cả', 'Bạn có chắc chắn muốn làm mới danh sách?', [
@@ -232,34 +379,32 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
               </View>
             </View>
           )}
-
-          {/* The Spin Wheel */}
-          <View style={styles.wheelWrapper}>
-            <FoodRoulette
-              ref={rouletteRef}
-              showSpinButton={false}
-              candidates={displayCandidates}
-              onSpinEnd={(winner) => handleSpinEnd(winner)}
-            />
-          </View>
         </ScrollView>
 
-        {/* Fixed 3D Game Press Action Dock */}
+        {/* 5. Fixed 3D Game Action Dock */}
         <View style={styles.bottomDock}>
           <TouchableOpacity
-            style={[styles.startSpinBtn, (!allReady || isSpinning) && styles.startSpinBtnDisabled]}
-            disabled={!allReady || isSpinning}
+            style={[
+              styles.startSpinBtn,
+              (!allReady || isSpinning || !isCurrentUserHost) && styles.startSpinBtnDisabled,
+            ]}
+            disabled={!allReady || isSpinning || !isCurrentUserHost}
             activeOpacity={0.88}
-            onPress={() => {
+            onPress={async () => {
+              if (!isCurrentUserHost) return;
               setIsSpinning(true);
+              const randomPick = displayCandidates[Math.floor(Math.random() * displayCandidates.length)];
+              await startGroupSpin(randomPick);
               rouletteRef.current?.spin();
             }}
           >
             <Text style={styles.startSpinText}>
               {isSpinning
                 ? '🔄 ĐANG QUAY VÒNG NHÓM...'
+                : !isCurrentUserHost
+                ? '⏳ ĐỢI TRƯỞNG PHÒNG BẤM QUAY VÒNG...'
                 : allReady
-                ? `🎉 QUAY NHÓM NGAY! (${members.length} NGƯỜI SẴN SÀNG)`
+                ? `🎉 QUAY CHO CẢ NHÓM (TRƯỞNG PHÒNG 👑)`
                 : 'Đợi mọi người tham gia...'}
             </Text>
           </TouchableOpacity>
@@ -279,6 +424,110 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
 
       {/* Invite Members Sheet */}
       <InviteMembersSheet visible={isInviteOpen} onClose={() => setIsInviteOpen(false)} />
+
+      {/* Join Room Code Modal */}
+      <Modal
+        visible={isJoinModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsJoinModalOpen(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>🔑 Nhập Mã Phòng</Text>
+            <Text style={styles.modalSubtitle}>Nhập mã phòng 4-8 ký tự để tham gia nhóm quay cùng bạn bè.</Text>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Ví dụ: PARTY2026 hoặc FR-8892"
+              placeholderTextColor="#8e4e14"
+              value={joinCodeInput}
+              onChangeText={setJoinCodeInput}
+              autoCapitalize="characters"
+              autoFocus
+            />
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setIsJoinModalOpen(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalCancelText}>Hủy</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalConfirmBtn}
+                onPress={async () => {
+                  if (!joinCodeInput.trim()) {
+                    Alert.alert('Thông báo', 'Vui lòng nhập mã phòng!');
+                    return;
+                  }
+                  try {
+                    const success = await joinByCode(joinCodeInput);
+                    if (success) {
+                      setIsJoinModalOpen(false);
+                      Alert.alert('Thành công 🎉', `Bạn đã vào phòng #${joinCodeInput.trim().toUpperCase()}!`);
+                    }
+                  } catch (err: any) {
+                    const msg = err?.response?.data?.error || err?.message || 'Không thể vào phòng này.';
+                    Alert.alert('Lỗi vào phòng', msg);
+                  }
+                }}
+                activeOpacity={0.88}
+              >
+                <Text style={styles.modalConfirmText}>Vào Phòng</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Kick Member Confirmation Modal */}
+      <Modal
+        visible={!!memberToKick}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMemberToKick(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>🚫 Xóa Thành Viên</Text>
+            <Text style={styles.modalSubtitle}>
+              Bạn có chắc chắn muốn xóa thành viên <Text style={{ fontWeight: '900', color: '#b52330' }}>{memberToKick?.name}</Text> khỏi phòng quay nhóm không?
+            </Text>
+
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setMemberToKick(null)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalCancelText}>Hủy</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalConfirmBtn, { backgroundColor: '#b52330', borderBottomColor: '#61000e' }]}
+                onPress={async () => {
+                  if (memberToKick) {
+                    const kickedName = memberToKick.name;
+                    await removeMember(memberToKick.id);
+                    setMemberToKick(null);
+                    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                      window.alert(`Đã xóa ${kickedName} khỏi nhóm thành công!`);
+                    } else {
+                      Alert.alert('Đã xóa', `Đã xóa ${kickedName} khỏi nhóm thành công!`);
+                    }
+                  }
+                }}
+                activeOpacity={0.88}
+              >
+                <Text style={styles.modalConfirmText}>Xác nhận Xóa</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -430,54 +679,42 @@ const styles = StyleSheet.create({
   // Tools Container
   toolsContainer: {
     marginHorizontal: 16,
-    marginTop: 16,
+    marginTop: 14,
+  },
+  toolsHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   toolsSectionTitle: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '900',
     color: '#8e4e14',
-    marginBottom: 10,
     letterSpacing: 0.5,
   },
-  aiToolsRow: {
+  aiPillRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 12,
+    gap: 6,
   },
-  aiToolBtnPink: {
-    flex: 1,
+  aiPillBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffdad8',
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1.5,
-    borderColor: '#ff5a5f',
-    gap: 8,
+    backgroundColor: '#fff0d4',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: '#c68e17',
+    gap: 4,
   },
-  aiToolBtnOrange: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffdcc4',
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1.5,
-    borderColor: '#ffab69',
-    gap: 8,
+  aiPillIcon: {
+    fontSize: 12,
   },
-  aiToolIcon: {
-    fontSize: 22,
-  },
-  aiToolTitle: {
-    fontSize: 13,
-    fontWeight: '900',
-    color: '#b52330',
-  },
-  aiToolSub: {
+  aiPillText: {
     fontSize: 10.5,
+    fontWeight: '800',
     color: '#8e4e14',
-    fontWeight: '600',
   },
 
   // Input Row
@@ -621,5 +858,155 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
     letterSpacing: 0.5,
+  },
+
+  // Room Code & Join Bar
+  roomCodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  createCodeBtn: {
+    backgroundColor: '#ffdad8',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ff5a5f',
+  },
+  createCodeBtnText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#b52330',
+  },
+  joinCodeBtn: {
+    backgroundColor: '#fff0d4',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#c68e17',
+  },
+  joinCodeBtnText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#8e4e14',
+  },
+
+  // Member Management & Kick
+  membersTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  membersHint: {
+    fontSize: 10,
+    color: '#a08885',
+    fontWeight: '600',
+  },
+  kickMemberBtn: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#b52330',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#ffffff',
+    zIndex: 10,
+  },
+  kickMemberText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '900',
+    lineHeight: 12,
+  },
+
+  // Join Room Modal
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    padding: 22,
+    borderWidth: 2,
+    borderColor: '#e2bebc',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#b52330',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 12.5,
+    color: '#5a403f',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  modalInput: {
+    backgroundColor: '#fff8ef',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#3d2314',
+    textAlign: 'center',
+    letterSpacing: 1,
+    marginBottom: 18,
+  },
+  modalBtnRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: '#fbf3e4',
+    borderWidth: 1,
+    borderColor: '#e2bebc',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    color: '#5a403f',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  modalConfirmBtn: {
+    flex: 1.5,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: '#b52330',
+    borderBottomWidth: 3,
+    borderBottomColor: '#61000e',
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    color: '#ffffff',
+    fontWeight: '900',
+    fontSize: 13,
   },
 });

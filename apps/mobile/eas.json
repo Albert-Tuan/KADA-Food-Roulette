@@ -12,6 +12,9 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://kada-food-roulette.onrender.com/api/v1"
+      },
       "android": {
         "buildType": "apk"
       },

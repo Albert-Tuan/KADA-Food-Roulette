@@ -9,9 +9,11 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter, Stack } from 'expo-router';
 import { stewardApi, PendingRestaurant, StewardStats } from '@/api';
 
 export default function StewardDashboardScreen() {
+  const router = useRouter();
   const [pending, setPending] = useState<PendingRestaurant[]>([]);
   const [stats, setStats] = useState<StewardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -175,6 +177,13 @@ export default function StewardDashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
+      <Stack.Screen options={{ headerShown: false }} />
+      <View className="px-5 py-3 flex-row items-center border-b border-border bg-card">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+          <Text className="text-primary text-xl font-bold">←</Text>
+        </TouchableOpacity>
+        <Text className="text-lg font-bold text-primary">Steward Dashboard</Text>
+      </View>
       <FlatList
         data={pending}
         keyExtractor={(item) => item.id}

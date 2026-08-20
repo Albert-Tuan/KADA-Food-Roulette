@@ -32,6 +32,7 @@ router.get(
   locketsController.getMedia,
 );
 router.get('/me', requireJWT, locketsController.getMine);
+router.get('/feed', optionalJWT, locketsController.getFeed);
 router.get('/', optionalJWT, locketsController.getFeed);
 router.post('/', requireJWT, uploadLocketImage, locketsController.create);
 router.post('/:id/like', requireJWT, locketsController.like);

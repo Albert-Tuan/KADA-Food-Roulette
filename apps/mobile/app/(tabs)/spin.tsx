@@ -7,6 +7,8 @@ import { RewardCard, RewardCardEmpty } from '../../src/components/RewardCard';
 import { FoodRoulette } from '../../src/features/spin/components/FoodRoulette';
 import { SpinFilterSheet } from '../../src/features/spin/components/SpinFilterSheet';
 import { useSpinStore } from '../../src/stores/spinStore';
+import { useGroupSpinStore } from '../../src/stores/groupSpinStore';
+import { useAuthStore } from '../../src/stores/authStore';
 import { restaurantApi, Restaurant as ApiRestaurant } from '../../src/api/endpoints/restaurants';
 import type { Restaurant } from '../../src/features/spin/types';
 
@@ -33,6 +35,7 @@ const toSpinRestaurant = (r: ApiRestaurant): Restaurant => {
   return {
     id: r.id,
     name: r.name,
+    address: r.address,
     category: r.category ?? 'Ẩm thực',
     rating: r.ratingAvg ?? 0,
     totalReviews: r.ratingCount ?? 0,
@@ -44,9 +47,13 @@ const toSpinRestaurant = (r: ApiRestaurant): Restaurant => {
 
 export default function SpinScreen() {
   const router = useRouter();
+  const currentUser = useAuthStore((s) => s.user);
+  const { joinByCode } = useGroupSpinStore();
   const { candidates, filters, customCandidates, setFilters, setCandidates, addCustomCandidate, removeCustomCandidate, setCurrentResult, resetStore, fetchNearbyCandidates, spin, currentResult } = useSpinStore();
   const [rewards] = useState<Reward[]>(MOCK_REWARDS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [joinCodeInput, setJoinCodeInput] = useState('');
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,60 +68,45 @@ export default function SpinScreen() {
     setNewFoodInput('');
   };
 
+  const handleJoinRoom = async () => {
+    if (!joinCodeInput.trim()) {
+      Alert.alert('Thông báo', 'Vui lòng nhập mã phòng nhóm!');
+      return;
+    }
+    try {
+      const success = await joinByCode(joinCodeInput);
+      if (success) {
+        setIsJoinModalOpen(false);
+        router.push('/group-spin/lobby');
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || 'Không thể vào phòng này. Vui lòng kiểm tra lại mã!';
+      Alert.alert('Lỗi vào phòng', msg);
+    }
+  };
+
   const isMockRepository = process.env.EXPO_PUBLIC_USE_MOCK_REPOSITORIES === 'true';
 
   useEffect(() => {
-    if (isMockRepository) return;
-
     let cancelled = false;
     (async () => {
       try {
+        setIsLoading(true);
         const list = await restaurantApi.list({ status: 'APPROVED' });
-        if (cancelled) return;
-        setCandidates(list.map(toSpinRestaurant));
+        if (!cancelled && list && list.length > 0) {
+          setCandidates(list.map(toSpinRestaurant));
+        }
       } catch (error) {
-        if (cancelled) return;
         console.error('Load spin candidates failed:', error);
-        setCandidates([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [isMockRepository, setCandidates]);
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active') {
-        resetStore();
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [resetStore]);
-
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Lỗi', 'Không thể lấy vị trí của bạn để tìm quán ăn.');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        let loc = await Location.getCurrentPositionAsync({});
-        setLocation(loc);
-        await fetchNearbyCandidates(loc.coords.latitude, loc.coords.longitude);
-      } catch (error) {
-        console.error('Error fetching location', error);
-      }
-      setIsLoading(false);
-    })();
-  }, [fetchNearbyCandidates]);
+  }, []);
 
   const handleFoodSpinEnd = useCallback((winner: Restaurant, index: number) => {
     if (multiMode === 1) {
@@ -138,6 +130,29 @@ export default function SpinScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
+          {/* Top Mode Switcher: Personal vs Group Spin */}
+          <View style={styles.modeSwitchContainer}>
+            <TouchableOpacity style={[styles.modeTab, styles.modeTabActive]} activeOpacity={0.9}>
+              <Text style={styles.modeTabTextActive}>👤 Cá Nhân</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modeTab}
+              activeOpacity={0.8}
+              onPress={() => router.push('/group-spin/lobby')}
+            >
+              <Text style={styles.modeTabText}>👥 Tạo Nhóm 👑</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modeTab}
+              activeOpacity={0.8}
+              onPress={() => {
+                setJoinCodeInput('');
+                setIsJoinModalOpen(true);
+              }}
+            >
+              <Text style={styles.modeTabText}>🔑 Nhập Mã</Text>
+            </TouchableOpacity>
+          </View>
           {/* Food Roulette Section */}
           <View style={styles.section}>
             {isLoading ? (
@@ -387,6 +402,51 @@ export default function SpinScreen() {
         </View>
       </Modal>
 
+      {/* Join Group Room Modal */}
+      <Modal
+        visible={isJoinModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsJoinModalOpen(false)}
+      >
+        <View style={styles.joinModalOverlay}>
+          <View style={styles.joinModalCard}>
+            <Text style={styles.joinModalTitle}>🔑 Nhập Mã Phòng Nhóm</Text>
+            <Text style={styles.joinModalSubtitle}>
+              Nhập mã phòng từ bạn bè (ví dụ: FOOD-8892 hoặc ROOM-4K9X) để cùng tham gia quay và chọn món!
+            </Text>
+
+            <TextInput
+              style={styles.joinModalInput}
+              placeholder="Nhập mã phòng (ví dụ: FOOD-1234)"
+              placeholderTextColor="#8e4e14"
+              value={joinCodeInput}
+              onChangeText={setJoinCodeInput}
+              autoCapitalize="characters"
+              autoFocus
+            />
+
+            <View style={styles.joinModalBtnRow}>
+              <TouchableOpacity
+                style={styles.joinModalCancelBtn}
+                onPress={() => setIsJoinModalOpen(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.joinModalCancelText}>Hủy</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.joinModalConfirmBtn}
+                onPress={handleJoinRoom}
+                activeOpacity={0.88}
+              >
+                <Text style={styles.joinModalConfirmText}>Vào Phòng Ngay 🚀</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Filter Sheet */}
       <SpinFilterSheet
         visible={isFilterOpen}
@@ -402,6 +462,87 @@ export default function SpinScreen() {
 }
 
 const styles = StyleSheet.create({
+  joinModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  joinModalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    padding: 22,
+    borderWidth: 2,
+    borderColor: '#e2bebc',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  joinModalTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#b52330',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  joinModalSubtitle: {
+    fontSize: 12.5,
+    color: '#5a403f',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  joinModalInput: {
+    backgroundColor: '#fff8ef',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#3d2314',
+    textAlign: 'center',
+    letterSpacing: 1,
+    marginBottom: 18,
+  },
+  joinModalBtnRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  joinModalCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: '#fbf3e4',
+    borderWidth: 1,
+    borderColor: '#e2bebc',
+    alignItems: 'center',
+  },
+  joinModalCancelText: {
+    color: '#5a403f',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  joinModalConfirmBtn: {
+    flex: 1.5,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: '#b52330',
+    borderBottomWidth: 3,
+    borderBottomColor: '#61000e',
+    alignItems: 'center',
+  },
+  joinModalConfirmText: {
+    color: '#ffffff',
+    fontWeight: '900',
+    fontSize: 13,
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff8ef',
@@ -560,6 +701,42 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 24,
+  },
+  modeSwitchContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+    backgroundColor: '#fff0d4',
+    borderRadius: 16,
+    padding: 4,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+  },
+  modeTab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+  },
+  modeTabActive: {
+    backgroundColor: '#b52330',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modeTabText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#8e4e14',
+  },
+  modeTabTextActive: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#ffffff',
   },
   section: {
     paddingHorizontal: 16,

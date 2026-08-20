@@ -1,120 +1,427 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { AuthRequest } from '../../shared/middleware/auth.middleware';
+import { prisma } from '../../shared/utils/prisma';
+
+export interface LiveRoomMember {
+  id: string;
+  name: string;
+  avatarUrl: string;
+  role: 'HOST' | 'MEMBER';
+}
+
+export interface LiveRoomCandidate {
+  id: string;
+  name: string;
+}
+
+export type RoomPhase = 'LOBBY' | 'SPINNING' | 'VOTING' | 'RESULT';
+
+export interface LiveRoom {
+  id: string;
+  name: string;
+  roomCode: string;
+  hostId: string;
+  status: RoomPhase;
+  members: LiveRoomMember[];
+  customCandidates: LiveRoomCandidate[];
+  votes: Record<string, string>;
+  currentResult: unknown;
+  spunAt?: number;
+  updatedAt: string;
+}
+
+// In-memory live room synchronization store for realtime group spins
+const liveRooms = new Map<string, LiveRoom>();
+
+const generateRoomCode = (): string => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let result = '';
+  for (let i = 0; i < 4; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `FOOD-${result}`;
+};
+
+const getMemberFromUser = async (userId: string, role: 'HOST' | 'MEMBER' = 'MEMBER'): Promise<LiveRoomMember> => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, displayNamePublic: true, displayNamePrivate: true, avatarUrl: true, email: true },
+    });
+
+    if (user) {
+      return {
+        id: user.id,
+        name: user.displayNamePublic || user.displayNamePrivate || user.email.split('@')[0],
+        avatarUrl: user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/png?seed=${user.email}`,
+        role,
+      };
+    }
+  } catch (err) {
+    console.error('[Groups] Error fetching user for room:', err);
+  }
+
+  return {
+    id: userId,
+    name: 'Thành viên',
+    avatarUrl: `https://api.dicebear.com/7.x/avataaars/png?seed=${userId}`,
+    role,
+  };
+};
 
 export const groupsController = {
-  // POST /api/groups
-  createGroup: async (req: AuthRequest, res: Response) => {
+  // POST /api/v1/groups/create-or-get (or POST /api/v1/groups)
+  createOrGetGroup: async (req: AuthRequest, res: Response) => {
     try {
-      const { name, maxMembers } = req.body;
-      const groupCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Chưa đăng nhập.' });
+      }
 
-      const newGroup = {
+      const hostMember = await getMemberFromUser(userId, 'HOST');
+
+      // Check if user already owns a room
+      for (const [, room] of liveRooms.entries()) {
+        if (room.hostId === userId) {
+          // Update host info if changed
+          room.members = room.members.map(m => (m.id === userId ? { ...m, ...hostMember, role: 'HOST' } : m));
+          return res.json({ success: true, data: room });
+        }
+      }
+
+      const roomCode = generateRoomCode();
+      const newRoom: LiveRoom = {
         id: `grp_${Date.now()}`,
-        name: name || 'Nhóm Ăn Trưa Cực Vui',
-        groupCode,
-        maxMembers: maxMembers || 20,
-        creatorId: req.user?.id || 'anonymous',
-        membersCount: 1,
-        createdAt: new Date().toISOString(),
+        name: 'Phòng Nhậu Roulette',
+        roomCode,
+        hostId: userId,
+        status: 'LOBBY',
+        members: [hostMember],
+        customCandidates: [],
+        votes: {},
+        currentResult: null,
+        updatedAt: new Date().toISOString(),
       };
 
-      return res.status(201).json(newGroup);
-    } catch (error: any) {
-      return res.status(500).json({ error: 'Lỗi tạo nhóm quay.' });
+      liveRooms.set(roomCode, newRoom);
+      return res.status(201).json({ success: true, data: newRoom });
+    } catch {
+      console.error('[Groups] Create group error');
+      return res.status(500).json({ success: false, error: 'Lỗi tạo phòng nhóm.' });
     }
   },
 
-  // GET /api/groups
-  listGroups: async (req: AuthRequest, res: Response) => {
+  // POST /api/v1/groups/new-code (Host wants to regenerate room code)
+  createNewCode: async (req: AuthRequest, res: Response) => {
     try {
-      const groups = [
-        {
-          id: 'grp_001',
-          name: 'Hội Sâu Code Q3',
-          groupCode: 'FOOD88',
-          membersCount: 5,
-          maxMembers: 20,
-          lastSpinResult: 'Cơm Tấm Ba Cường',
-          role: 'ADMIN',
-        },
-        {
-          id: 'grp_002',
-          name: 'Ăn Trưa Công Ty',
-          groupCode: 'LUNCH55',
-          membersCount: 8,
-          maxMembers: 20,
-          lastSpinResult: 'Phở Thìn Hà Nội',
-          role: 'MEMBER',
-        },
-      ];
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Chưa đăng nhập.' });
+      }
 
-      return res.json(groups);
-    } catch (error: any) {
-      return res.status(500).json({ error: 'Lỗi lấy danh sách nhóm.' });
-    }
-  },
+      const hostMember = await getMemberFromUser(userId, 'HOST');
 
-  // GET /api/groups/:id
-  getGroup: async (req: AuthRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const groupDetails = {
-        id,
-        name: 'Hội Sâu Code Q3',
-        groupCode: 'FOOD88',
-        members: [
-          { id: 'u1', name: 'Tuấn Anh (PM)', avatar: 'https://i.pravatar.cc/150?img=11', isHost: true },
-          { id: 'u2', name: 'Hoàng Hiếu (Frontend)', avatar: 'https://i.pravatar.cc/150?img=12', isHost: false },
-          { id: 'u3', name: 'Gia Bình (Content)', avatar: 'https://i.pravatar.cc/150?img=13', isHost: false },
-          { id: 'u4', name: 'Lê Huy Trường (Backend)', avatar: 'https://i.pravatar.cc/150?img=14', isHost: false },
-          { id: 'u5', name: 'Thành Nam (DevOps)', avatar: 'https://i.pravatar.cc/150?img=15', isHost: false },
-        ],
-        status: 'IDLE', // IDLE | SPINNING | VOTING | COMPLETED
+      // Delete old rooms of this host
+      for (const [code, room] of liveRooms.entries()) {
+        if (room.hostId === userId) {
+          liveRooms.delete(code);
+        }
+      }
+
+      const newCode = generateRoomCode();
+      const newRoom: LiveRoom = {
+        id: `grp_${Date.now()}`,
+        name: 'Phòng Nhậu Roulette',
+        roomCode: newCode,
+        hostId: userId,
+        status: 'LOBBY',
+        members: [hostMember],
+        customCandidates: [],
+        votes: {},
+        currentResult: null,
+        updatedAt: new Date().toISOString(),
       };
 
-      return res.json(groupDetails);
-    } catch (error: any) {
-      return res.status(500).json({ error: 'Không tìm thấy nhóm.' });
+      liveRooms.set(newCode, newRoom);
+      return res.json({ success: true, data: newRoom });
+    } catch {
+      return res.status(500).json({ success: false, error: 'Lỗi đổi mã phòng.' });
     }
   },
 
-  // POST /api/groups/:id/spin
+  // GET /api/v1/groups/code/:code
+  getGroupByCode: async (req: AuthRequest, res: Response) => {
+    try {
+      const rawCode = String(req.params.code || req.params.id || '').trim().toUpperCase().replace('#', '');
+      const room = liveRooms.get(rawCode);
+
+      if (!room) {
+        return res.status(404).json({
+          success: false,
+          error: `Không tìm thấy phòng với mã #${rawCode}. Vui lòng kiểm tra lại mã phòng!`,
+        });
+      }
+
+      return res.json({ success: true, data: room });
+    } catch {
+      return res.status(500).json({ success: false, error: 'Lỗi lấy thông tin phòng.' });
+    }
+  },
+
+  // POST /api/v1/groups/join
+  joinGroup: async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Chưa đăng nhập.' });
+      }
+
+      const { code } = req.body;
+      const rawCode = String(code || '').trim().toUpperCase().replace('#', '');
+
+      const room = liveRooms.get(rawCode);
+      if (!room) {
+        return res.status(404).json({
+          success: false,
+          error: `Mã phòng #${rawCode} không tồn tại hoặc đã đóng. Hãy nhờ chủ phòng gửi lại mã!`,
+        });
+      }
+
+      if (room.members.length >= 20) {
+        return res.status(400).json({
+          success: false,
+          error: 'Phòng đã đủ số lượng tối đa (20 người).',
+        });
+      }
+
+      const joiningMember = await getMemberFromUser(userId, 'MEMBER');
+
+      // If user is already in room, update details
+      const existingIdx = room.members.findIndex(m => m.id === userId);
+      if (existingIdx >= 0) {
+        room.members[existingIdx] = {
+          ...room.members[existingIdx],
+          ...joiningMember,
+          role: room.hostId === userId ? 'HOST' : 'MEMBER',
+        };
+      } else {
+        room.members.push(joiningMember);
+      }
+
+      room.updatedAt = new Date().toISOString();
+      return res.json({ success: true, data: room });
+    } catch {
+      console.error('[Groups] Join group error');
+      return res.status(500).json({ success: false, error: 'Lỗi tham gia phòng.' });
+    }
+  },
+
+  // POST /api/v1/groups/:code/kick
+  kickMember: async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      const rawCode = String(req.params.code || '').trim().toUpperCase().replace('#', '');
+      const { memberId } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Chưa đăng nhập.' });
+      }
+
+      const room = liveRooms.get(rawCode);
+      if (!room) {
+        return res.status(404).json({ success: false, error: 'Phòng không tồn tại.' });
+      }
+
+      if (room.hostId !== userId) {
+        return res.status(403).json({ success: false, error: 'Chỉ Trưởng Nhóm mới có quyền kick thành viên.' });
+      }
+
+      if (memberId === userId) {
+        return res.status(400).json({ success: false, error: 'Trưởng nhóm không thể tự kick chính mình.' });
+      }
+
+      room.members = room.members.filter(m => m.id !== memberId);
+      delete room.votes[memberId];
+      room.updatedAt = new Date().toISOString();
+
+      return res.json({ success: true, data: room });
+    } catch {
+      return res.status(500).json({ success: false, error: 'Lỗi kick thành viên.' });
+    }
+  },
+
+  // POST /api/v1/groups/:code/spin
   startSpin: async (req: AuthRequest, res: Response) => {
     try {
-      const { id } = req.params;
-      const { candidateRestaurants } = req.body;
+      const userId = req.user?.id;
+      const rawCode = String(req.params.code || req.params.id || '').trim().toUpperCase().replace('#', '');
+      const { winner } = req.body;
 
-      const result = {
-        sessionId: `group_spin_${Date.now()}`,
-        groupId: id,
-        selectedRestaurant: {
-          id: 'rest-1',
-          name: 'Cơm Tấm Ba Cường',
-          address: '123 Nguyễn Trãi, Q1, TP.HCM',
-          rating: 4.8,
-        },
-        spunBy: req.user?.id,
-        status: 'VOTING',
-        voteTimeoutSeconds: 60,
-      };
+      const room = liveRooms.get(rawCode);
+      if (!room) {
+        return res.status(404).json({ success: false, error: 'Phòng không tồn tại.' });
+      }
 
-      return res.json(result);
-    } catch (error: any) {
-      return res.status(500).json({ error: 'Lỗi bắt đầu Group Spin.' });
+      if (room.hostId !== userId) {
+        return res.status(403).json({ success: false, error: 'Chỉ Trưởng Nhóm mới có quyền bấm quay vòng!' });
+      }
+
+      room.status = 'SPINNING';
+      room.currentResult = winner || null;
+      room.votes = {};
+      room.spunAt = Date.now();
+      room.updatedAt = new Date().toISOString();
+
+      return res.json({ success: true, data: room });
+    } catch {
+      return res.status(500).json({ success: false, error: 'Lỗi bắt đầu quay nhóm.' });
     }
   },
 
-  // POST /api/groups/:id/vote
+  // POST /api/v1/groups/:code/finish-spin
+  finishSpin: async (req: AuthRequest, res: Response) => {
+    try {
+      const rawCode = String(req.params.code || req.params.id || '').trim().toUpperCase().replace('#', '');
+      const { winner } = req.body;
+
+      const room = liveRooms.get(rawCode);
+      if (!room) {
+        return res.status(404).json({ success: false, error: 'Phòng không tồn tại.' });
+      }
+
+      room.status = 'VOTING';
+      if (winner) {
+        room.currentResult = winner;
+      }
+      room.updatedAt = new Date().toISOString();
+
+      return res.json({ success: true, data: room });
+    } catch {
+      return res.status(500).json({ success: false, error: 'Lỗi chuyển trạng thái vote.' });
+    }
+  },
+
+  // POST /api/v1/groups/:code/vote
   vote: async (req: AuthRequest, res: Response) => {
     try {
-      const { decision } = req.body; // 'ACCEPT' | 'VETO'
+      const userId = req.user?.id;
+      const rawCode = String(req.params.code || req.params.id || '').trim().toUpperCase().replace('#', '');
+      const { decision } = req.body; // 'ACCEPT' | 'RESPIN' | 'VETO'
 
-      return res.json({
-        message: decision === 'VETO' ? 'Bạn đã Veto kết quả!' : 'Bạn đã chấp nhận kết quả!',
-        votedAt: new Date().toISOString(),
-      });
-    } catch (error: any) {
-      return res.status(500).json({ error: 'Lỗi gửi vote.' });
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'Chưa đăng nhập.' });
+      }
+
+      const room = liveRooms.get(rawCode);
+      if (!room) {
+        return res.status(404).json({ success: false, error: 'Phòng không tồn tại.' });
+      }
+
+      if (!['ACCEPT', 'RESPIN', 'VETO'].includes(decision)) {
+        return res.status(400).json({ success: false, error: 'Quyết định vote không hợp lệ.' });
+      }
+
+      room.votes[userId] = decision;
+
+      // If someone voted RESPIN or VETO and majority wants respin, or if all ACCEPT
+      const voteValues = Object.values(room.votes);
+      const respinCount = voteValues.filter(v => v === 'RESPIN' || v === 'VETO').length;
+      const acceptCount = voteValues.filter(v => v === 'ACCEPT').length;
+
+      // If majority accepts
+      if (acceptCount > room.members.length / 2) {
+        room.status = 'RESULT';
+      } else if (respinCount > room.members.length / 2) {
+        room.status = 'LOBBY';
+        room.votes = {};
+        room.currentResult = null;
+      }
+
+      room.updatedAt = new Date().toISOString();
+      return res.json({ success: true, data: room });
+    } catch {
+      return res.status(500).json({ success: false, error: 'Lỗi gửi vote.' });
     }
+  },
+
+  // POST /api/v1/groups/:code/reset-spin
+  resetSpin: async (req: AuthRequest, res: Response) => {
+    try {
+      const rawCode = String(req.params.code || req.params.id || '').trim().toUpperCase().replace('#', '');
+      const room = liveRooms.get(rawCode);
+      if (!room) {
+        return res.status(404).json({ success: false, error: 'Phòng không tồn tại.' });
+      }
+
+      room.status = 'LOBBY';
+      room.votes = {};
+      room.currentResult = null;
+      room.updatedAt = new Date().toISOString();
+
+      return res.json({ success: true, data: room });
+    } catch {
+      return res.status(500).json({ success: false, error: 'Lỗi đặt lại phòng.' });
+    }
+  },
+
+  // POST /api/v1/groups/:code/candidates
+  addCandidate: async (req: AuthRequest, res: Response) => {
+    try {
+      const rawCode = String(req.params.code || '').trim().toUpperCase().replace('#', '');
+      const { name } = req.body;
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ success: false, error: 'Vui lòng nhập tên món ăn.' });
+      }
+
+      const room = liveRooms.get(rawCode);
+      if (!room) {
+        return res.status(404).json({ success: false, error: 'Phòng không tồn tại.' });
+      }
+
+      const newCand: LiveRoomCandidate = {
+        id: `cand_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        name: name.trim(),
+      };
+
+      room.customCandidates.push(newCand);
+      room.updatedAt = new Date().toISOString();
+
+      return res.json({ success: true, data: room });
+    } catch {
+      return res.status(500).json({ success: false, error: 'Lỗi thêm món ăn vào nhóm.' });
+    }
+  },
+
+  // DELETE /api/v1/groups/:code/candidates/:candId
+  removeCandidate: async (req: AuthRequest, res: Response) => {
+    try {
+      const rawCode = String(req.params.code || '').trim().toUpperCase().replace('#', '');
+      const candId = String(req.params.candId || '');
+
+      const room = liveRooms.get(rawCode);
+      if (!room) {
+        return res.status(404).json({ success: false, error: 'Phòng không tồn tại.' });
+      }
+
+      room.customCandidates = room.customCandidates.filter(c => c.id !== candId);
+      room.updatedAt = new Date().toISOString();
+
+      return res.json({ success: true, data: room });
+    } catch {
+      return res.status(500).json({ success: false, error: 'Lỗi xóa món ăn khỏi nhóm.' });
+    }
+  },
+
+  // Legacy compatibility handlers
+  createGroup: async (req: AuthRequest, res: Response) => {
+    return groupsController.createOrGetGroup(req, res);
+  },
+  listGroups: async (req: AuthRequest, res: Response) => {
+    const list = Array.from(liveRooms.values());
+    return res.json({ success: true, data: list });
+  },
+  getGroup: async (req: AuthRequest, res: Response) => {
+    return groupsController.getGroupByCode(req, res);
   },
 };

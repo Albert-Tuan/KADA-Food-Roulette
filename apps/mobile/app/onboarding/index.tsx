@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { preferencesApi } from '../../src/api/endpoints/preferences';
+import { useAuthStore } from '../../src/stores/authStore';
 
 const CUISINE_OPTIONS = [
   { id: 'pho_bun', name: 'Phở & Bún Việt', icon: '🍜', category: 'món việt' },
@@ -63,6 +64,7 @@ const PRESET_AVATARS = [
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const updateUser = useAuthStore((s) => s.updateUser);
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -139,10 +141,12 @@ export default function OnboardingScreen() {
         );
       }
 
+      updateUser({ isOnboarded: true });
       setCurrentStep(5);
     } catch (error) {
       console.log('Non-blocking onboarding sync:', error);
       // Even if network fails, allow entering app smoothly
+      updateUser({ isOnboarded: true });
       setCurrentStep(5);
     } finally {
       setIsSubmitting(false);
