@@ -72,9 +72,6 @@ export const menuApi = {
     }
 
     const response = await apiClient.post<MenuCaptureResponse>('/menu/capture', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
       timeout: 300000, // 5 minutes timeout for AI processing of long menus
     });
     return response.data;
@@ -98,11 +95,7 @@ export const menuApi = {
       } as any);
     }
 
-    const response = await apiClient.post<VoicePickResponse>('/menu/voice-pick', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await apiClient.post<VoicePickResponse>('/menu/voice-pick', formData);
     return response.data;
   },
 
