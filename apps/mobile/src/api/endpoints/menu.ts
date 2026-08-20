@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system';
 import apiClient from '../client';
 
 export interface MenuItem {
@@ -50,39 +51,40 @@ export function getLatestCapturedMenu(): MenuCaptureResponse | null {
 
 export const menuApi = {
   captureMenu: async (restaurantId: string, imageUris: string[]): Promise<MenuCaptureResponse> => {
-    // Warm up the server first (Render free tier sleeps after 15min inactivity)
-    try {
-      const baseURL = apiClient.defaults.baseURL || '';
-      // Strip /api/v1 to get base server URL for /health
-      const serverBase = baseURL.replace(/\/api\/v1\/?$/, '');
-      await fetch(`${serverBase}/health`, { method: 'GET', signal: AbortSignal.timeout(60000) });
-    } catch {
-      // Server might still be waking up, proceed anyway
-    }
-
-    const formData = new FormData();
-    formData.append('restaurantId', restaurantId);
+    // Convert images to base64 and send as JSON (avoids all FormData/multipart issues)
+    const images: Array<{ base64: string; filename: string; mimeType: string }> = [];
 
     for (const imageUri of imageUris) {
       const filename = imageUri.split('/').pop() || 'menu.jpg';
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : `image/jpeg`;
+      const ext = filename.split('.').pop()?.toLowerCase() || 'jpg';
+      const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
 
+      let base64: string;
       if (Platform.OS === 'web') {
         const response = await fetch(imageUri);
         const blob = await response.blob();
-        formData.append('menuImages', blob, filename);
+        base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            resolve(result.split(',')[1] || result);
+          };
+          reader.readAsDataURL(blob);
+        });
       } else {
-        formData.append('menuImages', {
-          uri: imageUri,
-          name: filename,
-          type,
-        } as any);
+        base64 = await FileSystem.readAsStringAsync(imageUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
       }
+
+      images.push({ base64, filename, mimeType });
     }
 
-    const response = await apiClient.post<MenuCaptureResponse>('/menu/capture', formData, {
-      timeout: 300000, // 5 minutes timeout for AI processing of long menus
+    const response = await apiClient.post<MenuCaptureResponse>('/menu/capture-base64', {
+      restaurantId,
+      images,
+    }, {
+      timeout: 300000, // 5 minutes timeout for AI processing
     });
     return response.data;
   },

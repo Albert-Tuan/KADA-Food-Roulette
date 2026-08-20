@@ -1,7 +1,46 @@
 import { Request, Response } from 'express';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { menuService } from './menu.service';
 
 export const menuController = {
+  captureBase64: async (req: Request, res: Response) => {
+    try {
+      const { restaurantId = 'rest-1', images } = req.body;
+      const userId = req.user?.id || 'anonymous';
+
+      if (!images || !Array.isArray(images) || images.length === 0) {
+        return res.status(400).json({ message: 'Vui lòng gửi ít nhất 1 ảnh menu (base64).' });
+      }
+
+      console.log(`[menuController.captureBase64] Processing ${images.length} base64 images for restaurant: ${restaurantId}`);
+
+      // Write base64 images to temp files
+      const imagePaths: string[] = [];
+      for (const img of images) {
+        const buffer = Buffer.from(img.base64, 'base64');
+        const ext = (img.filename || 'menu.jpg').split('.').pop() || 'jpg';
+        const tempPath = path.join(os.tmpdir(), `menu_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`);
+        fs.writeFileSync(tempPath, buffer);
+        imagePaths.push(tempPath);
+      }
+
+      const result = await menuService.createMenu(restaurantId, userId, imagePaths);
+
+      // Cleanup temp files
+      for (const p of imagePaths) {
+        try { fs.unlinkSync(p); } catch { /* ignore */ }
+      }
+
+      return res.status(201).json(result);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('[menuController.captureBase64 Error]:', err);
+      return res.status(500).json({ message: 'Lỗi khi xử lý menu', error: err.message });
+    }
+  },
+
   capture: async (req: Request, res: Response) => {
     try {
       const restaurantId = (req.body?.restaurantId || req.query?.restaurantId as string) || 'rest-1';
