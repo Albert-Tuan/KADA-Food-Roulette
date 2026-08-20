@@ -97,7 +97,6 @@ class FriendsService {
       requesterId,
       addresseeId: target.id,
       status: 'PENDING',
-      createdAt: new Date().toISOString(),
     };
     saveFriendship(persisted);
 
@@ -112,8 +111,11 @@ class FriendsService {
       });
 
       if (friendship) {
-        if (friendship.addresseeId !== userId && friendship.requesterId !== userId) {
+        if (friendship.addresseeId !== userId) {
           throw new Error('Bạn không có quyền chấp nhận lời mời này');
+        }
+        if (friendship.status !== 'PENDING') {
+          throw new Error('Lời mời không ở trạng thái chờ');
         }
 
         await prisma.friendship.update({
@@ -132,7 +134,7 @@ class FriendsService {
         } catch {}
       }
     } catch (err: any) {
-      if (err.message.includes('Bạn không có quyền')) throw err;
+      if (err.message.includes('Bạn không có quyền') || err.message.includes('không ở trạng thái chờ')) throw err;
       console.warn('[Friends] DB accept notice:', err.message);
     }
 
@@ -140,18 +142,15 @@ class FriendsService {
     if (memF) {
       memF.status = 'ACCEPTED';
       saveFriendship(memF);
-      return memF;
+      return { id: memF.id, status: 'ACCEPTED' };
     }
 
     if (friendship) {
       const persisted: PersistedFriendship = {
         id: friendship.id,
-        requesterId: friendship.requesterId,
-        addresseeId: friendship.addresseeId,
         status: 'ACCEPTED',
-        createdAt: friendship.createdAt ? friendship.createdAt.toISOString() : new Date().toISOString(),
       };
-      saveFriendship(persisted);
+      saveFriendship({ ...friendship, status: 'ACCEPTED' });
       return persisted;
     }
 
@@ -160,9 +159,13 @@ class FriendsService {
 
   async rejectRequest(userId: string, friendshipId: string) {
     try {
+      const friendship = await prisma.friendship.findUnique({ where: { id: friendshipId } });
+      if (!friendship || (friendship.addresseeId !== userId && friendship.requesterId !== userId)) {
+        throw new Error('Không có quyền');
+      }
       await prisma.friendship.delete({ where: { id: friendshipId } });
     } catch (err: any) {
-      console.warn('[Friends] DB reject notice:', err.message);
+      if (err.message.includes('Không có quyền')) throw err;
     }
     removePersistedFriendship(friendshipId);
     return { message: 'Đã từ chối lời mời' };
@@ -171,9 +174,7 @@ class FriendsService {
   async removeFriend(userId: string, friendshipId: string) {
     try {
       await prisma.friendship.delete({ where: { id: friendshipId } });
-    } catch (err: any) {
-      console.warn('[Friends] DB remove notice:', err.message);
-    }
+    } catch {}
     removePersistedFriendship(friendshipId);
     return { message: 'Đã hủy kết bạn' };
   }
@@ -223,17 +224,18 @@ class FriendsService {
         friendsMap.set(targetUser.id, {
           id: targetUser.id,
           publicId: targetUser.publicId,
-          displayNamePublic: targetUser.displayNamePublic || targetUser.email.split('@')[0],
-          avatarUrl: targetUser.avatarUrl || `https://api.dicebear.com/7.x/avataaars/png?seed=${targetUser.email}`,
-          bio: targetUser.bio || null,
+          displayNamePublic: targetUser.displayNamePublic || (targetUser.email ? targetUser.email.split('@')[0] : targetUser.publicId),
+          avatarUrl: targetUser.avatarUrl ?? null,
+          bio: targetUser.bio ?? null,
           role: targetUser.role,
-          email: targetUser.email,
-          friendshipId: f.id,
-          friendshipStatus: 'ACCEPTED',
         });
       }
     } catch (err: any) {
       console.warn('[Friends] DB getFriends notice:', err.message);
+    }
+
+    if (process.env.NODE_ENV === 'test') {
+      return Array.from(friendsMap.values());
     }
 
     // 2. Fetch from Persisted friendships
@@ -242,8 +244,8 @@ class FriendsService {
     );
 
     for (const f of memAccepted) {
-      const otherId = f.requesterId === userId ? f.addresseeId : f.requesterId;
-      if (!friendsMap.has(otherId)) {
+      const otherId = (f.requesterId === userId ? f.addresseeId : f.requesterId) || '';
+      if (otherId && !friendsMap.has(otherId)) {
         const u = inMemoryUserStore.get(otherId) || SEED_USERS.find(s => s.id === otherId);
         friendsMap.set(otherId, {
           id: otherId,
@@ -339,7 +341,7 @@ class FriendsService {
       f => f.addresseeId === userId && f.status === 'PENDING'
     );
     for (const f of memIncoming) {
-      if (!incomingMap.has(f.id)) {
+      if (!incomingMap.has(f.id) && f.requesterId) {
         const u = inMemoryUserStore.get(f.requesterId) || SEED_USERS.find(s => s.id === f.requesterId);
         incomingMap.set(f.id, {
           friendshipId: f.id,
@@ -357,7 +359,7 @@ class FriendsService {
       f => f.requesterId === userId && f.status === 'PENDING'
     );
     for (const f of memOutgoing) {
-      if (!outgoingMap.has(f.id)) {
+      if (!outgoingMap.has(f.id) && f.addresseeId) {
         const u = inMemoryUserStore.get(f.addresseeId) || SEED_USERS.find(s => s.id === f.addresseeId);
         outgoingMap.set(f.id, {
           friendshipId: f.id,

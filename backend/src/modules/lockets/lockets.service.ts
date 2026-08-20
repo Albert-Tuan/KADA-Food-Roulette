@@ -113,27 +113,24 @@ export async function serializeLocket(
 
 async function acceptedFriendIds(userId: string): Promise<Set<string>> {
   if (!userId) return new Set<string>();
-  const idSet = new Set<string>();
-  try {
-    const friendships = await prisma.friendship.findMany({
-      where: {
-        status: 'ACCEPTED',
-        OR: [{ requesterId: userId }, { addresseeId: userId }],
-      },
-      select: { requesterId: true, addresseeId: true },
-    });
+  const friendships = await prisma.friendship.findMany({
+    where: {
+      status: 'ACCEPTED',
+      OR: [{ requesterId: userId }, { addresseeId: userId }],
+    },
+    select: { requesterId: true, addresseeId: true },
+  });
 
-    for (const friendship of friendships) {
-      idSet.add(friendship.requesterId === userId ? friendship.addresseeId : friendship.requesterId);
-    }
-  } catch {
-    // fallback
-  }
+  const idSet = new Set(friendships.map((friendship) => (
+    friendship.requesterId === userId ? friendship.addresseeId : friendship.requesterId
+  )));
 
   try {
     const friends = await friendsService.getFriends(userId);
-    for (const f of friends) {
-      idSet.add(f.id);
+    if (friends && Array.isArray(friends)) {
+      for (const f of friends) {
+        idSet.add(f.id);
+      }
     }
   } catch {}
 

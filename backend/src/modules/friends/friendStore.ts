@@ -3,10 +3,10 @@ import path from 'path';
 
 export interface PersistedFriendship {
   id: string;
-  requesterId: string;
-  addresseeId: string;
+  requesterId?: string;
+  addresseeId?: string;
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
-  createdAt: string;
+  createdAt?: string;
 }
 
 const DATA_DIR = path.resolve(process.cwd(), '.app_data');

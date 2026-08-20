@@ -111,7 +111,7 @@ export function validateImageFile(file?: Express.Multer.File): asserts file is E
     && pngSignature.every((byte, index) => file.buffer[index] === byte);
 
   if ((file.mimetype === 'image/jpeg' && !isJpeg) || (file.mimetype === 'image/png' && !isPng)) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV === 'development') {
       // In dev mode / web canvas uploads, ensure valid buffer
       file.mimetype = 'image/jpeg';
     } else {
@@ -127,7 +127,7 @@ export function parseCreateLocket(
 ): CreateLocketData {
   let deviceHash = headers.deviceHash?.trim();
   if (!deviceHash || !/^[a-f0-9]{64}$/.test(deviceHash)) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV === 'development') {
       deviceHash = 'a'.repeat(64);
     } else {
       throw new LocketApiError('LOCKET_DEVICE_INVALID', 'Định danh cài đặt không hợp lệ.', 403);
@@ -155,8 +155,8 @@ export function parseCreateLocket(
     rating: parseRating(body.rating, false),
     tags: body.tags === undefined ? undefined : parseTags(body.tags),
     visibility: parseVisibility(body.visibility, LocketVisibility.FRIENDS)!,
-    latitude: parseCoordinate(body.latitude, -90, 90, 'Latitude', 10.7769),
-    longitude: parseCoordinate(body.longitude, -180, 180, 'Longitude', 106.7009),
+    latitude: parseCoordinate(body.latitude, -90, 90, 'Latitude', process.env.NODE_ENV === 'development' ? 10.7769 : undefined),
+    longitude: parseCoordinate(body.longitude, -180, 180, 'Longitude', process.env.NODE_ENV === 'development' ? 106.7009 : undefined),
     capturedAt,
     deviceHash,
   };

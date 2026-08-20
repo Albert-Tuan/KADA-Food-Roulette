@@ -51,6 +51,7 @@ function isDevelopmentOrigin(origin: string): boolean {
 
 export function createCorsOptions(environment: NodeJS.ProcessEnv = process.env): CorsOptions {
   const allowedOrigins = configuredOrigins(environment)
+  const isProd = environment.NODE_ENV === 'production'
 
   return {
     origin: (origin, callback) => {
@@ -62,17 +63,25 @@ export function createCorsOptions(environment: NodeJS.ProcessEnv = process.env):
       if (
         allowedOrigins.has('*')
         || allowedOrigins.has(origin)
-        || isDevelopmentOrigin(origin)
-        || origin.includes('localhost')
-        || origin.includes('127.0.0.1')
-        || origin.endsWith('.vercel.app')
-        || origin.endsWith('.onrender.com')
       ) {
         callback(null, true)
         return
       }
-      // Relaxed fallback for client applications
-      callback(null, true)
+      if (!isProd) {
+        if (
+          isDevelopmentOrigin(origin)
+          || origin.includes('localhost')
+          || origin.includes('127.0.0.1')
+          || origin.endsWith('.vercel.app')
+          || origin.endsWith('.onrender.com')
+        ) {
+          callback(null, true)
+          return
+        }
+        callback(null, true)
+        return
+      }
+      callback(new Error('Origin is not allowed by CORS policy'))
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],

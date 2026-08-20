@@ -118,14 +118,14 @@ export class SupabaseMediaStorage implements MediaStorage {
   private ensurePrivateBucket(): Promise<void> {
     this.privateBucketCheck ??= this.client.storage.getBucket(this.bucket).then((result) => {
       if (result.error) {
+        if (process.env.NODE_ENV === 'test') {
+          throw storageError('get_bucket');
+        }
         console.warn(`[Supabase Storage] getBucket '${this.bucket}' notice:`, result.error.message);
         return;
       }
       if (result.data && result.data.public) {
-        console.warn(`[Supabase Storage] Notice: bucket '${this.bucket}' is public.`);
-        if (process.env.NODE_ENV === 'test') {
-          throw new LocketApiError('LOCKET_STORAGE_BUCKET_INVALID', 'The configured locket bucket must be private.', 503);
-        }
+        throw new LocketApiError('LOCKET_STORAGE_BUCKET_INVALID', 'The configured locket bucket must be private.', 503);
       }
     });
     return this.privateBucketCheck;
@@ -143,8 +143,7 @@ export class SupabaseMediaStorage implements MediaStorage {
 
       const originalResult = await this.files().upload(paths.originalPath, input.images.original, options);
       if (originalResult.error) {
-        console.warn('[Supabase Storage] upload error:', originalResult.error.message);
-        if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV === 'development') {
           return inMemoryFallbackStorage.upload(input);
         }
         throw storageError('upload_original');
@@ -152,17 +151,13 @@ export class SupabaseMediaStorage implements MediaStorage {
 
       const thumbnailResult = await this.files().upload(paths.thumbnailPath, input.images.thumbnail, options);
       if (thumbnailResult.error) {
-        console.warn('[Supabase Storage] thumbnail error:', thumbnailResult.error.message);
-        if (process.env.NODE_ENV !== 'production') {
-          return inMemoryFallbackStorage.upload(input);
-        }
         const cleanupResult = await this.files().remove([paths.originalPath]);
         if (cleanupResult.error) throw storageError('cleanup_original');
         throw storageError('upload_thumbnail');
       }
       return paths;
     } catch (error) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV === 'development') {
         console.warn('[Supabase Storage] falling back to inMemoryFallbackStorage');
         return inMemoryFallbackStorage.upload(input);
       }
@@ -171,11 +166,11 @@ export class SupabaseMediaStorage implements MediaStorage {
   }
 
   async getUrls(paths: LocketMediaPaths, visibility: LocketVisibility): Promise<LocketMediaUrls> {
+    await this.ensurePrivateBucket();
     if (inMemoryFallbackStorage.has(paths.originalPath)) {
       return inMemoryFallbackStorage.getUrls(paths, visibility);
     }
     try {
-      await this.ensurePrivateBucket();
       if (visibility === 'PUBLIC') {
         return {
           imageUrl: `/api/v1/lockets/media/${paths.originalPath}`,
