@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  type GestureResponderEvent,
   Image,
   Text,
   TouchableOpacity,
@@ -9,7 +11,14 @@ import {
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocketFeed, type Locket, type LocketFeedFilter } from '@/features/lockets';
+import {
+  filterTasteBoardsByCategory,
+  useLocketFeed,
+  useSetLocketLiked,
+  type Locket,
+  type LocketFeedFilter,
+  type TasteBoardCategory,
+} from '@/features/lockets';
 import { formatRelativeTime } from '@/lib';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -20,9 +29,10 @@ const FILTERS: { value: LocketFeedFilter; label: string; icon: keyof typeof Ioni
   { value: 'DISCOVER', label: 'Khám phá', icon: 'compass-outline' },
 ];
 
-const TRENDING_CATEGORIES = [
+const TRENDING_CATEGORIES: { id: TasteBoardCategory; label: string }[] = [
   { id: 'all', label: '🔥 Phổ biến' },
-  { id: 'pho', label: '🍜 Phở & Bún' },
+  { id: 'pho', label: '🍜 Phở' },
+  { id: 'bun', label: '🥣 Bún' },
   { id: 'banhmi', label: '🥖 Bánh Mì' },
   { id: 'cuon', label: '🥗 Món Cuốn' },
   { id: 'drink', label: '🧋 Trà Sữa & Cafe' },
@@ -32,14 +42,15 @@ const TRENDING_CATEGORIES = [
 export default function LocketsScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState<LocketFeedFilter>('ALL');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState<TasteBoardCategory>('all');
   const feed = useLocketFeed(filter);
+  const filteredLockets = filterTasteBoardsByCategory(feed.data ?? [], selectedCategory);
 
   return (
     <SafeAreaView testID="locket-feed-screen" className="flex-1 bg-surface" edges={['top']}>
       <FlatList
         testID="locket-feed-list"
-        data={feed.data ?? []}
+        data={filteredLockets}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <LocketCard locket={item} />}
         contentContainerStyle={{ paddingBottom: 90, flexGrow: 1 }}
@@ -145,9 +156,13 @@ export default function LocketsScreen() {
             </View>
           ) : (
             <View className="flex-1 items-center justify-center px-8 py-20">
-              <Text className="text-2xl font-black text-primary">Chưa có Taste Board</Text>
+              <Text className="text-2xl font-black text-primary">
+                {selectedCategory === 'all' ? 'Chưa có Taste Board' : 'Không có món phù hợp'}
+              </Text>
               <Text className="text-center mt-2 font-medium text-on-surface-variant">
-                Bấm nút camera bên dưới để là người đầu tiên chia sẻ món ngon!
+                {selectedCategory === 'all'
+                  ? 'Bấm nút camera bên dưới để là người đầu tiên chia sẻ món ngon!'
+                  : 'Thử chọn nhóm món khác nhé.'}
               </Text>
             </View>
           )
@@ -170,17 +185,19 @@ export default function LocketsScreen() {
 }
 
 function LocketCard({ locket }: { locket: Locket }) {
-  const router = useRouter();
-  const [likes, setLikes] = useState(12);
-  const [isLiked, setIsLiked] = useState(false);
+  const likeMutation = useSetLocketLiked();
 
-  const toggleLike = () => {
-    setIsLiked(!isLiked);
-    setLikes(prev => isLiked ? prev - 1 : prev + 1);
-  };
-
-  const handleWantToEat = () => {
-    router.push('/(tabs)/spin');
+  const toggleLike = (event: GestureResponderEvent) => {
+    event.stopPropagation();
+    likeMutation.mutate(
+      { id: locket.id, liked: !locket.isLiked },
+      {
+        onError: (error) => Alert.alert(
+          'Chưa thể cập nhật lượt thích',
+          error instanceof Error ? error.message : 'Bạn thử lại nhé.',
+        ),
+      },
+    );
   };
 
   return (
@@ -276,30 +293,22 @@ function LocketCard({ locket }: { locket: Locket }) {
           ) : null}
 
           {/* Social Reactions & Action Row */}
-          <View className="flex-row items-center justify-between mt-3.5 pt-3 border-t border-orange-100">
+          <View className="flex-row items-center mt-3.5 pt-3 border-t border-orange-100">
             {/* Like Button */}
             <TouchableOpacity 
               onPress={toggleLike}
+              disabled={likeMutation.isPending}
               className="flex-row items-center gap-1.5 py-1 px-2.5 rounded-full active:bg-orange-50"
+              style={{ opacity: likeMutation.isPending ? 0.6 : 1 }}
             >
               <Ionicons 
-                name={isLiked ? "heart" : "heart-outline"} 
+                name={locket.isLiked ? "heart" : "heart-outline"}
                 size={20} 
-                color={isLiked ? "#b52330" : "#5a403f"} 
+                color={locket.isLiked ? "#b52330" : "#5a403f"}
               />
-              <Text className={`text-xs font-bold ${isLiked ? 'text-primary' : 'text-on-surface-variant'}`}>
-                {likes}
+              <Text className={`text-xs font-bold ${locket.isLiked ? 'text-primary' : 'text-on-surface-variant'}`}>
+                {locket.likeCount}
               </Text>
-            </TouchableOpacity>
-
-            {/* Spin CTA Button */}
-            <TouchableOpacity
-              onPress={handleWantToEat}
-              style={{ backgroundColor: '#b52330', borderBottomColor: '#61000e' }}
-              className="rounded-full px-4 py-2 border-b-2 shadow-sm flex-row items-center justify-center gap-1.5 active:translate-y-0.5"
-            >
-              <Ionicons name="sparkles" size={14} color="#ffffff" />
-              <Text className="text-white font-black text-xs">Muốn ăn thử</Text>
             </TouchableOpacity>
           </View>
         </View>

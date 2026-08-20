@@ -99,12 +99,6 @@ export function LocketCard({ data, onLike, onComment, onShare }: LocketCardProps
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={styles.spinButton}
-            onPress={() => data.restaurantId && router.push(`/restaurant/${data.restaurantId}`)}
-          >
-            <Text style={styles.spinButtonText}>🎲 Muốn ăn thử!</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </Card>
@@ -240,7 +234,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 6,
     paddingTop: 12,
@@ -263,23 +256,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#5a403f',
-  },
-  spinButton: {
-    backgroundColor: '#b52330',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 14,
-    borderBottomWidth: 2,
-    borderBottomColor: '#61000e',
-    shadowColor: '#b52330',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  spinButtonText: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '800',
   },
 });

@@ -31,6 +31,7 @@ model User {
   friendshipsReceived   Friendship[]      @relation("FriendshipAddressee")
   friendshipsRequested  Friendship[]      @relation("FriendshipRequester")
   groupMemberships      GroupMember[]
+  locketLikes           LocketLike[]
   lockets               Locket[]
   menusCaptured         Menu[]            @relation("MenuCapturer")
   notifications         Notification[]
@@ -293,6 +294,7 @@ model Locket {
   updatedAt      DateTime         @updatedAt @map("updated_at")
   deletedAt      DateTime?        @map("deleted_at")
   checkIns       CheckIn[]
+  likes          LocketLike[]
   restaurant     Restaurant?      @relation(fields: [restaurantId], references: [id])
   user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -301,6 +303,18 @@ model Locket {
   @@index([restaurantId])
   @@index([deletedAt])
   @@map("lockets")
+}
+
+model LocketLike {
+  locketId  String   @map("locket_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  locket    Locket   @relation(fields: [locketId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([locketId, userId])
+  @@index([userId, createdAt])
+  @@map("locket_likes")
 }
 
 model CheckIn {

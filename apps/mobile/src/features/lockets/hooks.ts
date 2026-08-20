@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { locketRepository } from './repositories';
-import type { CreateLocketInput, LocketFeedFilter } from './types';
+import type { CreateLocketInput, Locket, LocketFeedFilter } from './types';
 
 export function useLocketFeed(filter: LocketFeedFilter) {
   return useQuery({
@@ -26,6 +26,24 @@ export function useCreateLocket() {
       queryClient.setQueryData(['lockets', 'detail', created.id], created);
       queryClient.invalidateQueries({ queryKey: ['lockets', 'feed'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+  });
+}
+
+export function useSetLocketLiked() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, liked }: { id: string; liked: boolean }) => locketRepository.setLiked(id, liked),
+    onSuccess: (reaction, { id }) => {
+      const applyReaction = (locket: Locket): Locket => locket.id === id
+        ? { ...locket, likeCount: reaction.likeCount, isLiked: reaction.isLiked }
+        : locket;
+      queryClient.setQueriesData<Locket[]>({ queryKey: ['lockets', 'feed'] }, (current: Locket[] | undefined) => (
+        current?.map(applyReaction)
+      ));
+      queryClient.setQueryData<Locket>(['lockets', 'detail', id], (current: Locket | undefined) => (
+        current ? applyReaction(current) : current
+      ));
     },
   });
 }

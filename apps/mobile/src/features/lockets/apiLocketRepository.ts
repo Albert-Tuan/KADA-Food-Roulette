@@ -1,7 +1,7 @@
 import { getApiErrorMessage, locketApi } from '@/api';
 import { mapLocketDto } from './locketMapper';
 import type { LocketRepository } from './repository';
-import type { CreateLocketInput, Locket, LocketFeedFilter, UpdateLocketInput } from './types';
+import type { CreateLocketInput, Locket, LocketFeedFilter, LocketLikeState, UpdateLocketInput } from './types';
 
 function getTasteBoardErrorMessage(error: unknown, fallback: string): string {
   return getApiErrorMessage(error, fallback).replace(/\bLockets?\b/gi, 'Taste Board');
@@ -62,6 +62,15 @@ class ApiLocketRepository implements LocketRepository {
       }));
     } catch (error) {
       throw new Error(getTasteBoardErrorMessage(error, 'Không thể cập nhật Taste Board.'));
+    }
+  }
+
+  async setLiked(id: string, liked: boolean): Promise<LocketLikeState> {
+    try {
+      const result = liked ? await locketApi.like(id) : await locketApi.unlike(id);
+      return { likeCount: result.like_count, isLiked: result.is_liked };
+    } catch (error) {
+      throw new Error(getTasteBoardErrorMessage(error, 'Không thể cập nhật lượt thích.'));
     }
   }
 

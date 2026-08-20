@@ -17,6 +17,8 @@ export interface LocketDto {
   note?: string | null;
   rating?: number | null;
   tags?: string[];
+  like_count: number;
+  is_liked: boolean;
   visibility: 'PRIVATE' | 'FRIENDS' | 'PUBLIC';
   captured_at: string;
   location?: { latitude: number; longitude: number } | null;
@@ -30,6 +32,11 @@ export interface LocketDto {
 interface ApiResponse<T> {
   success: true;
   data: T;
+}
+
+export interface LocketLikeDto {
+  is_liked: boolean;
+  like_count: number;
 }
 
 export interface UploadLocketRequest {
@@ -128,6 +135,16 @@ export const locketApi = {
 
   update: async (id: string, input: UpdateLocketRequest): Promise<LocketDto> => {
     const response = await apiClient.patch<ApiResponse<LocketDto>>(`/lockets/${id}`, input);
+    return response.data.data;
+  },
+
+  like: async (id: string): Promise<LocketLikeDto> => {
+    const response = await apiClient.post<ApiResponse<LocketLikeDto>>(`/lockets/${id}/like`);
+    return response.data.data;
+  },
+
+  unlike: async (id: string): Promise<LocketLikeDto> => {
+    const response = await apiClient.delete<ApiResponse<LocketLikeDto>>(`/lockets/${id}/like`);
     return response.data.data;
   },
 

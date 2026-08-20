@@ -2,7 +2,7 @@ import { LocketVisibility } from '@prisma/client';
 import { LocketApiError } from './lockets.errors.js';
 
 export const MAX_LOCKET_FILE_SIZE = 10 * 1024 * 1024;
-export const LOCKET_TIMESTAMP_TOLERANCE_MS = 5 * 60_000; // 5 phút (300_000 ms)
+export const LOCKET_TIMESTAMP_TOLERANCE_MS = 60_000;
 export const ALLOWED_LOCKET_MIME_TYPES = new Set(['image/jpeg', 'image/png']);
 
 export interface CreateLocketData {
