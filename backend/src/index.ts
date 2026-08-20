@@ -43,9 +43,18 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 // Logging
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 
-// Health check
+// Root & Health checks for Render Load Balancer
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    message: 'Food Roulette API is Live',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+  })
+})
+
 app.get('/health', (req: Request, res: Response) => {
-  res.json({
+  res.status(200).json({
     success: true,
     message: 'Food Roulette API is running',
     timestamp: new Date().toISOString(),
