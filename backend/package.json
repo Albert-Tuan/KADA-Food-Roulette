@@ -48,7 +48,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.2.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.2.0",
     "@vitest/coverage-v8": "4.1.10",
     "eslint": "^10.6.0",
     "prisma": "^5.22.0",
