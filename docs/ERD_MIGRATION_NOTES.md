@@ -1,8 +1,8 @@
 # ERD Migration Notes
 
 > SQL migration scripts and database trigger definitions
-> **Current Version:** v5.2 (Locket media pipeline)
-> **Date:** 2026-08-09
+> **Current Version:** v5.3 (Locket likes)
+> **Date:** 2026-08-20
 
 ---
 
@@ -11,7 +11,19 @@
 - `20260808_baseline`: canonical baseline trước các field Locket/Profile mới.
 - `20260809_add_locket_media_pipeline`: media paths và normalized image metadata.
 - `20260809_add_locket_profile_fields`: structured profile và Locket metadata.
+- `20260820_add_locket_likes`: reaction Like theo từng user cho Locket.
 - SQL bootstrap/validation thủ công nằm tại `backend/prisma/sql/v5.0/`, ngoài Prisma migration history.
+
+---
+
+## v5.3 — Locket likes
+
+Migration: `backend/prisma/migrations/20260820_add_locket_likes/migration.sql`
+
+- Thêm bảng `locket_likes` với khóa chính kép `[locket_id, user_id]` để một user không thể Like trùng.
+- Foreign key tới `lockets` và `users` đều `ON DELETE CASCADE`.
+- Feed/detail tính `like_count` từ dữ liệu thật và trả `is_liked` theo JWT hiện tại.
+- Locket mới không có reaction nên bắt đầu với `like_count = 0`.
 
 ---
 

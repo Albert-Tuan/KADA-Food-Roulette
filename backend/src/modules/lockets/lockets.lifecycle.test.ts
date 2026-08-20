@@ -8,7 +8,7 @@ import type { CreateLocketData } from './lockets.validation.js';
 const prismaMock = vi.hoisted(() => ({
   user: { findFirst: vi.fn() },
   restaurant: { findFirst: vi.fn() },
-  locket: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
+  locket: { create: vi.fn(), findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn() },
   friendship: { findMany: vi.fn() },
 }));
 
@@ -46,6 +46,29 @@ beforeEach(() => {
 });
 
 describe('Locket media lifecycle', () => {
+  it('surfaces friendship lookup failures instead of widening feed access', async () => {
+    const service = new LocketsService(createStorage(), async () => images);
+    prismaMock.friendship.findMany.mockRejectedValue(new Error('friendship database unavailable'));
+
+    await expect(service.getFeed(userId, 'ALL')).rejects.toThrow('friendship database unavailable');
+    expect(prismaMock.locket.findMany).not.toHaveBeenCalled();
+  });
+
+  it('surfaces feed query failures instead of returning demo records', async () => {
+    const service = new LocketsService(createStorage(), async () => images);
+    prismaMock.friendship.findMany.mockResolvedValue([]);
+    prismaMock.locket.findMany.mockRejectedValue(new Error('locket database unavailable'));
+
+    await expect(service.getFeed(userId, 'ALL')).rejects.toThrow('locket database unavailable');
+  });
+
+  it('surfaces detail query failures instead of returning a demo record', async () => {
+    const service = new LocketsService(createStorage(), async () => images);
+    prismaMock.locket.findFirst.mockRejectedValue(new Error('locket database unavailable'));
+
+    await expect(service.getById('locket-demo-1', userId)).rejects.toThrow('locket database unavailable');
+  });
+
   it('removes uploaded objects when Prisma persistence fails', async () => {
     const storage = createStorage();
     const service = new LocketsService(storage, async () => images);

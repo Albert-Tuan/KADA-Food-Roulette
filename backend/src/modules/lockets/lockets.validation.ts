@@ -2,7 +2,7 @@ import { LocketVisibility } from '@prisma/client';
 import { LocketApiError } from './lockets.errors.js';
 
 export const MAX_LOCKET_FILE_SIZE = 10 * 1024 * 1024;
-export const LOCKET_TIMESTAMP_TOLERANCE_MS = 5 * 60_000; // 5 phút (300_000 ms)
+export const LOCKET_TIMESTAMP_TOLERANCE_MS = 60_000;
 export const ALLOWED_LOCKET_MIME_TYPES = new Set(['image/jpeg', 'image/png']);
 
 export interface CreateLocketData {
@@ -116,18 +116,16 @@ export function parseCreateLocket(
   headers: { deviceHash?: string; capturedAt?: string },
   now = new Date(),
 ): CreateLocketData {
-  let deviceHash = headers.deviceHash?.trim();
+  const deviceHash = headers.deviceHash?.trim();
   if (!deviceHash || !/^[a-f0-9]{64}$/.test(deviceHash)) {
-    if (process.env.NODE_ENV !== 'production') {
-      deviceHash = 'a'.repeat(64);
-    } else {
-      throw new LocketApiError('LOCKET_DEVICE_INVALID', 'Định danh cài đặt không hợp lệ.', 403);
-    }
+    throw new LocketApiError('LOCKET_DEVICE_INVALID', 'Định danh cài đặt không hợp lệ.', 403);
   }
 
   const capturedAt = new Date(headers.capturedAt ?? '');
-  const tolerance = process.env.NODE_ENV === 'development' ? 10 * 60_000 : LOCKET_TIMESTAMP_TOLERANCE_MS;
-  if (!Number.isFinite(capturedAt.getTime()) || Math.abs(now.getTime() - capturedAt.getTime()) > tolerance) {
+  if (
+    !Number.isFinite(capturedAt.getTime())
+    || Math.abs(now.getTime() - capturedAt.getTime()) > LOCKET_TIMESTAMP_TOLERANCE_MS
+  ) {
     throw new LocketApiError('LOCKET_CAPTURE_EXPIRED', 'Thời điểm chụp không hợp lệ hoặc đã quá thời gian cho phép.');
   }
 
@@ -139,12 +137,8 @@ export function parseCreateLocket(
     rating: parseRating(body.rating, false),
     tags: body.tags === undefined ? undefined : parseTags(body.tags),
     visibility: parseVisibility(body.visibility, LocketVisibility.FRIENDS)!,
-    latitude: body.latitude != null && !Number.isNaN(Number(body.latitude)) 
-      ? parseCoordinate(body.latitude, -90, 90, 'Latitude') 
-      : 10.7769,
-    longitude: body.longitude != null && !Number.isNaN(Number(body.longitude)) 
-      ? parseCoordinate(body.longitude, -180, 180, 'Longitude') 
-      : 106.7009,
+    latitude: parseCoordinate(body.latitude, -90, 90, 'Latitude'),
+    longitude: parseCoordinate(body.longitude, -180, 180, 'Longitude'),
     capturedAt,
     deviceHash,
   };

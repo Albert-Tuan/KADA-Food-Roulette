@@ -5,7 +5,7 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <!-- Title -->
-        <mxCell id="title" value="Food Roulette - ERD v5.0 REVIEWED &amp; OPTIMIZED&#xa;15 Tables | BCNF/4NF | Critical Issues Fixed" style="text;align=center;fontStyle=bold;fontColor=#1A237E;fontSize=24;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+        <mxCell id="title" value="Food Roulette - ERD v5.3 REVIEWED &amp; OPTIMIZED&#xa;16 Tables | BCNF/4NF | Critical Issues Fixed" style="text;align=center;fontStyle=bold;fontColor=#1A237E;fontSize=24;strokeColor=none;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="1700" y="20" width="700" height="80" as="geometry" />
         </mxCell>
         
@@ -399,6 +399,23 @@
         <mxCell id="lkt_indexes" value="📇 INDEX: [userId, capturedAt]&#xa;📇 INDEX: [visibility, capturedAt]&#xa;📇 INDEX: [restaurantId], [deletedAt]" style="shape=text;align=left;spacingLeft=10;fontColor=#1976D2;fontSize=9;strokeColor=none;fillColor=#E3F2FD;fontStyle=2;" parent="locket_entity" vertex="1">
           <mxGeometry y="495" width="300" height="55" as="geometry" />
         </mxCell>
+
+        <!-- ========== LOCKET LIKE TABLE ========== -->
+        <mxCell id="locketlike_entity" value="LocketLike&#xa;(P1 - Heart Reaction)" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;fillColor=#AD1457;fontColor=#FFFFFF;strokeColor=#880E4F;" parent="1" vertex="1">
+          <mxGeometry x="400" y="1220" width="280" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_locket" value="locketId: UUID (PK, FK → Locket)" style="shape=text;align=left;spacingLeft=10;fontColor=#333;strokeColor=none;fillColor=none;" parent="locketlike_entity" vertex="1">
+          <mxGeometry y="30" width="280" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_user" value="userId: UUID (PK, FK → User)" style="shape=text;align=left;spacingLeft=10;fontColor=#333;strokeColor=none;fillColor=none;" parent="locketlike_entity" vertex="1">
+          <mxGeometry y="60" width="280" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_created" value="createdAt: DATETIME DEFAULT NOW()" style="shape=text;align=left;spacingLeft=10;fontColor=#333;strokeColor=none;fillColor=none;" parent="locketlike_entity" vertex="1">
+          <mxGeometry y="90" width="280" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ll_indexes" value="📇 PRIMARY KEY: [locketId, userId]&#xa;📇 INDEX: [userId, createdAt]" style="shape=text;align=left;spacingLeft=10;fontColor=#1976D2;fontSize=9;strokeColor=none;fillColor=#E3F2FD;fontStyle=2;" parent="locketlike_entity" vertex="1">
+          <mxGeometry y="120" width="280" height="50" as="geometry" />
+        </mxCell>
         
         <!-- ========== CHECK IN TABLE ========== -->
         <mxCell id="checkin_entity" value="CheckIn&#xa;(P1 - Location Verification)" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;fillColor=#00838F;fontColor=#FFFFFF;strokeColor=#006064;" parent="1" vertex="1">
@@ -487,6 +504,16 @@
         
         <!-- User → Locket -->
         <mxCell id="rel_user_locket" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0277BD;strokeWidth=2;endArrow=classic;endFill=1;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="user_entity" target="locket_entity" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- User → LocketLike -->
+        <mxCell id="rel_user_locketlike" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#AD1457;strokeWidth=2;endArrow=classic;endFill=1;" parent="1" source="user_entity" target="locketlike_entity" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Locket → LocketLike -->
+        <mxCell id="rel_locket_locketlike" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#AD1457;strokeWidth=2;endArrow=classic;endFill=1;" parent="1" source="locket_entity" target="locketlike_entity" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         
@@ -596,13 +623,13 @@
         <mxCell id="cnt_p0" value="P0 CORE: 13 tables (+1 SpinSessionCandidate)" style="text;align=left;fontColor=#2E7D32;fontSize=11;strokeColor=none;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="1630" y="685" width="380" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="cnt_p1" value="P1 IMPORTANT: 2 tables (Locket, CheckIn)" style="text;align=left;fontColor=#2E7D32;fontSize=11;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+        <mxCell id="cnt_p1" value="P1 IMPORTANT: 3 tables (Locket, LocketLike, CheckIn)" style="text;align=left;fontColor=#2E7D32;fontSize=11;strokeColor=none;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="1630" y="710" width="380" height="20" as="geometry" />
         </mxCell>
         <mxCell id="cnt_p2" value="P2 DEFERRED: TasteBoard, Menu, AI, B2B..." style="text;align=left;fontColor=#9E9E9E;fontSize=11;strokeColor=none;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="1630" y="735" width="380" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="cnt_total" value="TOTAL v5.0: 15 tables (BCNF/4NF compliant)" style="text;align=left;fontStyle=bold;fontColor=#1565C0;fontSize=11;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+        <mxCell id="cnt_total" value="TOTAL v5.3: 16 tables (BCNF/4NF compliant)" style="text;align=left;fontStyle=bold;fontColor=#1565C0;fontSize=11;strokeColor=none;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="1630" y="760" width="380" height="20" as="geometry" />
         </mxCell>
         
@@ -645,8 +672,11 @@
         <mxCell id="ver_50" value="v5.0: 15 entities - REVIEWED &amp; OPTIMIZED ✓" style="text;align=left;fontStyle=bold;fontColor=#2E7D32;fontSize=10;strokeColor=none;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="1630" y="1053" width="380" height="18" as="geometry" />
         </mxCell>
-        <mxCell id="ver_note" value="Changes: +1 table, +8 indexes, +10 fields&#xa;See: docs/DB_SCHEMA_REVIEW_v5.0.md" style="text;align=left;fontColor=#666;fontSize=9;strokeColor=none;fillColor=none;fontStyle=2;" parent="1" vertex="1">
-          <mxGeometry x="1630" y="1078" width="380" height="35" as="geometry" />
+        <mxCell id="ver_53" value="v5.3: + LocketLike persisted reactions" style="text;align=left;fontStyle=bold;fontColor=#2E7D32;fontSize=10;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1630" y="1074" width="380" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="ver_note" value="Changes: +2 tables since v4.1&#xa;See: docs/ERD_MIGRATION_NOTES.md" style="text;align=left;fontColor=#666;fontSize=9;strokeColor=none;fillColor=none;fontStyle=2;" parent="1" vertex="1">
+          <mxGeometry x="1630" y="1095" width="380" height="35" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

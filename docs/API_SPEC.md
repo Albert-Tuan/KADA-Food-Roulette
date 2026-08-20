@@ -1650,7 +1650,7 @@ X-Captured-At: <ISO8601_timestamp>
 - `LOCKET_STORAGE_CLEANUP_FAILED`: Không thể dọn object sau khi Prisma persistence thất bại
 - `LOCKET_IMAGE_PROCESSING_FAILED`: Sharp không thể giải mã hoặc chuẩn hóa ảnh
 
-**Legacy compatibility:** API vẫn nhận và lưu `dish_name`, `restaurant_name`, `rating`, `tags` từ client cũ. Client mới không gửi hoặc hiển thị các field này; `restaurant_id` vẫn có thể được truyền ngầm từ Spin check-in.
+**Taste Board metadata:** API nhận và lưu `dish_name`, `restaurant_name`, `rating`, `tags`. Mobile hiển thị metadata khi có và dùng `dish_name`, `restaurant_name`, `note`, `tags` để lọc nhóm món; `restaurant_id` có thể được truyền ngầm từ Spin check-in.
 
 **Media pipeline:**
 
@@ -1719,6 +1719,8 @@ GET /lockets
       },
       "restaurant_id": null,
       "note": "Bữa ăn ngon quá!",
+      "like_count": 0,
+      "is_liked": false,
       "visibility": "FRIENDS",
       "exif_stripped": true,
       "permissions": { "can_edit": true, "can_delete": true },
@@ -1782,6 +1784,8 @@ GET /lockets/:locket_id
     "author": { ... },
     "image_url": "...",
     "note": "...",
+    "like_count": 0,
+    "is_liked": false,
     "visibility": "FRIENDS",
     "permissions": { "can_edit": false, "can_delete": false },
     "created_at": "2026-08-07T12:00:00Z"

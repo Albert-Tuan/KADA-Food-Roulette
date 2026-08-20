@@ -33,7 +33,9 @@ router.get(
 );
 router.get('/me', requireJWT, locketsController.getMine);
 router.get('/', optionalJWT, locketsController.getFeed);
-router.post('/', optionalJWT, uploadLocketImage, locketsController.create);
+router.post('/', requireJWT, uploadLocketImage, locketsController.create);
+router.post('/:id/like', requireJWT, locketsController.like);
+router.delete('/:id/like', requireJWT, locketsController.unlike);
 router.get('/:id', optionalJWT, locketsController.getById);
 router.patch('/:id', requireJWT, locketsController.update);
 router.delete('/:id', requireJWT, locketsController.delete);
