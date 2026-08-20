@@ -13,7 +13,6 @@ import {
   View,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import * as ImageManipulator from 'expo-image-manipulator';
 import * as Location from 'expo-location';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -112,11 +111,7 @@ async function getFreshLocation(): Promise<Location.LocationObject> {
   });
 }
 
-function getLocationStatusLabel(isLocating: boolean, location: Location.LocationObject | null): string {
-  if (isLocating) return 'Đang lấy vị trí...';
-  if (!location) return 'Chưa có vị trí';
-  return `GPS ${location.coords.latitude.toFixed(5)}, ${location.coords.longitude.toFixed(5)}`;
-}
+
 
 export default function CaptureLocketScreen() {
   const routeParams = useLocalSearchParams<CaptureRouteParams>();
@@ -150,6 +145,7 @@ export default function CaptureLocketScreen() {
       setLocationPermission(result.status);
       if (result.status !== 'granted') {
         setLocation(null);
+        setPermissionError('Ứng dụng cần quyền vị trí để xác minh GPS cho Taste Board.');
         return;
       }
       const currentLocation = await getFreshLocation();
@@ -172,33 +168,23 @@ export default function CaptureLocketScreen() {
     try {
       setIsCapturing(true);
       setIsLocating(true);
-      setLocation(null);
       setPermissionError('');
       const currentLocation = await getFreshLocation();
       setLocation(currentLocation);
 
       const capturedAt = new Date().toISOString();
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.85,
-        base64: true,
+        quality: 0.8,
         skipProcessing: false,
-        exif: false,
-      });
-      if (!photo?.uri) throw new Error('Không thể chụp ảnh.');
-
-      const sanitizedPhoto = await ImageManipulator.manipulateAsync(photo.uri, [], {
-        compress: 0.85,
-        format: ImageManipulator.SaveFormat.JPEG,
-        base64: true,
       });
 
-      const finalUri = sanitizedPhoto.base64
-        ? `data:image/jpeg;base64,${sanitizedPhoto.base64}`
-        : (photo.base64 ? `data:image/jpeg;base64,${photo.base64}` : sanitizedPhoto.uri);
+      if (!photo?.uri) {
+        throw new Error('Không nhận được ảnh từ camera.');
+      }
 
       const deviceHash = await getInstallationDeviceHash();
       setDraft({
-        uri: finalUri,
+        uri: photo.uri,
         capturedAt,
         deviceHash,
         latitude: currentLocation.coords.latitude,
@@ -206,7 +192,6 @@ export default function CaptureLocketScreen() {
       });
       setStep('caption_overlay');
     } catch (error) {
-      setLocation(null);
       setPermissionError(error instanceof Error ? error.message : 'Không thể chụp ảnh. Bạn thử lại nhé.');
     } finally {
       setIsLocating(false);
@@ -223,8 +208,7 @@ export default function CaptureLocketScreen() {
       return setFormError('Nhà hàng từ Spin chưa có mã hợp lệ để liên kết. Bạn thử lại từ dữ liệu nhà hàng thật nhé.'), false;
     }
     if (!Number.isFinite(draft.latitude) || !Number.isFinite(draft.longitude)) {
-      draft.latitude = 10.7769;
-      draft.longitude = 106.7009;
+      return setFormError('Cần vị trí GPS để xác minh Taste Board. Vui lòng bật định vị.'), false;
     }
     if (dishName.trim().length > 80) return setFormError('Tên món tối đa 80 ký tự.'), false;
     if (note.length > MAX_CAPTION_LENGTH) {
