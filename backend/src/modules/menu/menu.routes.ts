@@ -39,6 +39,7 @@ const upload = multer({
   },
 });
 
+router.post('/capture-base64', optionalAuth, menuController.captureBase64);
 router.post('/capture', optionalAuth, upload.any(), menuController.capture);
 router.post('/', optionalAuth, upload.any(), menuController.capture);
 router.post('/voice-pick', optionalAuth, upload.single('audioFile'), voiceController.processVoicePick);
