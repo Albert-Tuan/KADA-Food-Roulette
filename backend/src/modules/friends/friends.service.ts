@@ -1,11 +1,25 @@
 import prisma from '../../shared/utils/prisma';
-import { inMemoryUserStore, inMemoryUserStoreByEmail, SEED_USERS } from '../users/userStore';
+import { inMemoryUserStore, SEED_USERS } from '../users/userStore';
 import { notificationService } from '../notifications/notifications.service';
 import { inMemoryFriendships, saveFriendship, removePersistedFriendship, PersistedFriendship } from './friendStore';
 
+interface FriendRecord {
+  id: string;
+  publicId?: string;
+  displayNamePublic?: string | null;
+  avatarUrl?: string | null;
+  bio?: string | null;
+  role?: string;
+  email?: string;
+  friendshipId?: string;
+  friendshipStatus?: string;
+  isSender?: boolean;
+}
+
 class FriendsService {
   async sendRequest(requesterId: string, targetPublicIdOrId: string) {
-    let target: any = null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let target: any;
     try {
       target = await prisma.user.findFirst({
         where: {
@@ -42,8 +56,8 @@ class FriendsService {
       const existing = await prisma.friendship.findFirst({
         where: {
           OR: [
-            { requesterId, addresseeId: target.id },
-            { requesterId: target.id, addresseeId: requesterId }
+            { requesterId, addresseeId: target.id as string },
+            { requesterId: target.id as string, addresseeId: requesterId }
           ],
           status: {
             in: ['PENDING', 'ACCEPTED']
@@ -59,14 +73,14 @@ class FriendsService {
         where: {
           requesterId_addresseeId: {
             requesterId,
-            addresseeId: target.id
+            addresseeId: target.id as string
           }
         },
         update: { status: 'PENDING' },
         create: {
           id: friendshipId,
           requesterId,
-          addresseeId: target.id,
+          addresseeId: target.id as string,
           status: 'PENDING'
         }
       });
@@ -75,27 +89,28 @@ class FriendsService {
       try {
         const requester = await prisma.user.findUnique({ where: { id: requesterId } });
         await notificationService.createNotification(
-          target.id,
+          target.id as string,
           'FRIEND_REQUEST',
           'Lời mời kết bạn mới',
           `${requester?.displayNamePublic || 'Một người dùng'} đã gửi cho bạn lời mời kết bạn.`,
           { friendshipId: friendship.id, requesterId }
         );
-      } catch (notifErr) {
+      } catch {
         console.warn('[Friends] Notification non-blocking notice');
       }
-    } catch (err: any) {
-      if (err.message.includes('Lời mời kết bạn') || err.message.includes('Không thể kết bạn')) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('Lời mời kết bạn') || msg.includes('Không thể kết bạn')) {
         throw err;
       }
-      console.warn('[Friends] DB sendRequest notice:', err.message);
+      console.warn('[Friends] DB sendRequest notice:', msg);
     }
 
     // Persist to disk
     const persisted: PersistedFriendship = {
       id: friendshipId,
       requesterId,
-      addresseeId: target.id,
+      addresseeId: target.id as string,
       status: 'PENDING',
     };
     saveFriendship(persisted);
@@ -104,6 +119,7 @@ class FriendsService {
   }
 
   async acceptRequest(userId: string, friendshipId: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let friendship: any = null;
     try {
       friendship = await prisma.friendship.findUnique({
@@ -125,17 +141,18 @@ class FriendsService {
 
         try {
           await notificationService.createNotification(
-            friendship.requesterId,
+            friendship.requesterId as string,
             'FRIEND_ACCEPTED',
             'Lời mời kết bạn đã được chấp nhận',
             'Lời mời kết bạn của bạn đã được chấp nhận.',
             { friendshipId }
           );
-        } catch {}
+        } catch { /* notification is non-critical */ }
       }
-    } catch (err: any) {
-      if (err.message.includes('Bạn không có quyền') || err.message.includes('không ở trạng thái chờ')) throw err;
-      console.warn('[Friends] DB accept notice:', err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('Bạn không có quyền') || msg.includes('không ở trạng thái chờ')) throw err;
+      console.warn('[Friends] DB accept notice:', msg);
     }
 
     const memF = inMemoryFriendships.get(friendshipId);
@@ -147,10 +164,10 @@ class FriendsService {
 
     if (friendship) {
       const persisted: PersistedFriendship = {
-        id: friendship.id,
+        id: friendship.id as string,
         status: 'ACCEPTED',
       };
-      saveFriendship({ ...friendship, status: 'ACCEPTED' });
+      saveFriendship({ ...friendship, id: friendship.id as string, status: 'ACCEPTED' });
       return persisted;
     }
 
@@ -164,8 +181,9 @@ class FriendsService {
         throw new Error('Không có quyền');
       }
       await prisma.friendship.delete({ where: { id: friendshipId } });
-    } catch (err: any) {
-      if (err.message.includes('Không có quyền')) throw err;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('Không có quyền')) throw err;
     }
     removePersistedFriendship(friendshipId);
     return { message: 'Đã từ chối lời mời' };
@@ -174,13 +192,13 @@ class FriendsService {
   async removeFriend(userId: string, friendshipId: string) {
     try {
       await prisma.friendship.delete({ where: { id: friendshipId } });
-    } catch {}
+    } catch { /* DB delete is best-effort */ }
     removePersistedFriendship(friendshipId);
     return { message: 'Đã hủy kết bạn' };
   }
 
   async getFriends(userId: string) {
-    const friendsMap = new Map<string, any>();
+    const friendsMap = new Map<string, FriendRecord>();
 
     // 1. Fetch from Database
     try {
@@ -230,8 +248,8 @@ class FriendsService {
           role: targetUser.role,
         });
       }
-    } catch (err: any) {
-      console.warn('[Friends] DB getFriends notice:', err.message);
+    } catch (err: unknown) {
+      console.warn('[Friends] DB getFriends notice:', err instanceof Error ? err.message : err);
     }
 
     if (process.env.NODE_ENV === 'test') {
@@ -264,8 +282,8 @@ class FriendsService {
   }
 
   async getPendingRequests(userId: string) {
-    const incomingMap = new Map<string, any>();
-    const outgoingMap = new Map<string, any>();
+    const incomingMap = new Map<string, FriendRecord>();
+    const outgoingMap = new Map<string, FriendRecord>();
 
     // 1. Fetch from Database
     try {
@@ -332,8 +350,8 @@ class FriendsService {
           email: o.addressee.email,
         });
       }
-    } catch (err: any) {
-      console.warn('[Friends] DB getPending notice:', err.message);
+    } catch (err: unknown) {
+      console.warn('[Friends] DB getPending notice:', err instanceof Error ? err.message : err);
     }
 
     // 2. Fetch from Persisted Friendships
@@ -383,7 +401,7 @@ class FriendsService {
     const cleanQuery = (query || '').trim().toLowerCase();
     if (!cleanQuery) return [];
 
-    const matchedMap = new Map<string, any>();
+    const matchedMap = new Map<string, FriendRecord>();
 
     // 1. Search Database
     try {
@@ -415,8 +433,8 @@ class FriendsService {
       for (const u of users) {
         matchedMap.set(u.id, u);
       }
-    } catch (err: any) {
-      console.warn('[Friends] DB search notice:', err.message);
+    } catch (err: unknown) {
+      console.warn('[Friends] DB search notice:', err instanceof Error ? err.message : err);
     }
 
     // 2. Search In-memory / Persisted users
@@ -434,10 +452,10 @@ class FriendsService {
 
     // 3. Compute friendship status for all matched users
     const allUsers = Array.from(matchedMap.values());
-    const results = [];
+    const results: FriendRecord[] = [];
 
     // Query DB friendships
-    let dbFriendships: any[] = [];
+    let dbFriendships: Array<{ id: string; requesterId: string; addresseeId: string; status: string }> = [];
     try {
       dbFriendships = await prisma.friendship.findMany({
         where: {
@@ -447,10 +465,10 @@ class FriendsService {
           ],
         },
       });
-    } catch {}
+    } catch { /* DB query is best-effort */ }
 
     for (const u of allUsers) {
-      let f = dbFriendships.find(
+      let f: { id: string; requesterId?: string; addresseeId?: string; status?: string } | undefined = dbFriendships.find(
         df => (df.requesterId === currentUserId && df.addresseeId === u.id) ||
               (df.requesterId === u.id && df.addresseeId === currentUserId)
       );
@@ -465,11 +483,11 @@ class FriendsService {
       results.push({
         id: u.id,
         publicId: u.publicId,
-        displayNamePublic: u.displayNamePublic || u.email.split('@')[0],
+        displayNamePublic: u.displayNamePublic || (u.email ? u.email.split('@')[0] : ''),
         avatarUrl: u.avatarUrl || `https://api.dicebear.com/7.x/avataaars/png?seed=${u.email}`,
         bio: u.bio || null,
         email: u.email,
-        friendshipId: f?.id || null,
+        friendshipId: f?.id || undefined,
         friendshipStatus: f?.status || 'NONE',
         isSender: f ? f.requesterId === currentUserId : false,
       });

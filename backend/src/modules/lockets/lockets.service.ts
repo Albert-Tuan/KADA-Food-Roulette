@@ -132,7 +132,7 @@ async function acceptedFriendIds(userId: string): Promise<Set<string>> {
         idSet.add(f.id);
       }
     }
-  } catch {}
+  } catch { /* friendsService fallback is non-critical */ }
 
   return idSet;
 }

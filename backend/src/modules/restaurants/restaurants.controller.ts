@@ -22,7 +22,7 @@ export const restaurantsController = {
 
       const dbRestaurants = await prisma.restaurant.findMany({
         where: {
-          status: filterStatus as any,
+          status: filterStatus as 'APPROVED' | 'PENDING' | 'REJECTED',
           deletedAt: null,
         },
         include: {
@@ -98,12 +98,12 @@ export const restaurantsController = {
         .filter((item) => (radiusNum != null && item.distance != null ? item.distance <= radiusNum : true));
 
       return res.json(list);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Restaurants] getNearby Database Error:', error);
       return res.status(500).json({
         success: false,
         error: 'Lỗi máy chủ khi lấy danh sách quán ăn từ cơ sở dữ liệu.',
-        details: error?.message,
+        details: error instanceof Error ? error.message : undefined,
       });
     }
   },
@@ -132,9 +132,9 @@ export const restaurantsController = {
       };
 
       return res.json(formattedRestaurant);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Restaurants] getById Database Error:', error);
-      return res.status(500).json({ error: 'Lỗi máy chủ khi truy vấn quán ăn.', details: error?.message });
+      return res.status(500).json({ error: 'Lỗi máy chủ khi truy vấn quán ăn.', details: error instanceof Error ? error.message : undefined });
     }
   },
 
@@ -200,9 +200,9 @@ export const restaurantsController = {
           lng: newRestaurant.lng ? Number(newRestaurant.lng) : null,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Restaurants] create Error:', error);
-      return res.status(500).json({ error: 'Lỗi gửi đề xuất quán ăn.', details: error?.message });
+      return res.status(500).json({ error: 'Lỗi gửi đề xuất quán ăn.', details: error instanceof Error ? error.message : undefined });
     }
   },
 
@@ -222,9 +222,9 @@ export const restaurantsController = {
       });
 
       return res.json({ message: 'Đã cập nhật trạng thái.', data: updated });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Restaurants] updateStatus Error:', error);
-      return res.status(500).json({ error: 'Lỗi cập nhật trạng thái quán ăn.', details: error?.message });
+      return res.status(500).json({ error: 'Lỗi cập nhật trạng thái quán ăn.', details: error instanceof Error ? error.message : undefined });
     }
   },
 };

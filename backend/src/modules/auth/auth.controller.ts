@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../shared/utils/prisma';
 import { AuthRequest } from '../../shared/middleware/auth.middleware';
-import { inMemoryUserStore, inMemoryUserStoreByEmail, saveUser, type InMemoryUser } from '../users/userStore.js';
+import { inMemoryUserStoreByEmail, saveUser } from '../users/userStore.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'food-roulette-super-secret-jwt-key-2026';
 
@@ -96,7 +96,7 @@ export const authController = {
             isOnboarded: false,
           },
         });
-      } catch (dbError) {
+      } catch {
         console.warn('[Auth] DB unavailable during register, saving to in-memory store:', cleanEmail);
         if (inMemoryUserStoreByEmail.has(cleanEmail)) {
           return res.status(400).json({
@@ -164,7 +164,7 @@ export const authController = {
       let user: any = null;
       try {
         user = await prisma.user.findUnique({ where: { email: cleanEmail } });
-      } catch (dbError) {
+      } catch {
         console.warn('[Auth] DB unavailable during login, checking in-memory store:', cleanEmail);
       }
 

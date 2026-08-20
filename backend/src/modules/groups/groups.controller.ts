@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { AuthRequest } from '../../shared/middleware/auth.middleware';
 import { prisma } from '../../shared/utils/prisma';
 
@@ -25,7 +25,7 @@ export interface LiveRoom {
   members: LiveRoomMember[];
   customCandidates: LiveRoomCandidate[];
   votes: Record<string, string>;
-  currentResult: any;
+  currentResult: unknown;
   spunAt?: number;
   updatedAt: string;
 }
@@ -81,7 +81,7 @@ export const groupsController = {
       const hostMember = await getMemberFromUser(userId, 'HOST');
 
       // Check if user already owns a room
-      for (const [code, room] of liveRooms.entries()) {
+      for (const [, room] of liveRooms.entries()) {
         if (room.hostId === userId) {
           // Update host info if changed
           room.members = room.members.map(m => (m.id === userId ? { ...m, ...hostMember, role: 'HOST' } : m));
@@ -105,8 +105,8 @@ export const groupsController = {
 
       liveRooms.set(roomCode, newRoom);
       return res.status(201).json({ success: true, data: newRoom });
-    } catch (error: any) {
-      console.error('[Groups] Create group error:', error);
+    } catch {
+      console.error('[Groups] Create group error');
       return res.status(500).json({ success: false, error: 'Lỗi tạo phòng nhóm.' });
     }
   },
@@ -144,7 +144,7 @@ export const groupsController = {
 
       liveRooms.set(newCode, newRoom);
       return res.json({ success: true, data: newRoom });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({ success: false, error: 'Lỗi đổi mã phòng.' });
     }
   },
@@ -163,7 +163,7 @@ export const groupsController = {
       }
 
       return res.json({ success: true, data: room });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({ success: false, error: 'Lỗi lấy thông tin phòng.' });
     }
   },
@@ -210,8 +210,8 @@ export const groupsController = {
 
       room.updatedAt = new Date().toISOString();
       return res.json({ success: true, data: room });
-    } catch (error: any) {
-      console.error('[Groups] Join group error:', error);
+    } catch {
+      console.error('[Groups] Join group error');
       return res.status(500).json({ success: false, error: 'Lỗi tham gia phòng.' });
     }
   },
@@ -245,7 +245,7 @@ export const groupsController = {
       room.updatedAt = new Date().toISOString();
 
       return res.json({ success: true, data: room });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({ success: false, error: 'Lỗi kick thành viên.' });
     }
   },
@@ -273,7 +273,7 @@ export const groupsController = {
       room.updatedAt = new Date().toISOString();
 
       return res.json({ success: true, data: room });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({ success: false, error: 'Lỗi bắt đầu quay nhóm.' });
     }
   },
@@ -296,7 +296,7 @@ export const groupsController = {
       room.updatedAt = new Date().toISOString();
 
       return res.json({ success: true, data: room });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({ success: false, error: 'Lỗi chuyển trạng thái vote.' });
     }
   },
@@ -339,7 +339,7 @@ export const groupsController = {
 
       room.updatedAt = new Date().toISOString();
       return res.json({ success: true, data: room });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({ success: false, error: 'Lỗi gửi vote.' });
     }
   },
@@ -359,7 +359,7 @@ export const groupsController = {
       room.updatedAt = new Date().toISOString();
 
       return res.json({ success: true, data: room });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({ success: false, error: 'Lỗi đặt lại phòng.' });
     }
   },
@@ -388,7 +388,7 @@ export const groupsController = {
       room.updatedAt = new Date().toISOString();
 
       return res.json({ success: true, data: room });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({ success: false, error: 'Lỗi thêm món ăn vào nhóm.' });
     }
   },
@@ -408,7 +408,7 @@ export const groupsController = {
       room.updatedAt = new Date().toISOString();
 
       return res.json({ success: true, data: room });
-    } catch (error: any) {
+    } catch {
       return res.status(500).json({ success: false, error: 'Lỗi xóa món ăn khỏi nhóm.' });
     }
   },
