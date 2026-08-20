@@ -2,7 +2,7 @@
   "expo": {
     "name": "Food Roulette",
     "slug": "food-roulette",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "scheme": "foodroulette",
     "userInterfaceStyle": "light",
@@ -20,12 +20,18 @@
     },
     "android": {
       "package": "com.foodroulette.app",
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY_HERE"
+        }
+      },
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.RECORD_AUDIO"
-      ]
+      ],
+      "versionCode": 2
     },
     "web": {
       "bundler": "metro",
@@ -54,7 +60,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "c34be744-a6db-4aca-93a3-3282e89334c9"
+        "projectId": "70eaf51a-26ac-4c4b-b18e-1e86c1f6bc40"
       }
     }
   }

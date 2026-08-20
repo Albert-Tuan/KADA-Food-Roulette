@@ -13,7 +13,7 @@ import { useRouter, Stack } from 'expo-router';
 import * as Location from 'expo-location';
 import { restaurantApi, Restaurant, placesApi } from '@/api';
 
-import { MapView, Marker, PROVIDER_GOOGLE } from '@/components/MapProvider';
+import { MapView, Marker, PROVIDER_GOOGLE, UrlTile } from '@/components/MapProvider';
 import MapFilterSheet from '@/components/MapFilterSheet';
 import RestaurantList from '@/components/RestaurantList';
 
@@ -239,8 +239,15 @@ export default function DiscoverScreen() {
             onRegionChangeComplete={setRegion}
             showsUserLocation
             showsMyLocationButton
-            mapType={Platform.select({ android: 'standard', ios: 'mutedStandard' }) as any}
+            mapType={Platform.select({ android: 'none', ios: 'mutedStandard' }) as any}
           >
+            {Platform.OS === 'android' && (
+              <UrlTile
+                urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                maximumZ={19}
+                flipY={false}
+              />
+            )}
             {filtered.map((r, index) => {
               if (!r.lat || !r.lng) return null;
               return (
