@@ -66,7 +66,7 @@ export default function DiscoverScreen() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterChip['value']>('all');
   const [seeding, setSeeding] = useState(false);
-  const [showList, setShowList] = useState(false);
+  const [showList, setShowList] = useState(Platform.OS === 'web');
   const [showFilter, setShowFilter] = useState(false);
 
   useEffect(() => {

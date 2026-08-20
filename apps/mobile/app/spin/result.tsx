@@ -16,11 +16,12 @@ export default function SpinResultScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <SpinResultCard
           restaurant={currentResult}
           onSpinAgain={() => router.replace('/(tabs)/spin')}
           onAccept={() => router.replace('/spin/lucky-spin')}
+          onClose={() => router.replace('/(tabs)/spin')}
         />
       </ScrollView>
     </SafeAreaView>
@@ -30,7 +31,7 @@ export default function SpinResultScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: '#fff8ef',
   },
   scroll: {
     flex: 1,

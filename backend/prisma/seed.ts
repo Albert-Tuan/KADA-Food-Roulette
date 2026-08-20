@@ -291,7 +291,7 @@ async function seed(): Promise<void> {
         await tx.restaurant.create({ data: restaurant });
       }
     }
-  });
+  }, { timeout: 60000, maxWait: 60000 });
 
   console.info('Seed hoàn tất.');
   console.info(`Đăng nhập demo: ${demoUsers[0].email} / ${DEMO_PASSWORD}`);

@@ -8,7 +8,6 @@ import {
   TextInput,
   Pressable,
 } from 'react-native';
-import Slider from '@react-native-community/slider';
 import type { SpinFilters } from '../types';
 
 const CUISINE_MAP: { name: string; emoji: string }[] = [
@@ -155,20 +154,32 @@ export function SpinFilterSheet({
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionLabel}>💰 Mức giá tối đa</Text>
               <Text style={styles.sectionValue}>
-                {localPriceVND === 1000000 ? '1.000.000 đ' : `${(localPriceVND / 1000).toLocaleString('vi-VN')}k đ`}
+                {localPriceVND >= 1000000 ? 'Tất cả mức giá' : `${(localPriceVND / 1000).toLocaleString('vi-VN')}k đ`}
               </Text>
             </View>
-            <Slider
-              style={{ width: '100%', height: 40 }}
-              minimumValue={0}
-              maximumValue={1000000}
-              step={50000}
-              value={localPriceVND}
-              onValueChange={setLocalPriceVND}
-              minimumTrackTintColor="#9A3324"
-              maximumTrackTintColor="#f0e6d2"
-              thumbTintColor="#9A3324"
-            />
+            <View style={styles.chipWrap}>
+              {[
+                { label: '50k đ', val: 50000 },
+                { label: '100k đ', val: 100000 },
+                { label: '250k đ', val: 250000 },
+                { label: '500k đ', val: 500000 },
+                { label: 'Tất cả', val: 1000000 },
+              ].map(p => {
+                const isActive = localPriceVND === p.val;
+                return (
+                  <TouchableOpacity
+                    key={p.label}
+                    style={[styles.chip, isActive && styles.chipActive]}
+                    onPress={() => setLocalPriceVND(p.val)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                      {p.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
 
           {/* Cuisines */}

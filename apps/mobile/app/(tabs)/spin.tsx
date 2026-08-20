@@ -33,6 +33,7 @@ const toSpinRestaurant = (r: ApiRestaurant): Restaurant => {
   return {
     id: r.id,
     name: r.name,
+    address: r.address,
     category: r.category ?? 'Ẩm thực',
     rating: r.ratingAvg ?? 0,
     totalReviews: r.ratingCount ?? 0,
@@ -64,57 +65,25 @@ export default function SpinScreen() {
   const isMockRepository = process.env.EXPO_PUBLIC_USE_MOCK_REPOSITORIES === 'true';
 
   useEffect(() => {
-    if (isMockRepository) return;
-
     let cancelled = false;
     (async () => {
       try {
+        setIsLoading(true);
         const list = await restaurantApi.list({ status: 'APPROVED' });
-        if (cancelled) return;
-        setCandidates(list.map(toSpinRestaurant));
+        if (!cancelled && list && list.length > 0) {
+          setCandidates(list.map(toSpinRestaurant));
+        }
       } catch (error) {
-        if (cancelled) return;
         console.error('Load spin candidates failed:', error);
-        setCandidates([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [isMockRepository, setCandidates]);
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active') {
-        resetStore();
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [resetStore]);
-
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Lỗi', 'Không thể lấy vị trí của bạn để tìm quán ăn.');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        let loc = await Location.getCurrentPositionAsync({});
-        setLocation(loc);
-        await fetchNearbyCandidates(loc.coords.latitude, loc.coords.longitude);
-      } catch (error) {
-        console.error('Error fetching location', error);
-      }
-      setIsLoading(false);
-    })();
-  }, [fetchNearbyCandidates]);
+  }, []);
 
   const handleFoodSpinEnd = useCallback((winner: Restaurant, index: number) => {
     if (multiMode === 1) {
@@ -138,6 +107,19 @@ export default function SpinScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
+          {/* Top Mode Switcher: Personal vs Group Spin */}
+          <View style={styles.modeSwitchContainer}>
+            <TouchableOpacity style={[styles.modeTab, styles.modeTabActive]} activeOpacity={0.9}>
+              <Text style={styles.modeTabTextActive}>👤 Quay Cá Nhân</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modeTab}
+              activeOpacity={0.8}
+              onPress={() => router.push('/group-spin/lobby')}
+            >
+              <Text style={styles.modeTabText}>👥 Quay Nhóm (Group) 👑</Text>
+            </TouchableOpacity>
+          </View>
           {/* Food Roulette Section */}
           <View style={styles.section}>
             {isLoading ? (
@@ -560,6 +542,42 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 24,
+  },
+  modeSwitchContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+    backgroundColor: '#fff0d4',
+    borderRadius: 16,
+    padding: 4,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+  },
+  modeTab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+  },
+  modeTabActive: {
+    backgroundColor: '#b52330',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modeTabText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#8e4e14',
+  },
+  modeTabTextActive: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#ffffff',
   },
   section: {
     paddingHorizontal: 16,

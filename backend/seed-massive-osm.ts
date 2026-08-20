@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 const LAT = 10.845;
 const LNG = 106.794;
-const RADIUS_METERS = 10000; // 10km
+const RADIUS_METERS = 5000; // 5km (giảm để tránh timeout)
 
 const FOOD_IMAGES = [
   "https://images.unsplash.com/photo-1582878826629-29b7ad1cb438?w=800&q=80",
@@ -33,7 +33,7 @@ function getRandomPrice(): number {
 
 async function fetchFromOverpass() {
   const query = `
-    [out:json][timeout:25];
+    [out:json][timeout:90];
     (
       node["amenity"~"restaurant|cafe|fast_food|food_court|ice_cream|bar|pub"](around:${RADIUS_METERS},${LAT},${LNG});
     );
