@@ -11,6 +11,7 @@ import { SpinFilterSheet } from './SpinFilterSheet';
 import { InviteMembersSheet } from './InviteMembersSheet';
 import { GroupVoteVeto } from './GroupVoteVeto';
 import { GroupVoteResult } from './GroupVoteResult';
+import { GroupPactConfirmationModal } from './GroupPactConfirmationModal';
 import type { Restaurant, GroupMember } from '../types';
 
 interface GroupLobbyProps {
@@ -60,6 +61,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
   const [memberToKick, setMemberToKick] = useState<GroupMember | null>(null);
   const [joinCodeInput, setJoinCodeInput] = useState('');
   const [isSpinning, setIsSpinning] = useState(false);
+  const [isPactModalOpen, setIsPactModalOpen] = useState(false);
 
   // Initialize room & sync realtime with backend every 1.5s
   useEffect(() => {
@@ -183,14 +185,66 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
     );
   }
 
+  const handleNewSpinRound = async () => {
+    try {
+      setIsPactModalOpen(false);
+      if (isCurrentUserHost) {
+        await resetGroupSpin();
+      }
+      setStep('LOBBY');
+      Alert.alert('🎲 Lượt Mới', 'Đã đặt lại phòng! Mời cả nhóm cùng quay món mới.');
+    } catch (err) {
+      console.error('Reset spin error:', err);
+      setStep('LOBBY');
+    }
+  };
+
+  const handleLeaveOrCreateNewRoom = async () => {
+    Alert.alert(
+      '🚪 Tạo Phòng Mới',
+      'Bạn có muốn tạo mã phòng mới cho nhóm quay khác không?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Tạo Mã Mới',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsPactModalOpen(false);
+              await createNewRoom();
+              setStep('LOBBY');
+            } catch (err) {
+              console.error('Create new room error:', err);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCheckInLocket = () => {
+    setIsPactModalOpen(false);
+    const resultData = currentResult || candidates[0];
+    router.push({
+      pathname: '/locket/capture',
+      params: {
+        restaurantId: resultData?.id || '',
+        restaurantName: resultData?.name || '',
+      },
+    });
+  };
+
   if (step === 'VOTE_RESULT') {
     return (
       <View style={styles.container}>
         <GroupVoteResult
           onCreatePact={() => {
-            Alert.alert('🤝 Khế Ước Thành Công', 'Cả nhóm đã lập khế ước ăn uống thành công!');
+            setIsPactModalOpen(true);
           }}
-          onRespin={() => setStep('LOBBY')}
+          onRespin={handleNewSpinRound}
+          onNewSpinRound={handleNewSpinRound}
+          onLeaveRoom={handleLeaveOrCreateNewRoom}
+          isHost={isCurrentUserHost}
           onDirections={() => {
             const resultData = currentResult || candidates[0];
             if (resultData) {
@@ -200,6 +254,22 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
               Alert.alert('🧭 Chỉ đường', 'Đang mở bản đồ chỉ đường đến quán...');
             }
           }}
+        />
+
+        {/* Group Pact Confirmation Modal */}
+        <GroupPactConfirmationModal
+          visible={isPactModalOpen}
+          onClose={() => setIsPactModalOpen(false)}
+          onNewSpinRound={handleNewSpinRound}
+          onDirections={() => {
+            const resultData = currentResult || candidates[0];
+            if (resultData) {
+              const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(resultData.name)}`;
+              Linking.openURL(url).catch(() => Alert.alert('Lỗi', 'Không thể mở bản đồ'));
+            }
+          }}
+          onCheckInLocket={handleCheckInLocket}
+          isHost={isCurrentUserHost}
         />
       </View>
     );
@@ -451,6 +521,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
         visible={isJoinModalOpen}
         transparent
         animationType="fade"
+        statusBarTranslucent
         onRequestClose={() => setIsJoinModalOpen(false)}
       >
         <View style={styles.modalBackdrop}>
@@ -509,6 +580,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
         visible={!!memberToKick}
         transparent
         animationType="fade"
+        statusBarTranslucent
         onRequestClose={() => setMemberToKick(null)}
       >
         <View style={styles.modalBackdrop}>
@@ -950,25 +1022,26 @@ const styles = StyleSheet.create({
 
   // Join Room Modal
   modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    zIndex: 9999,
   },
   modalCard: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff8ef',
     borderRadius: 24,
     padding: 22,
     borderWidth: 2,
     borderColor: '#e2bebc',
-    shadowColor: '#000',
+    shadowColor: '#b52330',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 10,
   },
   modalTitle: {
     fontSize: 18,

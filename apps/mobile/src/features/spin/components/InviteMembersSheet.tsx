@@ -14,10 +14,13 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import type { GroupMember } from '../types';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface InviteMembersSheetProps {
   visible: boolean;
@@ -104,6 +107,7 @@ export function InviteMembersSheet({ visible, onClose }: InviteMembersSheetProps
       visible={visible}
       transparent
       animationType="slide"
+      statusBarTranslucent
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
@@ -263,11 +267,13 @@ export function InviteMembersSheet({ visible, onClose }: InviteMembersSheetProps
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
+    width: '100%',
+    height: '100%',
     justifyContent: 'flex-end',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   sheet: {
     width: '100%',
@@ -278,13 +284,13 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     borderRightWidth: 2,
     borderColor: '#e2bebc',
-    maxHeight: '90%',
-    paddingBottom: 28,
+    maxHeight: SCREEN_HEIGHT * 0.88,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
     shadowColor: '#b52330',
     shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 10,
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
   },
   grabHandleContainer: {
     alignItems: 'center',
