@@ -117,7 +117,8 @@ export default function SpinScreen() {
 
   const handleMultiSpinEnd = useCallback((winners: Restaurant[]) => {
     if (multiMode > 1) {
-      setComboWinners(winners);
+      const validWinners = (winners || []).filter(Boolean);
+      setComboWinners(validWinners);
       setIsComboModalOpen(true);
     }
   }, [multiMode]);
@@ -352,7 +353,7 @@ export default function SpinScreen() {
       </SafeAreaView>
 
       {/* Combo Winners Reveal Modal (2-3 món cùng lúc) */}
-      <Modal visible={isComboModalOpen} transparent animationType="slide">
+      <Modal visible={isComboModalOpen} transparent animationType="slide" onRequestClose={() => setIsComboModalOpen(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
@@ -365,7 +366,7 @@ export default function SpinScreen() {
               <ScrollView style={{ maxHeight: 260 }}>
                 {comboWinners.map((w, i) => (
                   <TouchableOpacity
-                    key={w.id || i}
+                    key={`${w?.id || 'combo-dish'}-${i}`}
                     activeOpacity={0.9}
                     onPress={() => {
                       setIsComboModalOpen(false);
@@ -374,16 +375,16 @@ export default function SpinScreen() {
                     }}
                     style={styles.comboWinnerCard}
                   >
-                    <Image source={{ uri: w.imageUrl }} style={styles.comboWinnerImage} />
+                    <Image source={{ uri: w?.imageUrl || FALLBACK_IMAGE_URL }} style={styles.comboWinnerImage} />
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <View style={styles.comboNumberBadge}>
                           <Text style={styles.comboNumberBadgeText}>{i + 1}</Text>
                         </View>
-                        <Text style={styles.comboWinnerName}>{w.name}</Text>
+                        <Text style={styles.comboWinnerName}>{w?.name || 'Món ăn trúng thưởng'}</Text>
                       </View>
                       <Text style={styles.comboWinnerInfo}>
-                        ⭐ {w.rating} • {w.category} • {(w.distance / 1000).toFixed(1)}km
+                        ⭐ {w?.rating ?? 5.0} • {w?.category ?? 'Ẩm thực'} • {((w?.distance ?? 0) / 1000).toFixed(1)}km
                       </Text>
                     </View>
                     <Text style={styles.comboArrow}>➔</Text>

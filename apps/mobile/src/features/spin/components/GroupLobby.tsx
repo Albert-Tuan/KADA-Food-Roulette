@@ -76,17 +76,26 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
   useEffect(() => {
     if (roomStatus === 'SPINNING' && !isSpinning) {
       setIsSpinning(true);
-      rouletteRef.current?.spin();
+      if (rouletteRef.current) {
+        rouletteRef.current.spin();
+      }
+      // Safety fallback timer so UI never gets permanently stuck
+      const timer = setTimeout(() => {
+        setIsSpinning(false);
+      }, 4500);
+      return () => clearTimeout(timer);
     } else if (roomStatus === 'VOTING' && step === 'LOBBY') {
       if (backendResult) {
         setCurrentResult(backendResult);
       }
+      setIsSpinning(false);
       setStep('VOTE_VETO');
     } else if (roomStatus === 'LOBBY' && step !== 'LOBBY') {
       setStep('LOBBY');
       setIsSpinning(false);
     } else if (roomStatus === 'RESULT' && step !== 'VOTE_RESULT') {
       setStep('VOTE_RESULT');
+      setIsSpinning(false);
     }
   }, [roomStatus, isSpinning, step, backendResult]);
 
@@ -121,9 +130,17 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
     };
   }, []);
 
+  const DEFAULT_FALLBACK_RESTAURANTS: Restaurant[] = [
+    { id: 'def-1', name: 'Phở Bò Tái Nạm', category: 'Món nước', rating: 4.8, totalReviews: 50, distance: 800, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&q=80&w=400' },
+    { id: 'def-2', name: 'Cơm Tấm Sườn Bì', category: 'Cơm', rating: 4.7, totalReviews: 42, distance: 1200, priceLevel: 1, imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400' },
+    { id: 'def-3', name: 'Bún Chả Hà Nội', category: 'Bún', rating: 4.9, totalReviews: 88, distance: 1500, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&q=80&w=400' },
+    { id: 'def-4', name: 'Gà Nướng Mật Ong', category: 'Gà', rating: 4.6, totalReviews: 35, distance: 2000, priceLevel: 2, imageUrl: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?auto=format&fit=crop&q=80&w=400' },
+  ];
+
+  const pool = candidates.length > 0 ? candidates : DEFAULT_FALLBACK_RESTAURANTS;
   const displayCandidates = storeCustomCandidates.length > 0 
-    ? [...storeCustomCandidates, ...candidates.slice(0, 4)]
-    : candidates;
+    ? [...storeCustomCandidates, ...pool.slice(0, 4)]
+    : pool;
   const allReady = members.length > 0;
   const isCurrentUserHost = currentUser?.id ? hostId === currentUser.id : true;
 
@@ -132,7 +149,11 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
     setCurrentResult(winner);
     if (onSpinEnd) onSpinEnd(winner);
     if (isCurrentUserHost) {
-      await finishGroupSpin(winner);
+      try {
+        await finishGroupSpin(winner);
+      } catch (err) {
+        console.error('Error finishing group spin:', err);
+      }
     }
     setStep('VOTE_VETO');
   };
