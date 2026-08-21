@@ -264,11 +264,12 @@ function createMediaStorage(): MediaStorage {
     }
     console.warn('[Locket Storage] Supabase credentials not found or incomplete; running with inMemoryFallbackStorage.');
     return inMemoryFallbackStorage;
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (process.env.NODE_ENV === 'test') {
       return new UnconfiguredMediaStorage();
     }
-    console.warn('[Locket Storage] Configuration notice:', err?.message, '- falling back to inMemoryFallbackStorage.');
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn('[Locket Storage] Configuration notice:', message, '- falling back to inMemoryFallbackStorage.');
     return inMemoryFallbackStorage;
   }
 }
