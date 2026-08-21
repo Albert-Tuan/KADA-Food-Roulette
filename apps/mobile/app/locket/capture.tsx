@@ -218,8 +218,9 @@ export default function CaptureLocketScreen() {
       } else {
         router.replace('/(tabs)/lockets' as any);
       }
-    } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'Không thể đăng Taste Board. Bạn thử lại nhé.');
+    } catch (error: any) {
+      const serverMsg = error?.response?.data?.error?.message || error?.response?.data?.message || error?.message;
+      setFormError(serverMsg || 'Không thể đăng Taste Board. Bạn thử lại nhé.');
     }
   };
 

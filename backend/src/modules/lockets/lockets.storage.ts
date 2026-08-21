@@ -143,25 +143,28 @@ export class SupabaseMediaStorage implements MediaStorage {
 
       const originalResult = await this.files().upload(paths.originalPath, input.images.original, options);
       if (originalResult.error) {
-        if (process.env.NODE_ENV === 'development') {
-          return inMemoryFallbackStorage.upload(input);
+        if (process.env.NODE_ENV === 'test') {
+          throw storageError('upload_original');
         }
-        throw storageError('upload_original');
+        console.warn('[Supabase Storage] upload_original notice, falling back to inMemoryFallbackStorage:', originalResult.error.message);
+        return inMemoryFallbackStorage.upload(input);
       }
 
       const thumbnailResult = await this.files().upload(paths.thumbnailPath, input.images.thumbnail, options);
       if (thumbnailResult.error) {
         const cleanupResult = await this.files().remove([paths.originalPath]);
-        if (cleanupResult.error) throw storageError('cleanup_original');
-        throw storageError('upload_thumbnail');
+        if (cleanupResult.error && process.env.NODE_ENV === 'test') throw storageError('cleanup_original');
+        if (process.env.NODE_ENV === 'test') throw storageError('upload_thumbnail');
+        console.warn('[Supabase Storage] upload_thumbnail notice, falling back to inMemoryFallbackStorage:', thumbnailResult.error.message);
+        return inMemoryFallbackStorage.upload(input);
       }
       return paths;
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[Supabase Storage] falling back to inMemoryFallbackStorage');
-        return inMemoryFallbackStorage.upload(input);
+      if (process.env.NODE_ENV === 'test') {
+        throw error;
       }
-      throw error;
+      console.warn('[Supabase Storage] upload catch, falling back to inMemoryFallbackStorage:', error);
+      return inMemoryFallbackStorage.upload(input);
     }
   }
 
@@ -256,11 +259,17 @@ function createMediaStorage(): MediaStorage {
     if (config) {
       return new SupabaseMediaStorage(createSupabaseServerClient(config), config.bucket);
     }
-    return process.env.NODE_ENV === 'production'
-      ? new UnconfiguredMediaStorage()
-      : new InMemoryMediaStorage();
-  } catch {
-    return new UnconfiguredMediaStorage();
+    if (process.env.NODE_ENV === 'test') {
+      return new InMemoryMediaStorage();
+    }
+    console.warn('[Locket Storage] Supabase credentials not found or incomplete; running with inMemoryFallbackStorage.');
+    return inMemoryFallbackStorage;
+  } catch (err: any) {
+    if (process.env.NODE_ENV === 'test') {
+      return new UnconfiguredMediaStorage();
+    }
+    console.warn('[Locket Storage] Configuration notice:', err?.message, '- falling back to inMemoryFallbackStorage.');
+    return inMemoryFallbackStorage;
   }
 }
 

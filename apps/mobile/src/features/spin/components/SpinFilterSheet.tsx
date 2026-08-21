@@ -8,8 +8,12 @@ import {
   TextInput,
   Pressable,
   Modal,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import type { SpinFilters } from '../types';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const CUISINE_MAP: { name: string; emoji: string }[] = [
   { name: 'Phở', emoji: '🍜' },
@@ -109,6 +113,7 @@ export function SpinFilterSheet({
       visible={visible}
       transparent
       animationType="slide"
+      statusBarTranslucent
       onRequestClose={onClose}
     >
       <View style={styles.modalContainer}>
@@ -308,11 +313,13 @@ export function SpinFilterSheet({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
+    width: '100%',
+    height: '100%',
     justifyContent: 'flex-end',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   sheet: {
     width: '100%',
@@ -323,13 +330,13 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     borderRightWidth: 2,
     borderColor: '#e2bebc',
-    maxHeight: '85%',
-    paddingBottom: 24,
+    maxHeight: SCREEN_HEIGHT * 0.88,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
     shadowColor: '#b52330',
     shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
   },
   grabHandleContainer: {
     alignItems: 'center',

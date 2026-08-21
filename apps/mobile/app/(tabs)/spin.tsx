@@ -353,7 +353,13 @@ export default function SpinScreen() {
       </SafeAreaView>
 
       {/* Combo Winners Reveal Modal (2-3 món cùng lúc) */}
-      <Modal visible={isComboModalOpen} transparent animationType="slide" onRequestClose={() => setIsComboModalOpen(false)}>
+      <Modal
+        visible={isComboModalOpen}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setIsComboModalOpen(false)}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
@@ -363,11 +369,11 @@ export default function SpinScreen() {
             </View>
 
             <View style={styles.modalBody}>
-              <ScrollView style={{ maxHeight: 260 }}>
+              <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
                 {comboWinners.map((w, i) => (
                   <TouchableOpacity
                     key={`${w?.id || 'combo-dish'}-${i}`}
-                    activeOpacity={0.9}
+                    activeOpacity={0.88}
                     onPress={() => {
                       setIsComboModalOpen(false);
                       setCurrentResult(w);
@@ -377,11 +383,11 @@ export default function SpinScreen() {
                   >
                     <Image source={{ uri: w?.imageUrl || FALLBACK_IMAGE_URL }} style={styles.comboWinnerImage} />
                     <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                         <View style={styles.comboNumberBadge}>
-                          <Text style={styles.comboNumberBadgeText}>{i + 1}</Text>
+                          <Text style={styles.comboNumberBadgeText}>#{i + 1}</Text>
                         </View>
-                        <Text style={styles.comboWinnerName}>{w?.name || 'Món ăn trúng thưởng'}</Text>
+                        <Text style={styles.comboWinnerName} numberOfLines={1}>{w?.name || 'Món ăn trúng thưởng'}</Text>
                       </View>
                       <Text style={styles.comboWinnerInfo}>
                         ⭐ {w?.rating ?? 5.0} • {w?.category ?? 'Ẩm thực'} • {((w?.distance ?? 0) / 1000).toFixed(1)}km
@@ -394,6 +400,7 @@ export default function SpinScreen() {
 
               <TouchableOpacity
                 style={styles.modalCloseBtn}
+                activeOpacity={0.88}
                 onPress={() => setIsComboModalOpen(false)}
               >
                 <Text style={styles.modalCloseBtnText}>Đóng & Quay Tiếp 🎲</Text>
@@ -408,6 +415,7 @@ export default function SpinScreen() {
         visible={isJoinModalOpen}
         transparent
         animationType="fade"
+        statusBarTranslucent
         onRequestClose={() => setIsJoinModalOpen(false)}
       >
         <View style={styles.joinModalOverlay}>
@@ -463,26 +471,156 @@ export default function SpinScreen() {
 }
 
 const styles = StyleSheet.create({
-  joinModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    zIndex: 9999,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#fff8ef',
+    borderRadius: 26,
+    padding: 22,
+    borderWidth: 2,
+    borderColor: '#e2bebc',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalBadge: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#8e4e14',
+    backgroundColor: '#ffdcc4',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 12,
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#ffab69',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#b52330',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 12.5,
+    color: '#5a403f',
+    textAlign: 'center',
+    lineHeight: 18,
+    fontWeight: '600',
+  },
+  modalBody: {
+    width: '100%',
+  },
+  comboWinnerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  comboWinnerImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#ffdcc4',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#e2bebc',
+  },
+  comboNumberBadge: {
+    backgroundColor: '#b52330',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  comboNumberBadgeText: {
+    fontSize: 10.5,
+    fontWeight: '900',
+    color: '#ffffff',
+  },
+  comboWinnerName: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#b52330',
+    flex: 1,
+  },
+  comboWinnerInfo: {
+    fontSize: 11.5,
+    color: '#8e4e14',
+    fontWeight: '600',
+  },
+  comboArrow: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#b52330',
+    marginLeft: 6,
+  },
+  modalCloseBtn: {
+    backgroundColor: '#b52330',
+    paddingVertical: 14,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    borderBottomWidth: 3.5,
+    borderBottomColor: '#61000e',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  modalCloseBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  joinModalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    zIndex: 9999,
   },
   joinModalCard: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff8ef',
     borderRadius: 24,
     padding: 22,
     borderWidth: 2,
     borderColor: '#e2bebc',
-    shadowColor: '#000',
+    shadowColor: '#b52330',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 10,
   },
   joinModalTitle: {
     fontSize: 18,
@@ -585,117 +723,6 @@ const styles = StyleSheet.create({
   multiModeBtnTextActive: {
     color: '#ffffff',
     fontWeight: '900',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
-    width: '100%',
-    maxWidth: 380,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#FFC107',
-  },
-  modalHeader: {
-    backgroundColor: '#b52330',
-    padding: 18,
-    alignItems: 'center',
-  },
-  modalBadge: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#ffffff',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    marginBottom: 6,
-    letterSpacing: 0.5,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#ffffff',
-  },
-  modalSubtitle: {
-    fontSize: 12,
-    color: '#ffdcc4',
-    marginTop: 2,
-  },
-  modalBody: {
-    padding: 16,
-  },
-  comboWinnerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff8ef',
-    borderWidth: 1.5,
-    borderColor: '#e2bebc',
-    padding: 10,
-    borderRadius: 16,
-    marginBottom: 8,
-    gap: 10,
-  },
-  comboWinnerImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: '#FFC107',
-    backgroundColor: '#ffdcc4',
-  },
-  comboNumberBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#b52330',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  comboNumberBadgeText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#ffffff',
-  },
-  comboWinnerName: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#b52330',
-  },
-  comboWinnerInfo: {
-    fontSize: 11,
-    color: '#8e4e14',
-    marginTop: 2,
-    fontWeight: '700',
-  },
-  comboArrow: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#b52330',
-    marginRight: 4,
-  },
-  modalCloseBtn: {
-    backgroundColor: '#b52330',
-    paddingVertical: 13,
-    borderRadius: 14,
-    alignItems: 'center',
-    marginTop: 10,
-    shadowColor: '#b52330',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  modalCloseBtnText: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#ffffff',
   },
   scrollView: {
     flex: 1,

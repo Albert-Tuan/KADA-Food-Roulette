@@ -451,6 +451,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
         visible={isJoinModalOpen}
         transparent
         animationType="fade"
+        statusBarTranslucent
         onRequestClose={() => setIsJoinModalOpen(false)}
       >
         <View style={styles.modalBackdrop}>
@@ -509,6 +510,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
         visible={!!memberToKick}
         transparent
         animationType="fade"
+        statusBarTranslucent
         onRequestClose={() => setMemberToKick(null)}
       >
         <View style={styles.modalBackdrop}>
@@ -950,25 +952,26 @@ const styles = StyleSheet.create({
 
   // Join Room Modal
   modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    zIndex: 9999,
   },
   modalCard: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff8ef',
     borderRadius: 24,
     padding: 22,
     borderWidth: 2,
     borderColor: '#e2bebc',
-    shadowColor: '#000',
+    shadowColor: '#b52330',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 10,
   },
   modalTitle: {
     fontSize: 18,
