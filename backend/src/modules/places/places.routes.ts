@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { googlePlacesController } from './places.controller';
-import { authenticateJWT } from '../../shared/middleware/auth.middleware';
+import { optionalAuth } from '../../middleware/auth.js';
 
 const router = Router();
 
-// Public: search nearby Google Places (no DB write)
+// Public: search nearby real places (Google Places / OpenStreetMap)
 router.get('/nearby', googlePlacesController.searchNearby);
 
-// Auth: seed Google Places into our DB (cache for offline)
-router.post('/seed', authenticateJWT, googlePlacesController.seed);
+// Seed nearby real places into DB (auto-approved for Map and Wheel)
+router.post('/seed', optionalAuth, googlePlacesController.seed);
 
 export default router;

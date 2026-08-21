@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import * as ImageManipulator from 'expo-image-manipulator';
 import apiClient from '../client';
 
 export interface LocketDto {
@@ -77,6 +78,52 @@ export const locketApi = {
   },
 
   create: async (input: UploadLocketRequest): Promise<LocketDto> => {
+    let base64String = '';
+
+    if (Platform.OS !== 'web') {
+      try {
+        // Compress and resize image to width 1024 to drastically reduce payload size (from 10MB to ~150KB)
+        const manipResult = await ImageManipulator.manipulateAsync(
+          input.localImageUri,
+          [{ resize: { width: 1024 } }],
+          { compress: 0.75, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        );
+        if (manipResult.base64) {
+          base64String = `data:image/jpeg;base64,${manipResult.base64}`;
+        }
+      } catch (err) {
+        console.warn('ImageManipulator failed for locket photo:', err);
+      }
+    }
+
+    // If we have base64, send via JSON (100% reliable on React Native Android without multipart boundary bugs)
+    if (base64String || input.localImageUri.startsWith('data:')) {
+      const payload: Record<string, any> = {
+        image_base64: base64String || input.localImageUri,
+        dish_name: input.dishName,
+        restaurant_id: input.restaurantId,
+        restaurant_name: input.restaurantName,
+        note: input.note,
+        rating: input.rating,
+        tags: input.tags,
+        visibility: input.visibility,
+        latitude: input.latitude,
+        longitude: input.longitude,
+      };
+
+      const response = await apiClient.post<ApiResponse<LocketDto>>('/lockets', payload, {
+        headers: {
+          'X-Device-ID': input.deviceHash || 'a'.repeat(64),
+          'X-Captured-At': input.capturedAt || new Date().toISOString(),
+          'device-hash': input.deviceHash || 'a'.repeat(64),
+          'captured-at': input.capturedAt || new Date().toISOString(),
+        },
+        timeout: 60_000,
+      });
+      return response.data.data;
+    }
+
+    // Fallback FormData for Web
     const form = new FormData();
     if (Platform.OS === 'web' && typeof fetch !== 'undefined') {
       try {
@@ -110,9 +157,6 @@ export const locketApi = {
       } as unknown as Blob);
     }
 
-    if (input.localImageUri.startsWith('data:')) {
-      form.append('image_base64', input.localImageUri);
-    }
     if (input.dishName) form.append('dish_name', input.dishName);
     if (input.restaurantId) form.append('restaurant_id', input.restaurantId);
     if (input.restaurantName) form.append('restaurant_name', input.restaurantName);

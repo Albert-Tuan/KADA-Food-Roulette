@@ -2,7 +2,7 @@
   "expo": {
     "name": "Food Roulette",
     "slug": "food-roulette",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "scheme": "foodroulette",
     "userInterfaceStyle": "light",
@@ -25,7 +25,8 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.RECORD_AUDIO"
-      ]
+      ],
+      "versionCode": 2
     },
     "web": {
       "bundler": "metro",

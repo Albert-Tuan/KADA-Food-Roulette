@@ -13,16 +13,13 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://kada-food-roulette.onrender.com/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://food-roulette-api-backend.onrender.com/api/v1"
       },
       "android": {
         "buildType": "apk"
       },
       "ios": {
         "simulator": true
-      },
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://food-roulette-api-backend.onrender.com/api/v1"
       }
     },
     "production": {

@@ -19,6 +19,7 @@ import userRoutes from './modules/users/users.routes.js'
 import profileRoutes from './modules/profile/profile.routes.js'
 import friendsRoutes from './modules/friends/friends.routes.js'
 import notificationRoutes from './modules/notifications/notifications.routes.js'
+import placesRoutes from './modules/places/places.routes.js'
 
 const app: Express = express()
 const PORT = process.env.PORT || 3000
@@ -42,9 +43,18 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 // Logging
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 
-// Health check
+// Root & Health checks for Render Load Balancer
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    message: 'Food Roulette API is Live',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+  })
+})
+
 app.get('/health', (req: Request, res: Response) => {
-  res.json({
+  res.status(200).json({
     success: true,
     message: 'Food Roulette API is running',
     timestamp: new Date().toISOString(),
@@ -71,6 +81,7 @@ app.use('/api/v1/notifications', notificationRoutes)
 
 import reviewRoutes from './modules/reviews/reviews.routes'
 app.use('/api/v1/reviews', reviewRoutes)
+app.use('/api/v1/places', placesRoutes)
 
 // 404 handler
 app.use(notFoundHandler)

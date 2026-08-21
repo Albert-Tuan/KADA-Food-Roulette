@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, DeviceEventEmitter } from 'react-native';
 import { API_TIMEOUT, API_URL as ENV_API_URL } from '@/lib/constants';
 
-let API_URL = process.env.EXPO_PUBLIC_API_URL || ENV_API_URL || 'https://kada-food-roulette.onrender.com/api/v1';
+let API_URL = process.env.EXPO_PUBLIC_API_URL || ENV_API_URL || 'https://food-roulette-api-backend.onrender.com/api/v1';
 
 const getStorageItem = async (key: string) => {
   if (Platform.OS === 'web') {
@@ -32,6 +32,9 @@ apiClient.interceptors.request.use(
     const token = await getStorageItem('token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (config.headers) {
+      config.headers['Bypass-Tunnel-Reminder'] = 'true';
     }
     if (config.data instanceof FormData) {
       if (config.headers?.delete) {
