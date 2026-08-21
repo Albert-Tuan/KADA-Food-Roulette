@@ -459,8 +459,14 @@ export default function FriendsScreen() {
                     )
                   }
                   renderItem={({ item }) => {
-                    const isFriend = item.friendshipStatus === 'ACCEPTED';
-                    const isPending = item.friendshipStatus === 'PENDING';
+                    const isSelf = Boolean(
+                      (currentUser?.id && item.id === currentUser.id) ||
+                      (currentUser?.publicId && item.publicId === currentUser.publicId) ||
+                      (currentUser?.email && item.email && item.email.toLowerCase() === currentUser.email.toLowerCase())
+                    );
+                    const isFriend = item.friendshipStatus === 'ACCEPTED' || friends.some((f) => f.id === item.id || f.publicId === item.publicId);
+                    const isOutgoingPending = item.friendshipStatus === 'PENDING' || pendingRequests.outgoing.some((p) => p.id === item.id || p.publicId === item.publicId);
+                    const isIncomingPending = pendingRequests.incoming.some((p) => p.id === item.id || p.publicId === item.publicId);
                     const isActing = actionFriendId === item.id;
 
                     return (
@@ -471,14 +477,29 @@ export default function FriendsScreen() {
                           <Text style={styles.userSub}>@{item.publicId} • {item.email || ''}</Text>
                         </View>
 
-                        {isFriend ? (
+                        {isSelf ? (
+                          <View style={styles.selfBadge}>
+                            <Text style={styles.selfBadgeText}>👤 Bạn</Text>
+                          </View>
+                        ) : isFriend ? (
                           <View style={styles.friendBadge}>
                             <Text style={styles.friendBadgeText}>✓ Bạn bè</Text>
                           </View>
-                        ) : isPending ? (
+                        ) : isOutgoingPending ? (
                           <View style={styles.pendingBadge}>
                             <Text style={styles.pendingBadgeText}>⏳ Đã gửi lời mời</Text>
                           </View>
+                        ) : isIncomingPending ? (
+                          <TouchableOpacity
+                            style={styles.acceptBtn}
+                            onPress={() => {
+                              const req = pendingRequests.incoming.find((p) => p.id === item.id || p.publicId === item.publicId);
+                              if (req?.friendshipId) handleAccept(req.friendshipId);
+                            }}
+                            activeOpacity={0.88}
+                          >
+                            <Text style={styles.acceptBtnText}>Đồng ý ✓</Text>
+                          </TouchableOpacity>
                         ) : (
                           <TouchableOpacity
                             style={styles.addFriendBtn}
@@ -791,6 +812,19 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     color: '#137333',
+  },
+  selfBadge: {
+    backgroundColor: '#f1e6d4',
+    borderWidth: 1,
+    borderColor: '#dfcfb7',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  selfBadgeText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#8e4e14',
   },
   addFriendBtn: {
     backgroundColor: '#b52330',
