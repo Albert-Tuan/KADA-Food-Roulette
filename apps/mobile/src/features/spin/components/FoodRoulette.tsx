@@ -65,14 +65,65 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
     const segmentAngle = candidates.length > 0 ? 360 / candidates.length : 360;
 
     const handleSpinEnd = useCallback(
-      (winners: Restaurant[], primaryIndex: number) => {
+      (finished: boolean | undefined, finalRotation: number) => {
         setSpinning(false);
-        if (winners.length > 0) {
-          onSpinEnd?.(winners[0], primaryIndex);
-          onMultiSpinEnd?.(winners);
+        if (!finished || candidates.length === 0) return;
+
+        try {
+          const normalizedRot = ((finalRotation % 360) + 360) % 360;
+          const sliceAngle = 360 / Math.max(candidates.length, 1);
+          const won: Restaurant[] = [];
+          const usedIndices = new Set<number>();
+
+          let pointerOffsets = [0];
+          if (multiSpinMode === 2) {
+            pointerOffsets = [0, 180];
+          } else if (multiSpinMode === 3) {
+            pointerOffsets = [0, 120, 240];
+          }
+
+          pointerOffsets.forEach((offset) => {
+            const pointerAngle = ((360 - ((normalizedRot + offset) % 360)) + 360) % 360;
+            let idx = Math.floor(pointerAngle / sliceAngle) % candidates.length;
+            if (isNaN(idx) || idx < 0) idx = 0;
+
+            if (usedIndices.has(idx) && candidates.length >= pointerOffsets.length) {
+              for (let step = 1; step < candidates.length; step++) {
+                const nextIdx = (idx + step) % candidates.length;
+                if (!usedIndices.has(nextIdx)) {
+                  idx = nextIdx;
+                  break;
+                }
+              }
+            }
+            usedIndices.add(idx);
+            const candidate = candidates[idx] || candidates[0];
+            if (candidate) {
+              won.push(candidate);
+            }
+          });
+
+          // Ensure won has items even if candidates is small
+          if (won.length === 0 && candidates[0]) {
+            won.push(candidates[0]);
+          }
+
+          const primaryIndex = Math.floor((((360 - (normalizedRot % 360)) + 360) % 360) / sliceAngle) % candidates.length;
+          const safePrimaryIndex = isNaN(primaryIndex) || primaryIndex < 0 ? 0 : primaryIndex;
+
+          if (won.length > 0) {
+            onSpinEnd?.(won[0], safePrimaryIndex);
+            onMultiSpinEnd?.(won);
+          }
+        } catch (err) {
+          console.error('Error calculating spin winners:', err);
+          if (candidates[0]) {
+            onSpinEnd?.(candidates[0], 0);
+            onMultiSpinEnd?.([candidates[0]]);
+          }
         }
       },
-      [onSpinEnd, onMultiSpinEnd]
+      [candidates, multiSpinMode, onSpinEnd, onMultiSpinEnd]
     );
 
     const spin = useCallback(async () => {
@@ -93,20 +144,13 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
 
       const extraSpins = (Math.floor(Math.random() * 4) + 4) * 360;
       let randomSegment = Math.floor(Math.random() * 360);
-      const sliceAngle = 360 / candidates.length;
+      const sliceAngle = 360 / Math.max(candidates.length, 1);
 
       if (targetIndex !== undefined && targetIndex >= 0 && targetIndex < candidates.length) {
-         // Calculate the exact angle to land on targetIndex
-         // primaryIndex = Math.floor(((360 - (normalizedRot % 360)) % 360) / sliceAngle)
-         // We want primaryIndex = targetIndex
          const targetAngleStart = targetIndex * sliceAngle;
-         // aim for the middle of the slice + some random noise
          const noise = (Math.random() * (sliceAngle * 0.8)) - (sliceAngle * 0.4);
          const targetAngle = targetAngleStart + (sliceAngle / 2) + noise;
-         
-         // 360 - (normalizedRot % 360) = targetAngle
-         // normalizedRot % 360 = 360 - targetAngle
-         randomSegment = 360 - targetAngle;
+         randomSegment = ((360 - targetAngle) % 360 + 360) % 360;
       }
 
       const newRotation = rotation.value + extraSpins + randomSegment;
@@ -118,41 +162,10 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
           easing: Easing.bezier(0.15, 0.85, 0.35, 1.05), // Smooth casino decelerate bounce
         },
         (finished) => {
-          if (finished) {
-            const normalizedRot = (newRotation % 360);
-            const sliceAngle = 360 / candidates.length;
-            const won: Restaurant[] = [];
-            const usedIndices = new Set<number>();
-
-            let pointerOffsets = [0];
-            if (multiSpinMode === 2) {
-              pointerOffsets = [0, 180];
-            } else if (multiSpinMode === 3) {
-              pointerOffsets = [0, 120, 240];
-            }
-
-            pointerOffsets.forEach((offset) => {
-              const pointerAngle = (360 - ((normalizedRot + offset) % 360)) % 360;
-              let idx = Math.floor(pointerAngle / sliceAngle) % candidates.length;
-              if (usedIndices.has(idx) && candidates.length >= pointerOffsets.length) {
-                for (let step = 1; step < candidates.length; step++) {
-                  const nextIdx = (idx + step) % candidates.length;
-                  if (!usedIndices.has(nextIdx)) {
-                    idx = nextIdx;
-                    break;
-                  }
-                }
-              }
-              usedIndices.add(idx);
-              won.push(candidates[idx]);
-            });
-
-            const primaryIndex = Math.floor(((360 - (normalizedRot % 360)) % 360) / sliceAngle) % candidates.length;
-            runOnJS(handleSpinEnd)(won, primaryIndex);
-          }
+          runOnJS(handleSpinEnd)(finished, newRotation);
         }
       );
-    }, [spinning, disabled, rotation, candidates, multiSpinMode, handleSpinEnd, onSpinStart]);
+    }, [spinning, disabled, rotation, candidates, handleSpinEnd, onSpinStart]);
 
     useImperativeHandle(ref, () => ({
       spin,

@@ -7,6 +7,7 @@ import {
   ScrollView,
   TextInput,
   Pressable,
+  Modal,
 } from 'react-native';
 import type { SpinFilters } from '../types';
 
@@ -104,205 +105,209 @@ export function SpinFilterSheet({
   const distanceSteps = [500, 1000, 2000, 3000, 5000, 7000, 10000];
 
   return (
-    <View style={styles.modalContainer}>
-      <Pressable style={styles.backdrop} onPress={onClose} />
-      <View style={styles.sheet}>
-        {/* Grab Handle */}
-        <View style={styles.grabHandleContainer}>
-          <View style={styles.grabHandle} />
-        </View>
-
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>🎛️ Bộ Lọc Vòng Quay</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton} activeOpacity={0.8}>
-            <Text style={styles.closeText}>✕</Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContent}>
-          {/* Distance */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionLabel}>📍 Khoảng cách tối đa</Text>
-              <Text style={styles.sectionValue}>{(localDistance / 1000).toFixed(1)} km</Text>
-            </View>
-            <View style={styles.distanceRow}>
-              {distanceSteps.map((d) => (
-                <TouchableOpacity
-                  key={d}
-                  onPress={() => setLocalDistance(d)}
-                  activeOpacity={0.8}
-                  style={[
-                    styles.distanceChip,
-                    localDistance >= d && styles.distanceChipActive,
-                  ]}
-                >
-                  <Text style={[
-                    styles.distanceChipText,
-                    localDistance >= d && styles.distanceChipTextActive,
-                  ]}>
-                    {d >= 1000 ? `${d / 1000}k` : `${d}m`}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalContainer}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+        <View style={styles.sheet}>
+          {/* Grab Handle */}
+          <View style={styles.grabHandleContainer}>
+            <View style={styles.grabHandle} />
           </View>
 
-          {/* Price */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionLabel}>💰 Mức giá tối đa</Text>
-              <Text style={styles.sectionValue}>
-                {localPriceVND >= 1000000 ? 'Tất cả mức giá' : `${(localPriceVND / 1000).toLocaleString('vi-VN')}k đ`}
-              </Text>
-            </View>
-            <View style={styles.chipWrap}>
-              {[
-                { label: '50k đ', val: 50000 },
-                { label: '100k đ', val: 100000 },
-                { label: '250k đ', val: 250000 },
-                { label: '500k đ', val: 500000 },
-                { label: 'Tất cả', val: 1000000 },
-              ].map(p => {
-                const isActive = localPriceVND === p.val;
-                return (
-                  <TouchableOpacity
-                    key={p.label}
-                    style={[styles.chip, isActive && styles.chipActive]}
-                    onPress={() => setLocalPriceVND(p.val)}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                      {p.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>🎛️ Bộ Lọc Vòng Quay</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton} activeOpacity={0.8}>
+              <Text style={styles.closeText}>✕</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Cuisines */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>🍱 Thể loại món ăn</Text>
-            <View style={styles.chipWrap}>
-              {CUISINE_MAP.map(item => {
-                const isActive = localCategories.includes(item.name);
-                return (
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContent}>
+            {/* Distance */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionLabel}>📍 Khoảng cách tối đa</Text>
+                <Text style={styles.sectionValue}>{(localDistance / 1000).toFixed(1)} km</Text>
+              </View>
+              <View style={styles.distanceRow}>
+                {distanceSteps.map((d) => (
                   <TouchableOpacity
-                    key={item.name}
-                    onPress={() => toggleCategory(item.name)}
+                    key={d}
+                    onPress={() => setLocalDistance(d)}
                     activeOpacity={0.8}
                     style={[
-                      styles.chip,
-                      isActive && styles.chipActive,
+                      styles.distanceChip,
+                      localDistance >= d && styles.distanceChipActive,
                     ]}
                   >
                     <Text style={[
-                      styles.chipText,
-                      isActive && styles.chipTextActive,
+                      styles.distanceChipText,
+                      localDistance >= d && styles.distanceChipTextActive,
                     ]}>
-                      {item.emoji} {item.name}
+                      {d >= 1000 ? `${d / 1000}k` : `${d}m`}
                     </Text>
                   </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Dietary */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>🥗 Khẩu vị / Dị ứng</Text>
-            <View style={styles.chipWrap}>
-              {DIETARY_MAP.map(item => {
-                const isActive = localDietary.includes(item.name);
-                return (
-                  <TouchableOpacity
-                    key={item.name}
-                    onPress={() => toggleDietary(item.name)}
-                    activeOpacity={0.8}
-                    style={[
-                      styles.chip,
-                      isActive && styles.chipActive,
-                    ]}
-                  >
-                    <Text style={[
-                      styles.chipText,
-                      isActive && styles.chipTextActive,
-                    ]}>
-                      {item.emoji} {item.name} {isActive ? '✓' : ''}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Custom Food */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>✍️ Thêm món ăn tự chọn</Text>
-            <View style={styles.customInputRow}>
-              <TextInput
-                placeholder="Ví dụ: Cơm rang dưa bò..."
-                value={newCustomFood}
-                onChangeText={setNewCustomFood}
-                style={styles.customInput}
-                placeholderTextColor="#8e4e14"
-                onSubmitEditing={() => {
-                  if (newCustomFood.trim()) {
-                    onAddCustom(newCustomFood.trim());
-                    setNewCustomFood('');
-                  }
-                }}
-              />
-              <TouchableOpacity
-                onPress={() => {
-                  if (newCustomFood.trim()) {
-                    onAddCustom(newCustomFood.trim());
-                    setNewCustomFood('');
-                  }
-                }}
-                activeOpacity={0.85}
-                style={styles.addButton}
-              >
-                <Text style={styles.addButtonText}>➕ Thêm</Text>
-              </TouchableOpacity>
-            </View>
-            {customCandidates.length > 0 && (
-              <View style={styles.chipWrap}>
-                {customCandidates.map(c => (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => onRemoveCustom(c.id)}
-                    style={styles.customTag}
-                  >
-                    <Text style={styles.customTagText}>{c.name} ✕</Text>
-                  </Pressable>
                 ))}
               </View>
-            )}
-          </View>
-        </ScrollView>
+            </View>
 
-        {/* Actions */}
-        <View style={styles.actions}>
-          <TouchableOpacity onPress={handleReset} style={styles.resetButton} activeOpacity={0.8}>
-            <Text style={styles.resetButtonText}>🔄 Đặt Lại</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleApply} style={styles.applyButton} activeOpacity={0.88}>
-            <Text style={styles.applyButtonText}>ÁP DỤNG BỘ LỌC ➔</Text>
-          </TouchableOpacity>
+            {/* Price */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionLabel}>💰 Mức giá tối đa</Text>
+                <Text style={styles.sectionValue}>
+                  {localPriceVND >= 1000000 ? 'Tất cả mức giá' : `${(localPriceVND / 1000).toLocaleString('vi-VN')}k đ`}
+                </Text>
+              </View>
+              <View style={styles.chipWrap}>
+                {[100000, 300000, 500000, 1000000].map((price) => (
+                  <TouchableOpacity
+                    key={price}
+                    onPress={() => setLocalPriceVND(price)}
+                    activeOpacity={0.8}
+                    style={[
+                      styles.chip,
+                      localPriceVND === price && styles.chipActive,
+                    ]}
+                  >
+                    <Text style={[
+                      styles.chipText,
+                      localPriceVND === price && styles.chipTextActive,
+                    ]}>
+                      {price === 1000000 ? 'Tất cả' : `≤ ${(price / 1000).toLocaleString('vi-VN')}k`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Cuisine / Category */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionLabel}>🍜 Thể loại món ăn</Text>
+                {localCategories.length > 0 && (
+                  <Text style={styles.sectionValue}>{localCategories.length} đã chọn</Text>
+                )}
+              </View>
+              <View style={styles.chipWrap}>
+                {CUISINE_MAP.map((item) => {
+                  const isSelected = localCategories.includes(item.name);
+                  return (
+                    <TouchableOpacity
+                      key={item.name}
+                      onPress={() => toggleCategory(item.name)}
+                      activeOpacity={0.8}
+                      style={[styles.chip, isSelected && styles.chipActive]}
+                    >
+                      <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
+                        {item.emoji} {item.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Dietary */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionLabel}>🥗 Sở thích / Kiêng khem</Text>
+                {localDietary.length > 0 && (
+                  <Text style={styles.sectionValue}>{localDietary.length} đã chọn</Text>
+                )}
+              </View>
+              <View style={styles.chipWrap}>
+                {DIETARY_MAP.map((item) => {
+                  const isSelected = localDietary.includes(item.name);
+                  return (
+                    <TouchableOpacity
+                      key={item.name}
+                      onPress={() => toggleDietary(item.name)}
+                      activeOpacity={0.8}
+                      style={[styles.chip, isSelected && styles.chipActive]}
+                    >
+                      <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
+                        {item.emoji} {item.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Custom Dishes (Góp món thủ công) */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionLabel}>✍️ Tự thêm món bạn muốn</Text>
+              </View>
+              <View style={styles.customInputRow}>
+                <TextInput
+                  style={styles.customInput}
+                  placeholder="Ví dụ: Bún riêu cua, Nem nướng..."
+                  placeholderTextColor="#8e4e14"
+                  value={newCustomFood}
+                  onChangeText={setNewCustomFood}
+                  onSubmitEditing={() => {
+                    if (newCustomFood.trim()) {
+                      onAddCustom(newCustomFood.trim());
+                      setNewCustomFood('');
+                    }
+                  }}
+                />
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={() => {
+                    if (newCustomFood.trim()) {
+                      onAddCustom(newCustomFood.trim());
+                      setNewCustomFood('');
+                    }
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.addButtonText}>➕ Thêm</Text>
+                </TouchableOpacity>
+              </View>
+
+              {customCandidates.length > 0 && (
+                <View style={styles.chipWrap}>
+                  {customCandidates.map((c) => (
+                    <TouchableOpacity
+                      key={c.id}
+                      onPress={() => onRemoveCustom(c.id)}
+                      style={styles.customTag}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.customTagText}>🍲 {c.name} ✕</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          </ScrollView>
+
+          {/* Action Buttons */}
+          <View style={styles.actions}>
+            <TouchableOpacity onPress={handleReset} style={styles.resetButton} activeOpacity={0.8}>
+              <Text style={styles.resetButtonText}>🔄 Đặt Lại</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleApply} style={styles.applyButton} activeOpacity={0.88}>
+              <Text style={styles.applyButtonText}>ÁP DỤNG BỘ LỌC ➔</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   modalContainer: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 9999,
-    elevation: 9999,
+    flex: 1,
     justifyContent: 'flex-end',
   },
   backdrop: {
