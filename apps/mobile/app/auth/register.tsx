@@ -49,7 +49,8 @@ export default function RegisterScreen() {
       await login(formData.email.trim(), formData.password);
       router.replace('/onboarding' as any);
     } catch (err: any) {
-      setError(err.message || 'Đăng ký thất bại');
+      const message = err?.response?.data?.error || err.message || 'Đăng ký thất bại';
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }

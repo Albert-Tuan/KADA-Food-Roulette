@@ -30,11 +30,19 @@ interface UserLike {
   displayNamePublic?: string | null;
   publicId?: string | null;
   avatarUrl?: string | null;
+  bio?: string | null;
   xp?: number | null;
   streakDays?: number | null;
   coins?: number | null;
   role?: string | null;
+  passwordHash?: string | null;
+  passwordVersion?: number | null;
+  isOnboarded?: boolean | null;
   createdAt?: Date | string | null;
+  deletedAt?: Date | string | null;
+  lastActiveAt?: Date | string | null;
+  subscriptionTier?: string | null;
+  themePreference?: string | null;
 }
 
 const formatUserProfile = (user: UserLike) => ({
@@ -64,18 +72,19 @@ export const authController = {
         });
       }
 
-      const namePrivate = displayNamePrivate || displayNamePublic || email.split('@')[0];
-      const namePublic = displayNamePublic || displayNamePrivate || email.split('@')[0];
+      const cleanEmail = email.trim().toLowerCase();
+      const namePrivate = (displayNamePrivate || displayNamePublic || cleanEmail.split('@')[0]).trim();
+      const namePublic = (displayNamePublic || displayNamePrivate || cleanEmail.split('@')[0]).trim();
 
       let existingUser = null;
       let user = null;
 
       try {
-        existingUser = await prisma.user.findUnique({ where: { email } });
+        existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
         if (existingUser) {
           return res.status(400).json({
             success: false,
-            error: 'Email này đã được sử dụng.'
+            error: 'Email này đã được sử dụng. Vui lòng đăng nhập hoặc dùng email khác.'
           });
         }
 
@@ -84,7 +93,7 @@ export const authController = {
 
         user = await prisma.user.create({
           data: {
-            email,
+            email: cleanEmail,
             passwordHash,
             displayNamePrivate: namePrivate,
             displayNamePublic: namePublic,
@@ -93,20 +102,29 @@ export const authController = {
             isOnboarded: true,
           },
         });
-      } catch {
-        console.log('[Auth] DB notice during register, using in-memory demo registration');
+      } catch (dbError: unknown) {
+        console.log('[Auth] DB notice during register, saving to in-memory store:', dbError instanceof Error ? dbError.message : dbError);
+        if (inMemoryUserStoreByEmail.has(cleanEmail)) {
+          return res.status(400).json({
+            success: false,
+            error: 'Email này đã được sử dụng.'
+          });
+        }
         const publicId = `u_${Math.random().toString(36).substring(2, 9)}`;
+        const passwordHash = await bcrypt.hash(password, 10);
         user = {
           id: `user_${Date.now()}`,
-          email,
+          email: cleanEmail,
+          passwordHash,
           displayNamePrivate: namePrivate,
           displayNamePublic: namePublic,
           publicId,
-          avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+          avatarUrl: `https://api.dicebear.com/7.x/avataaars/png?seed=${cleanEmail}`,
           xp: 100,
           streakDays: 1,
           coins: 50,
           role: 'USER',
+          isOnboarded: true,
           createdAt: new Date().toISOString(),
         };
       }
