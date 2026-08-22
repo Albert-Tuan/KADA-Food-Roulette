@@ -1,0 +1,4 @@
+interface:
+  display_name: "Food Roulette Git Integration"
+  short_description: "Sync, merge, verify, and push repository branches safely"
+  default_prompt: "Use $food-roulette-git-integration to integrate this Food Roulette branch in the requested direction, resolve conflicts, verify affected packages, and deliver only the authorized refs."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Food Roulette Local Stack"
+  short_description: "Run and diagnose the real MySQL, Express, and Expo stack"
+  default_prompt: "Use $food-roulette-local-stack to set up or run the requested Food Roulette local environment and verify each runtime layer without exposing credentials."

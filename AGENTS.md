@@ -102,6 +102,8 @@ Thay đổi cross-feature → phối hợp với owner. Spec/architecture confli
 
 - `food-roulette-feature-workflow` — route mọi feature work. Bắt đầu bằng context snapshot:
   `bash "$(git rev-parse --show-toplevel)/.agents/skills/food-roulette-feature-workflow/scripts/context-snapshot.sh"`
+- `food-roulette-git-integration` — đồng bộ `main`, giải quyết conflict, verify và push đúng ref được user cho phép; có hướng dẫn xử lý remote ref xung đột hoa/thường trên macOS.
+- `food-roulette-local-stack` — setup/chạy/chẩn đoán MySQL + Express + Expo trên simulator hoặc thiết bị thật; giữ Supabase service-role credential ở backend.
 - `post-code-double-check` — bắt buộc sau mỗi code change (error-swallowing audit + gates).
 - Khác: `code-review-and-quality`, `security-and-hardening`, `observability-and-instrumentation`, `debugging-and-error-recovery`.
 
