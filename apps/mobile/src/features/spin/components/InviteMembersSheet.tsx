@@ -20,7 +20,7 @@ import Svg, { Rect } from 'react-native-svg';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import type { GroupMember } from '../types';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface InviteMembersSheetProps {
   visible: boolean;
@@ -102,6 +102,8 @@ export function InviteMembersSheet({ visible, onClose }: InviteMembersSheetProps
     }
   };
 
+  if (!visible) return null;
+
   return (
     <Modal
       visible={visible}
@@ -110,19 +112,20 @@ export function InviteMembersSheet({ visible, onClose }: InviteMembersSheetProps
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.modalContainer}
-      >
+      <View style={styles.modalContainer}>
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.sheet}>
-          {/* Grab Handle */}
-          <View style={styles.grabHandleContainer}>
-            <View style={styles.grabHandle} />
-          </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.sheetContainer}
+        >
+          <View style={styles.sheet}>
+            {/* Grab Handle */}
+            <View style={styles.grabHandleContainer}>
+              <View style={styles.grabHandle} />
+            </View>
 
-          {/* Header */}
-          <View style={styles.header}>
+            {/* Header */}
+            <View style={styles.header}>
             <View style={{ flex: 1, paddingRight: 8 }}>
               <Text style={styles.title}>👥 Mời & Nhập Mã Phòng</Text>
               <Text style={styles.subtitle}>Chia sẻ mã cho bạn bè hoặc nhập mã để vào nhóm</Text>
@@ -260,20 +263,28 @@ export function InviteMembersSheet({ visible, onClose }: InviteMembersSheetProps
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </View>
+  </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   modalContainer: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
+    ...StyleSheet.absoluteFillObject,
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
     justifyContent: 'flex-end',
+    zIndex: 9999,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  sheetContainer: {
+    width: '100%',
+    justifyContent: 'flex-end',
   },
   sheet: {
     width: '100%',
