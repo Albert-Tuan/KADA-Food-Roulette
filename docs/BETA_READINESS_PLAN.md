@@ -178,7 +178,8 @@ Môi trường local: macOS, Node `v22.23.2`, npm `10.9.8`.
 ### Dependency audit
 
 - Backend: 2 high-severity findings qua dependency chain `localtunnel -> axios`.
-- Mobile: 13 high và 2 moderate findings trong chuỗi Expo/Metro/XML/image parsing.
+- Mobile production tree (`npm audit --omit=dev`): 13 high và 2 moderate findings trong chuỗi Expo/Metro/XML/image parsing; không có critical finding.
+- Mobile full tree gồm build/dev tooling: 1 critical, 20 high và 4 moderate; critical finding nằm trong chuỗi `@expo/cli -> cacache -> tar`.
 - Không tự động chạy `npm audit fix --force`; cần đánh giá reachability và nâng version tương thích với Expo SDK.
 
 ### Production smoke check
