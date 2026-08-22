@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, AppState, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, AppState, Alert, Modal, TextInput, ActivityIndicator, Dimensions } from 'react-native';
 import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -11,6 +11,8 @@ import { useGroupSpinStore } from '../../src/stores/groupSpinStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { restaurantApi, Restaurant as ApiRestaurant } from '../../src/api/endpoints/restaurants';
 import type { Restaurant } from '../../src/features/spin/types';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface Reward {
   id: string;
@@ -353,108 +355,112 @@ export default function SpinScreen() {
       </SafeAreaView>
 
       {/* Combo Winners Reveal Modal (2-3 món cùng lúc) */}
-      <Modal
-        visible={isComboModalOpen}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => setIsComboModalOpen(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalBadge}>🎉 COMBO {comboWinners.length} MÓN TRÚNG THƯỞNG 🎉</Text>
-              <Text style={styles.modalTitle}>✨ CHÚC MỪNG BẠN! ✨</Text>
-              <Text style={styles.modalSubtitle}>Vòng quay 3D đã chọn ra {comboWinners.length} món ngon xuất sắc</Text>
-            </View>
+      {isComboModalOpen && (
+        <Modal
+          visible={isComboModalOpen}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={() => setIsComboModalOpen(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalBadge}>🎉 COMBO {comboWinners.length} MÓN TRÚNG THƯỞNG 🎉</Text>
+                <Text style={styles.modalTitle}>✨ CHÚC MỪNG BẠN! ✨</Text>
+                <Text style={styles.modalSubtitle}>Vòng quay 3D đã chọn ra {comboWinners.length} món ngon xuất sắc</Text>
+              </View>
 
-            <View style={styles.modalBody}>
-              <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
-                {comboWinners.map((w, i) => (
-                  <TouchableOpacity
-                    key={`${w?.id || 'combo-dish'}-${i}`}
-                    activeOpacity={0.88}
-                    onPress={() => {
-                      setIsComboModalOpen(false);
-                      setCurrentResult(w);
-                      router.push('/spin/result');
-                    }}
-                    style={styles.comboWinnerCard}
-                  >
-                    <Image source={{ uri: w?.imageUrl || FALLBACK_IMAGE_URL }} style={styles.comboWinnerImage} />
-                    <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                        <View style={styles.comboNumberBadge}>
-                          <Text style={styles.comboNumberBadgeText}>#{i + 1}</Text>
+              <View style={styles.modalBody}>
+                <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
+                  {comboWinners.map((w, i) => (
+                    <TouchableOpacity
+                      key={`${w?.id || 'combo-dish'}-${i}`}
+                      activeOpacity={0.88}
+                      onPress={() => {
+                        setIsComboModalOpen(false);
+                        setCurrentResult(w);
+                        router.push('/spin/result');
+                      }}
+                      style={styles.comboWinnerCard}
+                    >
+                      <Image source={{ uri: w?.imageUrl || FALLBACK_IMAGE_URL }} style={styles.comboWinnerImage} />
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                          <View style={styles.comboNumberBadge}>
+                            <Text style={styles.comboNumberBadgeText}>#{i + 1}</Text>
+                          </View>
+                          <Text style={styles.comboWinnerName} numberOfLines={1}>{w?.name || 'Món ăn trúng thưởng'}</Text>
                         </View>
-                        <Text style={styles.comboWinnerName} numberOfLines={1}>{w?.name || 'Món ăn trúng thưởng'}</Text>
+                        <Text style={styles.comboWinnerInfo}>
+                          ⭐ {w?.rating ?? 5.0} • {w?.category ?? 'Ẩm thực'} • {((w?.distance ?? 0) / 1000).toFixed(1)}km
+                        </Text>
                       </View>
-                      <Text style={styles.comboWinnerInfo}>
-                        ⭐ {w?.rating ?? 5.0} • {w?.category ?? 'Ẩm thực'} • {((w?.distance ?? 0) / 1000).toFixed(1)}km
-                      </Text>
-                    </View>
-                    <Text style={styles.comboArrow}>➔</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+                      <Text style={styles.comboArrow}>➔</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
 
-              <TouchableOpacity
-                style={styles.modalCloseBtn}
-                activeOpacity={0.88}
-                onPress={() => setIsComboModalOpen(false)}
-              >
-                <Text style={styles.modalCloseBtnText}>Đóng & Quay Tiếp 🎲</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalCloseBtn}
+                  activeOpacity={0.88}
+                  onPress={() => setIsComboModalOpen(false)}
+                >
+                  <Text style={styles.modalCloseBtnText}>Đóng & Quay Tiếp 🎲</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
 
       {/* Join Group Room Modal */}
-      <Modal
-        visible={isJoinModalOpen}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => setIsJoinModalOpen(false)}
-      >
-        <View style={styles.joinModalOverlay}>
-          <View style={styles.joinModalCard}>
-            <Text style={styles.joinModalTitle}>🔑 Nhập Mã Phòng Nhóm</Text>
-            <Text style={styles.joinModalSubtitle}>
-              Nhập mã phòng từ bạn bè (ví dụ: FOOD-8892 hoặc ROOM-4K9X) để cùng tham gia quay và chọn món!
-            </Text>
+      {isJoinModalOpen && (
+        <Modal
+          visible={isJoinModalOpen}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={() => setIsJoinModalOpen(false)}
+        >
+          <View style={styles.joinModalOverlay}>
+            <View style={styles.joinModalCard}>
+              <Text style={styles.joinModalTitle}>🔑 Nhập Mã Phòng Nhóm</Text>
+              <Text style={styles.joinModalSubtitle}>
+                Nhập mã phòng từ bạn bè (ví dụ: FOOD-8892 hoặc ROOM-4K9X) để cùng tham gia quay và chọn món!
+              </Text>
 
-            <TextInput
-              style={styles.joinModalInput}
-              placeholder="Nhập mã phòng (ví dụ: FOOD-1234)"
-              placeholderTextColor="#8e4e14"
-              value={joinCodeInput}
-              onChangeText={setJoinCodeInput}
-              autoCapitalize="characters"
-              autoFocus
-            />
+              <TextInput
+                style={styles.joinModalInput}
+                placeholder="Nhập mã phòng (ví dụ: FOOD-1234)"
+                placeholderTextColor="#8e4e14"
+                value={joinCodeInput}
+                onChangeText={setJoinCodeInput}
+                autoCapitalize="characters"
+                autoFocus
+              />
 
-            <View style={styles.joinModalBtnRow}>
-              <TouchableOpacity
-                style={styles.joinModalCancelBtn}
-                onPress={() => setIsJoinModalOpen(false)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.joinModalCancelText}>Hủy</Text>
-              </TouchableOpacity>
+              <View style={styles.joinModalBtnRow}>
+                <TouchableOpacity
+                  style={styles.joinModalCancelBtn}
+                  onPress={() => setIsJoinModalOpen(false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.joinModalCancelText}>Hủy</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.joinModalConfirmBtn}
-                onPress={handleJoinRoom}
-                activeOpacity={0.88}
-              >
-                <Text style={styles.joinModalConfirmText}>Vào Phòng Ngay 🚀</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.joinModalConfirmBtn}
+                  onPress={handleJoinRoom}
+                  activeOpacity={0.88}
+                >
+                  <Text style={styles.joinModalConfirmText}>Vào Phòng Ngay 🚀</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
 
       {/* Filter Sheet */}
       <SpinFilterSheet
@@ -473,14 +479,16 @@ export default function SpinScreen() {
 const styles = StyleSheet.create({
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
     backgroundColor: 'rgba(0,0,0,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 16,
     zIndex: 9999,
   },
   modalCard: {
-    width: '100%',
+    width: '90%',
     maxWidth: 360,
     backgroundColor: '#fff8ef',
     borderRadius: 26,
@@ -558,20 +566,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   comboNumberBadgeText: {
-    fontSize: 10.5,
-    fontWeight: '900',
     color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '900',
   },
   comboWinnerName: {
-    fontSize: 14,
+    color: '#3d2314',
+    fontSize: 15,
     fontWeight: '900',
-    color: '#b52330',
     flex: 1,
   },
   comboWinnerInfo: {
-    fontSize: 11.5,
     color: '#8e4e14',
-    fontWeight: '600',
+    fontSize: 11.5,
+    fontWeight: '700',
   },
   comboArrow: {
     fontSize: 16,
@@ -582,11 +590,10 @@ const styles = StyleSheet.create({
   modalCloseBtn: {
     backgroundColor: '#b52330',
     paddingVertical: 14,
-    borderRadius: 18,
+    borderRadius: 16,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-    borderBottomWidth: 3.5,
+    marginTop: 8,
+    borderBottomWidth: 3,
     borderBottomColor: '#61000e',
     shadowColor: '#b52330',
     shadowOffset: { width: 0, height: 4 },
@@ -602,15 +609,17 @@ const styles = StyleSheet.create({
   },
   joinModalOverlay: {
     ...StyleSheet.absoluteFillObject,
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
     backgroundColor: 'rgba(0,0,0,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 16,
     zIndex: 9999,
   },
   joinModalCard: {
-    width: '100%',
-    maxWidth: 340,
+    width: '90%',
+    maxWidth: 360,
     backgroundColor: '#fff8ef',
     borderRadius: 24,
     padding: 22,

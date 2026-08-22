@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import type { SpinFilters } from '../types';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const CUISINE_MAP: { name: string; emoji: string }[] = [
   { name: 'Phở', emoji: '🍜' },
@@ -107,6 +107,8 @@ export function SpinFilterSheet({
   };
 
   const distanceSteps = [500, 1000, 2000, 3000, 5000, 7000, 10000];
+
+  if (!visible) return null;
 
   return (
     <Modal
@@ -312,14 +314,17 @@ export function SpinFilterSheet({
 
 const styles = StyleSheet.create({
   modalContainer: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
+    ...StyleSheet.absoluteFillObject,
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
     justifyContent: 'flex-end',
+    zIndex: 9999,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    backgroundColor: 'rgba(0,0,0,0.65)',
   },
   sheet: {
     width: '100%',
