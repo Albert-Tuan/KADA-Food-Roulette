@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Alert, Linking, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Alert, Linking, Modal, Platform, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../../stores/authStore';
@@ -13,6 +13,8 @@ import { GroupVoteVeto } from './GroupVoteVeto';
 import { GroupVoteResult } from './GroupVoteResult';
 import { GroupPactConfirmationModal } from './GroupPactConfirmationModal';
 import type { Restaurant, GroupMember } from '../types';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface GroupLobbyProps {
   onSpinEnd?: (winner: Restaurant) => void;
@@ -517,110 +519,114 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
       <InviteMembersSheet visible={isInviteOpen} onClose={() => setIsInviteOpen(false)} />
 
       {/* Join Room Code Modal */}
-      <Modal
-        visible={isJoinModalOpen}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => setIsJoinModalOpen(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>🔑 Nhập Mã Phòng</Text>
-            <Text style={styles.modalSubtitle}>Nhập mã phòng 4-8 ký tự để tham gia nhóm quay cùng bạn bè.</Text>
+      {isJoinModalOpen && (
+        <Modal
+          visible={isJoinModalOpen}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={() => setIsJoinModalOpen(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>🔑 Nhập Mã Phòng</Text>
+              <Text style={styles.modalSubtitle}>Nhập mã phòng 4-8 ký tự để tham gia nhóm quay cùng bạn bè.</Text>
 
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Ví dụ: PARTY2026 hoặc FR-8892"
-              placeholderTextColor="#8e4e14"
-              value={joinCodeInput}
-              onChangeText={setJoinCodeInput}
-              autoCapitalize="characters"
-              autoFocus
-            />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Ví dụ: PARTY2026 hoặc FR-8892"
+                placeholderTextColor="#8e4e14"
+                value={joinCodeInput}
+                onChangeText={setJoinCodeInput}
+                autoCapitalize="characters"
+                autoFocus
+              />
 
-            <View style={styles.modalBtnRow}>
-              <TouchableOpacity
-                style={styles.modalCancelBtn}
-                onPress={() => setIsJoinModalOpen(false)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.modalCancelText}>Hủy</Text>
-              </TouchableOpacity>
+              <View style={styles.modalBtnRow}>
+                <TouchableOpacity
+                  style={styles.modalCancelBtn}
+                  onPress={() => setIsJoinModalOpen(false)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.modalCancelText}>Hủy</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.modalConfirmBtn}
-                onPress={async () => {
-                  if (!joinCodeInput.trim()) {
-                    Alert.alert('Thông báo', 'Vui lòng nhập mã phòng!');
-                    return;
-                  }
-                  try {
-                    const success = await joinByCode(joinCodeInput);
-                    if (success) {
-                      setIsJoinModalOpen(false);
-                      Alert.alert('Thành công 🎉', `Bạn đã vào phòng #${joinCodeInput.trim().toUpperCase()}!`);
+                <TouchableOpacity
+                  style={styles.modalConfirmBtn}
+                  onPress={async () => {
+                    if (!joinCodeInput.trim()) {
+                      Alert.alert('Thông báo', 'Vui lòng nhập mã phòng!');
+                      return;
                     }
-                  } catch (err: any) {
-                    const msg = err?.response?.data?.error || err?.message || 'Không thể vào phòng này.';
-                    Alert.alert('Lỗi vào phòng', msg);
-                  }
-                }}
-                activeOpacity={0.88}
-              >
-                <Text style={styles.modalConfirmText}>Vào Phòng</Text>
-              </TouchableOpacity>
+                    try {
+                      const success = await joinByCode(joinCodeInput);
+                      if (success) {
+                        setIsJoinModalOpen(false);
+                        Alert.alert('Thành công 🎉', `Bạn đã vào phòng #${joinCodeInput.trim().toUpperCase()}!`);
+                      }
+                    } catch (err: any) {
+                      const msg = err?.response?.data?.error || err?.message || 'Không thể vào phòng này.';
+                      Alert.alert('Lỗi vào phòng', msg);
+                    }
+                  }}
+                  activeOpacity={0.88}
+                >
+                  <Text style={styles.modalConfirmText}>Vào Phòng</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
 
       {/* Kick Member Confirmation Modal */}
-      <Modal
-        visible={!!memberToKick}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => setMemberToKick(null)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>🚫 Xóa Thành Viên</Text>
-            <Text style={styles.modalSubtitle}>
-              Bạn có chắc chắn muốn xóa thành viên <Text style={{ fontWeight: '900', color: '#b52330' }}>{memberToKick?.name}</Text> khỏi phòng quay nhóm không?
-            </Text>
+      {!!memberToKick && (
+        <Modal
+          visible={!!memberToKick}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={() => setMemberToKick(null)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>🚫 Xóa Thành Viên</Text>
+              <Text style={styles.modalSubtitle}>
+                Bạn có chắc chắn muốn xóa thành viên <Text style={{ fontWeight: '900', color: '#b52330' }}>{memberToKick?.name}</Text> khỏi phòng quay nhóm không?
+              </Text>
 
-            <View style={styles.modalBtnRow}>
-              <TouchableOpacity
-                style={styles.modalCancelBtn}
-                onPress={() => setMemberToKick(null)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.modalCancelText}>Hủy</Text>
-              </TouchableOpacity>
+              <View style={styles.modalBtnRow}>
+                <TouchableOpacity
+                  style={styles.modalCancelBtn}
+                  onPress={() => setMemberToKick(null)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.modalCancelText}>Hủy</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.modalConfirmBtn, { backgroundColor: '#b52330', borderBottomColor: '#61000e' }]}
-                onPress={async () => {
-                  if (memberToKick) {
-                    const kickedName = memberToKick.name;
-                    await removeMember(memberToKick.id);
-                    setMemberToKick(null);
-                    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                      window.alert(`Đã xóa ${kickedName} khỏi nhóm thành công!`);
-                    } else {
-                      Alert.alert('Đã xóa', `Đã xóa ${kickedName} khỏi nhóm thành công!`);
+                <TouchableOpacity
+                  style={[styles.modalConfirmBtn, { backgroundColor: '#b52330', borderBottomColor: '#61000e' }]}
+                  onPress={async () => {
+                    if (memberToKick) {
+                      const kickedName = memberToKick.name;
+                      await removeMember(memberToKick.id);
+                      setMemberToKick(null);
+                      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                        window.alert(`Đã xóa ${kickedName} khỏi nhóm thành công!`);
+                      } else {
+                        Alert.alert('Đã xóa', `Đã xóa ${kickedName} khỏi nhóm thành công!`);
+                      }
                     }
-                  }
-                }}
-                activeOpacity={0.88}
-              >
-                <Text style={styles.modalConfirmText}>Xác nhận Xóa</Text>
-              </TouchableOpacity>
+                  }}
+                  activeOpacity={0.88}
+                >
+                  <Text style={styles.modalConfirmText}>Xác nhận Xóa</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
     </>
   );
 }
@@ -1023,15 +1029,17 @@ const styles = StyleSheet.create({
   // Join Room Modal
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
     backgroundColor: 'rgba(0,0,0,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 16,
     zIndex: 9999,
   },
   modalCard: {
-    width: '100%',
-    maxWidth: 340,
+    width: '90%',
+    maxWidth: 360,
     backgroundColor: '#fff8ef',
     borderRadius: 24,
     padding: 22,

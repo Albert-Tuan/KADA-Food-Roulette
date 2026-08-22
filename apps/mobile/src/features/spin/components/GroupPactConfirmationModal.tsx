@@ -15,7 +15,7 @@ import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import { useSpinStore } from '../../../stores/spinStore';
 import type { Restaurant } from '../types';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface GroupPactConfirmationModalProps {
   visible: boolean;
@@ -197,6 +197,8 @@ export function GroupPactConfirmationModal({
 const styles = StyleSheet.create({
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
     backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -204,7 +206,7 @@ const styles = StyleSheet.create({
     zIndex: 9999,
   },
   modalCard: {
-    width: '100%',
+    width: '90%',
     maxWidth: 380,
     maxHeight: SCREEN_HEIGHT * 0.9,
     backgroundColor: '#fff8ef',
