@@ -9,13 +9,12 @@ import {
   Image,
   Share,
   Dimensions,
-  Platform,
 } from 'react-native';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import { useSpinStore } from '../../../stores/spinStore';
 import type { Restaurant } from '../types';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface GroupPactConfirmationModalProps {
   visible: boolean;

@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import type { Restaurant, SpinFilters } from '../features/spin/types';
 import { restaurantApi } from '../api/endpoints/restaurants';
-import { rouletteApi } from '../api/endpoints/roulette';
 import { preferencesApi } from '../api/endpoints/preferences';
 import { mapBackendRestaurantToSpinCandidate } from '../features/spin/utils/mapper';
 

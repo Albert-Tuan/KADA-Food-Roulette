@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import type { SpinFilters } from '../types';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const CUISINE_MAP: { name: string; emoji: string }[] = [
   { name: 'Phở', emoji: '🍜' },
