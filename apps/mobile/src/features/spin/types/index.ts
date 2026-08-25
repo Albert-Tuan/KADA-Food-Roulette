@@ -16,6 +16,8 @@ export interface SpinFilters {
   maxPriceVND: number;
   categories: string[];
   dietary: string[];
+  dislikedIngredients: string[];
+  spiceTolerance?: string;
 }
 
 export interface CustomCandidate {

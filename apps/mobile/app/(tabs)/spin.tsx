@@ -94,6 +94,9 @@ export default function SpinScreen() {
     (async () => {
       try {
         setIsLoading(true);
+        // Automatically load AI taste and allergy preferences
+        await useSpinStore.getState().loadUserPreferences();
+        
         const list = await restaurantApi.list({ status: 'APPROVED' });
         if (!cancelled && list && list.length > 0) {
           setCandidates(list.map(toSpinRestaurant));
@@ -181,6 +184,20 @@ export default function SpinScreen() {
                   {filters.categories.length > 0 && (
                     <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={styles.contextChip}>
                       <Text style={styles.contextChipText}>🍲 {filters.categories.length} loại</Text>
+                    </TouchableOpacity>
+                  )}
+                  {filters.dislikedIngredients && filters.dislikedIngredients.length > 0 && (
+                    <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={[styles.contextChip, { borderColor: '#e2bebc', backgroundColor: '#ffdad8' }]}>
+                      <Text style={[styles.contextChipText, { color: '#b52330', fontWeight: '800' }]}>
+                        🛡️ {filters.dislikedIngredients.length} dị ứng
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {filters.dietary && filters.dietary.length > 0 && (
+                    <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={[styles.contextChip, { borderColor: '#85d0ab', backgroundColor: '#e2f7ed' }]}>
+                      <Text style={[styles.contextChipText, { color: '#166b47', fontWeight: '800' }]}>
+                        🌿 {filters.dietary.join(', ')}
+                      </Text>
                     </TouchableOpacity>
                   )}
                 </View>

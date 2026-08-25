@@ -20,7 +20,7 @@ import Svg, { Rect } from 'react-native-svg';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import type { GroupMember } from '../types';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface InviteMembersSheetProps {
   visible: boolean;

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Alert, Linking, Modal, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, ScrollView, TouchableOpacity, Alert, Linking, Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../../stores/authStore';
@@ -13,8 +13,6 @@ import { GroupVoteVeto } from './GroupVoteVeto';
 import { GroupVoteResult } from './GroupVoteResult';
 import { GroupPactConfirmationModal } from './GroupPactConfirmationModal';
 import type { Restaurant, GroupMember } from '../types';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface GroupLobbyProps {
   onSpinEnd?: (winner: Restaurant) => void;
