@@ -478,14 +478,11 @@ export default function SpinScreen() {
 
 const styles = StyleSheet.create({
   modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    zIndex: 9999,
   },
   modalCard: {
     width: '90%',
@@ -608,14 +605,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   joinModalOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    zIndex: 9999,
   },
   joinModalCard: {
     width: '90%',

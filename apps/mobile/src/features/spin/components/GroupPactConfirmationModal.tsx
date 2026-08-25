@@ -196,14 +196,11 @@ export function GroupPactConfirmationModal({
 
 const styles = StyleSheet.create({
   modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    zIndex: 9999,
   },
   modalCard: {
     width: '90%',
