@@ -1028,14 +1028,11 @@ const styles = StyleSheet.create({
 
   // Join Room Modal
   modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    zIndex: 9999,
   },
   modalCard: {
     width: '90%',

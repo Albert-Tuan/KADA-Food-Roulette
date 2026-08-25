@@ -270,21 +270,18 @@ export function InviteMembersSheet({ visible, onClose }: InviteMembersSheetProps
 
 const styles = StyleSheet.create({
   modalContainer: {
-    ...StyleSheet.absoluteFillObject,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    flex: 1,
     justifyContent: 'flex-end',
-    zIndex: 9999,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   sheetContainer: {
     width: '100%',
     justifyContent: 'flex-end',
+    zIndex: 10,
+    elevation: 16,
   },
   sheet: {
     width: '100%',
@@ -301,7 +298,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
-    elevation: 12,
+    elevation: 16,
+    zIndex: 10,
   },
   grabHandleContainer: {
     alignItems: 'center',
