@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Modal,
+  Pressable,
   ScrollView,
   Image,
   Share,
@@ -70,15 +70,9 @@ export function GroupPactConfirmationModal({
   if (!visible) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
+    <View style={styles.modalOverlay}>
+      <Pressable style={styles.backdrop} onPress={onClose} />
+      <View style={styles.modalCard}>
           {/* Badge & Title */}
           <View style={styles.header}>
             <View style={styles.badge}>
@@ -189,17 +183,29 @@ export function GroupPactConfirmationModal({
           </View>
         </View>
       </View>
-    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.65)',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+    elevation: 9999,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
+  },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.65)',
   },
   modalCard: {
     width: '90%',

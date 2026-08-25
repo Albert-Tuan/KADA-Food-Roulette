@@ -129,16 +129,9 @@ export function SpinFilterSheet({
   if (!visible) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalContainer}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.sheet}>
+    <View style={styles.modalContainer}>
+      <Pressable style={styles.backdrop} onPress={onClose} />
+      <View style={styles.sheet}>
           {/* Grab Handle */}
           <View style={styles.grabHandleContainer}>
             <View style={styles.grabHandle} />
@@ -367,17 +360,26 @@ export function SpinFilterSheet({
           </View>
         </View>
       </View>
-    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   modalContainer: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+    elevation: 9999,
     justifyContent: 'flex-end',
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   sheet: {
