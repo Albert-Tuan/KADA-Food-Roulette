@@ -11,9 +11,9 @@ import Svg, { Path, G, Text as SvgText, Circle } from 'react-native-svg';
 import type { Restaurant } from '../types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const WHEEL_SIZE = Math.min(SCREEN_WIDTH - 48, 330);
+const WHEEL_SIZE = Math.min(SCREEN_WIDTH - 64, 285);
 const CENTER = WHEEL_SIZE / 2;
-const RADIUS = CENTER - 18;
+const RADIUS = CENTER - 15;
 
 const SEGMENT_COLORS = [
   '#b52330', // Deep Crimson Red
@@ -285,39 +285,25 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
 
     return (
       <View style={styles.container}>
-        {/* Top 3D Pointer Badge (Pointer 1) */}
-        <View style={styles.pointerContainer}>
-          <Svg width={32} height={40} viewBox="0 0 28 36">
-            <Path
-              d="M14 36 L2 10 A12 12 0 1 1 26 10 Z"
-              fill="#b52330"
-              stroke="#FFC107"
-              strokeWidth={2.5}
-            />
-            <Circle cx={14} cy={12} r={4} fill="#ffffff" />
-          </Svg>
-        </View>
-
-        {/* Pointer 2 for Mode 2 (180° Bottom) */}
-        {multiSpinMode === 2 && (
-          <View style={styles.pointerBottomContainer}>
-            <Svg width={32} height={40} viewBox="0 0 28 36" style={{ transform: [{ rotate: '180deg' }] }}>
+        {/* Wheel and Pointers Assembly */}
+        <View style={styles.wheelAssembly}>
+          {/* Top 3D Pointer Badge (Pointer 1) */}
+          <View style={styles.pointerContainer}>
+            <Svg width={30} height={38} viewBox="0 0 28 36">
               <Path
                 d="M14 36 L2 10 A12 12 0 1 1 26 10 Z"
-                fill="#166b47"
+                fill="#b52330"
                 stroke="#FFC107"
                 strokeWidth={2.5}
               />
               <Circle cx={14} cy={12} r={4} fill="#ffffff" />
             </Svg>
           </View>
-        )}
 
-        {/* Pointer 2 & 3 for Mode 3 (120° and 240°) */}
-        {multiSpinMode === 3 && (
-          <>
-            <View style={styles.pointer120Container}>
-              <Svg width={32} height={40} viewBox="0 0 28 36" style={{ transform: [{ rotate: '120deg' }] }}>
+          {/* Pointer 2 for Mode 2 (180° Bottom) */}
+          {multiSpinMode === 2 && (
+            <View style={styles.pointerBottomContainer}>
+              <Svg width={30} height={38} viewBox="0 0 28 36" style={{ transform: [{ rotate: '180deg' }] }}>
                 <Path
                   d="M14 36 L2 10 A12 12 0 1 1 26 10 Z"
                   fill="#166b47"
@@ -327,56 +313,73 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
                 <Circle cx={14} cy={12} r={4} fill="#ffffff" />
               </Svg>
             </View>
-            <View style={styles.pointer240Container}>
-              <Svg width={32} height={40} viewBox="0 0 28 36" style={{ transform: [{ rotate: '240deg' }] }}>
-                <Path
-                  d="M14 36 L2 10 A12 12 0 1 1 26 10 Z"
-                  fill="#8e4e14"
+          )}
+
+          {/* Pointer 2 & 3 for Mode 3 (120° and 240°) */}
+          {multiSpinMode === 3 && (
+            <>
+              <View style={styles.pointer120Container}>
+                <Svg width={30} height={38} viewBox="0 0 28 36" style={{ transform: [{ rotate: '120deg' }] }}>
+                  <Path
+                    d="M14 36 L2 10 A12 12 0 1 1 26 10 Z"
+                    fill="#166b47"
+                    stroke="#FFC107"
+                    strokeWidth={2.5}
+                  />
+                  <Circle cx={14} cy={12} r={4} fill="#ffffff" />
+                </Svg>
+              </View>
+              <View style={styles.pointer240Container}>
+                <Svg width={30} height={38} viewBox="0 0 28 36" style={{ transform: [{ rotate: '240deg' }] }}>
+                  <Path
+                    d="M14 36 L2 10 A12 12 0 1 1 26 10 Z"
+                    fill="#8e4e14"
+                    stroke="#FFC107"
+                    strokeWidth={2.5}
+                  />
+                  <Circle cx={14} cy={12} r={4} fill="#ffffff" />
+                </Svg>
+              </View>
+            </>
+          )}
+
+          {/* Wheel Assembly */}
+          <View style={styles.wheelOuterFrame}>
+            <Animated.View style={[styles.wheelContainer, animatedStyle]}>
+              <Svg width={WHEEL_SIZE} height={WHEEL_SIZE} viewBox={`0 0 ${WHEEL_SIZE} ${WHEEL_SIZE}`}>
+                {/* Outer Metallic Ring */}
+                <Circle
+                  cx={CENTER}
+                  cy={CENTER}
+                  r={RADIUS + 7}
+                  fill="#b52330"
                   stroke="#FFC107"
-                  strokeWidth={2.5}
+                  strokeWidth={6}
                 />
-                <Circle cx={14} cy={12} r={4} fill="#ffffff" />
+
+                {/* Slices */}
+                <G>{renderSegments()}</G>
+
+                {/* Circumference Lights */}
+                <G>{renderOuterLights()}</G>
               </Svg>
-            </View>
-          </>
-        )}
 
-        {/* Wheel Assembly */}
-        <View style={styles.wheelOuterFrame}>
-          <Animated.View style={[styles.wheelContainer, animatedStyle]}>
-            <Svg width={WHEEL_SIZE} height={WHEEL_SIZE} viewBox={`0 0 ${WHEEL_SIZE} ${WHEEL_SIZE}`}>
-              {/* Outer Metallic Ring */}
-              <Circle
-                cx={CENTER}
-                cy={CENTER}
-                r={RADIUS + 9}
-                fill="#b52330"
-                stroke="#FFC107"
-                strokeWidth={7}
-              />
+              {candidates.length === 0 && (
+                <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(181, 35, 48, 0.85)', borderRadius: WHEEL_SIZE / 2, zIndex: 10 }]}>
+                  <Text style={{ color: 'white', fontSize: 15, textAlign: 'center', padding: 18, fontWeight: 'bold', lineHeight: 22 }}>
+                    Không tìm thấy quán ăn gần bạn.{'\n'}Hãy mở rộng khoảng cách{'\n'}hoặc tự "Thêm món" nhé!
+                  </Text>
+                </View>
+              )}
 
-              {/* Slices */}
-              <G>{renderSegments()}</G>
-
-              {/* Circumference Lights */}
-              <G>{renderOuterLights()}</G>
-            </Svg>
-
-            {candidates.length === 0 && (
-              <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(181, 35, 48, 0.85)', borderRadius: WHEEL_SIZE / 2, zIndex: 10 }]}>
-                <Text style={{ color: 'white', fontSize: 16, textAlign: 'center', padding: 20, fontWeight: 'bold', lineHeight: 24 }}>
-                  Không tìm thấy quán ăn gần bạn.{'\n'}Hãy mở rộng khoảng cách{'\n'}hoặc tự "Thêm món" nhé!
-                </Text>
+              {/* 3D Tactile Center Bullseye Hub */}
+              <View style={[styles.centerCircle, { zIndex: 11 }]}>
+                <View style={styles.centerInnerCircle}>
+                  <Text style={styles.centerEmoji}>{spinning ? '🎲' : '🍜'}</Text>
+                </View>
               </View>
-            )}
-
-            {/* 3D Tactile Center Bullseye Hub */}
-            <View style={[styles.centerCircle, { zIndex: 11 }]}>
-              <View style={styles.centerInnerCircle}>
-                <Text style={styles.centerEmoji}>{spinning ? '🎲' : '🍜'}</Text>
-              </View>
-            </View>
-          </Animated.View>
+            </Animated.View>
+          </View>
         </View>
 
         {/* Spin Action Button */}
@@ -407,11 +410,19 @@ export const FoodRoulette = forwardRef<FoodRouletteRef, FoodRouletteProps>(
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 4,
+  },
+  wheelAssembly: {
+    width: WHEEL_SIZE,
+    height: WHEEL_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    marginVertical: 12,
   },
   pointerContainer: {
     position: 'absolute',
-    top: 2,
+    top: -14,
     zIndex: 20,
     alignItems: 'center',
     shadowColor: '#b52330',
@@ -422,7 +433,7 @@ const styles = StyleSheet.create({
   },
   pointerBottomContainer: {
     position: 'absolute',
-    bottom: 60,
+    bottom: -14,
     zIndex: 20,
     alignItems: 'center',
     shadowColor: '#166b47',
@@ -433,8 +444,8 @@ const styles = StyleSheet.create({
   },
   pointer120Container: {
     position: 'absolute',
-    bottom: 95,
-    right: 15,
+    bottom: 22,
+    right: -6,
     zIndex: 20,
     alignItems: 'center',
     shadowColor: '#166b47',
@@ -445,8 +456,8 @@ const styles = StyleSheet.create({
   },
   pointer240Container: {
     position: 'absolute',
-    bottom: 95,
-    left: 15,
+    bottom: 22,
+    left: -6,
     zIndex: 20,
     alignItems: 'center',
     shadowColor: '#8e4e14',
@@ -460,12 +471,11 @@ const styles = StyleSheet.create({
     height: WHEEL_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 18,
     borderRadius: WHEEL_SIZE / 2,
     shadowColor: '#b52330',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.22,
-    shadowRadius: 14,
+    shadowRadius: 12,
     elevation: 8,
   },
   wheelContainer: {
@@ -476,9 +486,9 @@ const styles = StyleSheet.create({
   },
   centerCircle: {
     position: 'absolute',
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#FFC107',
     alignItems: 'center',
     justifyContent: 'center',
@@ -491,9 +501,9 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   centerInnerCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#fff8ef',
     alignItems: 'center',
     justifyContent: 'center',
@@ -501,27 +511,27 @@ const styles = StyleSheet.create({
     borderColor: '#e2bebc',
   },
   centerEmoji: {
-    fontSize: 24,
+    fontSize: 22,
   },
   spinButton: {
-    marginTop: 24,
-    width: SCREEN_WIDTH - 64,
+    marginTop: 14,
+    width: Math.min(SCREEN_WIDTH - 48, 350),
     backgroundColor: '#b52330',
-    paddingVertical: 15,
-    borderRadius: 22,
+    paddingVertical: 14,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 4,
     borderBottomColor: '#61000e',
     shadowColor: '#b52330',
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
-    shadowRadius: 10,
+    shadowRadius: 8,
     elevation: 6,
   },
   spinButtonText: {
     color: '#ffffff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '900',
     letterSpacing: 0.5,
   },

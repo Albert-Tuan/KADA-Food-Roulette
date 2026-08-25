@@ -748,7 +748,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 24,
+    paddingBottom: 100,
   },
   modeSwitchContainer: {
     flexDirection: 'row',

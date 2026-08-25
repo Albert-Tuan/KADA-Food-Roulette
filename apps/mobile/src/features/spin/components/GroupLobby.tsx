@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 30,
+    paddingBottom: 110,
   },
 
   // Room Card Banner
