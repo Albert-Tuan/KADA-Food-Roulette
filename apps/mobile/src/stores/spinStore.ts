@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Restaurant, SpinFilters } from '../features/spin/types';
 import { restaurantApi } from '../api/endpoints/restaurants';
 import { rouletteApi } from '../api/endpoints/roulette';
+import { preferencesApi } from '../api/endpoints/preferences';
 import { mapBackendRestaurantToSpinCandidate } from '../features/spin/utils/mapper';
 
 interface SpinState {
@@ -20,13 +21,18 @@ interface SpinState {
   grantLuckySpin: () => void;
   consumeLuckySpin: () => void;
   fetchNearbyCandidates: (lat: number, lng: number) => Promise<void>;
+  loadUserPreferences: () => Promise<void>;
   markCheckedIn: (id: string) => void;
   isCheckedIn: (id: string) => boolean;
   spin: (lat?: number, lng?: number) => Promise<void>;
   resetStore: () => void;
 }
 
-
+const normalizeText = (text: string) =>
+  (text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 
 const getPriceLevel = (priceVND: number) => {
   if (priceVND <= 100000) return 1;
@@ -36,15 +42,33 @@ const getPriceLevel = (priceVND: number) => {
 };
 
 const applyFilters = (filters: SpinFilters, base: Restaurant[], custom: Restaurant[]) => {
+  const normalizedDisliked = (filters.dislikedIngredients || [])
+    .map(normalizeText)
+    .filter(Boolean);
+
   const filtered = base.filter(r => {
     if (r.distance > filters.maxDistance) return false;
     const maxAllowedLevel = getPriceLevel(filters.maxPriceVND);
     if (r.priceLevel > maxAllowedLevel) return false;
     if (filters.categories.length > 0 && !filters.categories.includes(r.category)) return false;
+    
     if (filters.dietary.length > 0) {
       const hasAllDietary = filters.dietary.every(d => r.dietary?.includes(d));
       if (!hasAllDietary) return false;
     }
+
+    if (normalizedDisliked.length > 0) {
+      const rNameNorm = normalizeText(r.name);
+      const rCatNorm = normalizeText(r.category);
+      const rAddressNorm = normalizeText(r.address || '');
+      const fullRestaurantText = `${rNameNorm} ${rCatNorm} ${rAddressNorm}`;
+      
+      const containsDisliked = normalizedDisliked.some(disliked =>
+        fullRestaurantText.includes(disliked)
+      );
+      if (containsDisliked) return false;
+    }
+
     return true;
   });
   return [...filtered, ...custom];
@@ -56,6 +80,7 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     maxPriceVND: 1000000,
     categories: [],
     dietary: [],
+    dislikedIngredients: [],
   },
   customCandidates: [],
   baseCandidates: [],
@@ -140,6 +165,27 @@ export const useSpinStore = create<SpinState>((set, get) => ({
     } catch (error) {
       console.error('Failed to fetch nearby restaurants:', error);
       throw error;
+    }
+  },
+
+  loadUserPreferences: async () => {
+    try {
+      const prefs = await preferencesApi.getPreferences();
+      if (prefs) {
+        const state = get();
+        const updatedFilters: SpinFilters = {
+          ...state.filters,
+          dietary: prefs.dietaryRestrictions || state.filters.dietary,
+          dislikedIngredients: prefs.dislikedIngredients || state.filters.dislikedIngredients,
+          spiceTolerance: prefs.spiceTolerance || state.filters.spiceTolerance,
+        };
+        set({
+          filters: updatedFilters,
+          candidates: applyFilters(updatedFilters, state.baseCandidates, state.customCandidates),
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to load user preferences in spinStore:', error);
     }
   },
 

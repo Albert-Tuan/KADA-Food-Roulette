@@ -1,12 +1,28 @@
-import { useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View, Switch } from 'react-native';
+import { useState, useEffect } from 'react';
+import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View, TextInput, Alert } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Polygon, Circle, Line, Text as SvgText } from 'react-native-svg';
 import { useMyProfile } from '@/features/profile';
 import { useLocketFeed, type Locket } from '@/features/lockets';
 import { useAuthStore } from '@/stores';
+import { preferencesApi } from '@/api/endpoints/preferences';
+import { useSpinStore } from '@/stores/spinStore';
 import { Ionicons } from '@expo/vector-icons';
+
+const POPULAR_ALLERGENS = [
+  { id: 'tom', label: 'Tôm', icon: '🦐' },
+  { id: 'cua', label: 'Cua/Ghẹ', icon: '🦀' },
+  { id: 'muc', label: 'Mực', icon: '🦑' },
+  { id: 'oc', label: 'Ốc', icon: '🐚' },
+  { id: 'ca', label: 'Cá', icon: '🐟' },
+  { id: 'dau phong', label: 'Đậu phộng', icon: '🥜' },
+  { id: 'sua', label: 'Sữa/Lactose', icon: '🥛' },
+  { id: 'trung', label: 'Trứng', icon: '🥚' },
+  { id: 'bot mi', label: 'Bột mì/Gluten', icon: '🌾' },
+  { id: 'hanh', label: 'Hành/Tỏi', icon: '🧅' },
+  { id: 'ngo', label: 'Ngò gai', icon: '🌿' },
+];
 
 export default function ProfileScreen() {
   const profile = useMyProfile();
@@ -16,16 +32,56 @@ export default function ProfileScreen() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const [activeTab, setActiveTab] = useState<'lockets' | 'achievements'>('lockets');
-  const [allergies, setAllergies] = useState({
-    seafood: false,
-    peanut: true,
-    milk: false,
-    gluten: false,
-    egg: false,
-  });
+  const [allergies, setAllergies] = useState<string[]>([]);
+  const [customInput, setCustomInput] = useState('');
+  const [isSavingAllergy, setIsSavingAllergy] = useState(false);
 
-  const toggleAllergy = (key: keyof typeof allergies) => {
-    setAllergies((prev) => ({ ...prev, [key]: !prev[key] }));
+  useEffect(() => {
+    if (isAuthenticated) {
+      preferencesApi.getPreferences().then(data => {
+        if (data && Array.isArray(data.dislikedIngredients)) {
+          setAllergies(data.dislikedIngredients);
+        }
+      }).catch(err => console.log('Fetch profile preferences error:', err));
+    }
+  }, [isAuthenticated]);
+
+  const saveAllergies = async (updated: string[]) => {
+    setAllergies(updated);
+    useSpinStore.getState().setFilters({ dislikedIngredients: updated });
+    try {
+      setIsSavingAllergy(true);
+      await preferencesApi.updatePreferences({ dislikedIngredients: updated });
+    } catch (err) {
+      console.warn('Save allergies failed:', err);
+    } finally {
+      setIsSavingAllergy(false);
+    }
+  };
+
+  const toggleQuickAllergen = (id: string) => {
+    const norm = id.toLowerCase().trim();
+    if (allergies.some(a => a.toLowerCase().trim() === norm)) {
+      saveAllergies(allergies.filter(a => a.toLowerCase().trim() !== norm));
+    } else {
+      saveAllergies([...allergies, id]);
+    }
+  };
+
+  const handleAddCustom = () => {
+    const trimmed = customInput.trim();
+    if (!trimmed) return;
+    if (allergies.some(a => a.toLowerCase() === trimmed.toLowerCase())) {
+      setCustomInput('');
+      return;
+    }
+    const updated = [...allergies, trimmed];
+    setCustomInput('');
+    saveAllergies(updated);
+  };
+
+  const handleRemoveAllergen = (item: string) => {
+    saveAllergies(allergies.filter(a => a !== item));
   };
 
   if (profile.isLoading) {
@@ -160,17 +216,70 @@ export default function ProfileScreen() {
         </Text>
       </View>
 
-      {/* Section: Allergy Settings */}
+      {/* Section: Granular Allergy & Custom Exclusion Settings */}
       <View className="mx-5 mb-5 bg-white rounded-3xl p-5 border-1.5 shadow-xs" style={{ borderColor: '#e2bebc' }}>
-        <Text className="text-base font-black text-primary mb-1">Thiết lập Dị ứng</Text>
-        <Text className="text-xs text-on-surface-variant mb-3 font-medium">Tự động loại trừ các quán có thành phần gây dị ứng khỏi vòng quay.</Text>
-        
-        <View className="gap-2.5">
-          <AllergyItem icon="🦐" label="Hải sản & Tôm cua" value={allergies.seafood} onToggle={() => toggleAllergy('seafood')} />
-          <AllergyItem icon="🥜" label="Đậu phộng & Hạt" value={allergies.peanut} onToggle={() => toggleAllergy('peanut')} />
-          <AllergyItem icon="🥛" label="Sữa & Lactose" value={allergies.milk} onToggle={() => toggleAllergy('milk')} />
-          <AllergyItem icon="🌾" label="Gluten & Bột mì" value={allergies.gluten} onToggle={() => toggleAllergy('gluten')} />
-          <AllergyItem icon="🥚" label="Trứng" value={allergies.egg} onToggle={() => toggleAllergy('egg')} />
+        <View className="flex-row items-center justify-between mb-1">
+          <Text className="text-base font-black text-primary">🛡️ Thiết lập Dị ứng & Kiêng khem</Text>
+          {isSavingAllergy && <ActivityIndicator size="small" color="#b52330" />}
+        </View>
+        <Text className="text-xs text-on-surface-variant mb-3 font-medium">
+          Tự động loại trừ các quán/món ăn chứa đúng thành phần bạn dị ứng khỏi vòng quay.
+        </Text>
+
+        {/* Custom Input Box */}
+        <View className="flex-row gap-2 mb-3">
+          <TextInput
+            value={customInput}
+            onChangeText={setCustomInput}
+            onSubmitEditing={handleAddCustom}
+            placeholder="Gõ món dị ứng (VD: Mực, Cua đồng, Sầu riêng...)"
+            placeholderTextColor="#a88574"
+            className="flex-1 px-3.5 py-2.5 rounded-2xl bg-amber-50/70 border border-outline-variant text-xs font-bold text-on-surface"
+          />
+          <TouchableOpacity
+            onPress={handleAddCustom}
+            activeOpacity={0.8}
+            className="px-3.5 py-2.5 rounded-2xl bg-primary items-center justify-center shadow-xs"
+          >
+            <Text className="text-white font-black text-xs">➕ Thêm</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Selected Allergens Tags */}
+        {allergies.length > 0 ? (
+          <View className="flex-row flex-wrap gap-1.5 mb-3 p-2.5 rounded-2xl bg-red-50/60 border border-red-200/80">
+            {allergies.map((item, idx) => (
+              <View key={`${item}-${idx}`} className="flex-row items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-red-300 shadow-xs">
+                <Text className="text-primary font-bold text-xs">🚫 {item}</Text>
+                <TouchableOpacity onPress={() => handleRemoveAllergen(item)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Text className="text-red-700 font-black text-xs ml-0.5">✕</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {/* Quick Suggestion Chips */}
+        <Text className="text-[11px] font-bold text-secondary mb-2">⚡ Gợi ý món/nguyên liệu phổ biến:</Text>
+        <View className="flex-row flex-wrap gap-1.5">
+          {POPULAR_ALLERGENS.map((al) => {
+            const isSelected = allergies.some(a => a.toLowerCase().trim() === al.id);
+            return (
+              <TouchableOpacity
+                key={al.id}
+                onPress={() => toggleQuickAllergen(al.id)}
+                activeOpacity={0.8}
+                className={`flex-row items-center gap-1 px-3 py-1.5 rounded-full border ${
+                  isSelected ? 'bg-primary border-primary' : 'bg-surface-low border-outline-variant/60'
+                }`}
+              >
+                <Text className="text-xs">{al.icon}</Text>
+                <Text className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-on-surface'}`}>
+                  {al.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
@@ -274,23 +383,6 @@ return (
     <Text className="text-lg">{icon}</Text>
     <Text className="text-xl font-black text-primary mt-0.5">{value}</Text>
     <Text className="text-[11px] font-bold text-on-surface-variant mt-0.5">{label}</Text>
-  </View>
-);
-}
-
-function AllergyItem({ icon, label, value, onToggle }: { icon: string; label: string; value: boolean; onToggle: () => void }) {
-return (
-  <View className="flex-row items-center justify-between p-3 rounded-2xl bg-surface-low border border-outline-variant/60">
-    <View className="flex-row items-center gap-2.5">
-      <Text className="text-lg">{icon}</Text>
-      <Text className="font-bold text-xs text-on-surface">{label}</Text>
-    </View>
-    <Switch 
-      value={value} 
-      onValueChange={onToggle}
-      trackColor={{ false: '#e2bebc', true: '#b52330' }}
-      thumbColor="#ffffff"
-    />
   </View>
 );
 }

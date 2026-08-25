@@ -59,6 +59,8 @@ export function SpinFilterSheet({
   const [localPriceVND, setLocalPriceVND] = useState(filters.maxPriceVND);
   const [localCategories, setLocalCategories] = useState<string[]>(filters.categories);
   const [localDietary, setLocalDietary] = useState<string[]>(filters.dietary);
+  const [localDisliked, setLocalDisliked] = useState<string[]>(filters.dislikedIngredients || []);
+  const [newAllergenInput, setNewAllergenInput] = useState('');
   const [newCustomFood, setNewCustomFood] = useState('');
 
   useEffect(() => {
@@ -67,6 +69,7 @@ export function SpinFilterSheet({
       setLocalPriceVND(filters.maxPriceVND);
       setLocalCategories(filters.categories);
       setLocalDietary(filters.dietary);
+      setLocalDisliked(filters.dislikedIngredients || []);
     }
   }, [visible, filters]);
 
@@ -84,6 +87,19 @@ export function SpinFilterSheet({
     );
   };
 
+  const handleAddAllergen = () => {
+    const trimmed = newAllergenInput.trim();
+    if (!trimmed) return;
+    if (!localDisliked.some(d => d.toLowerCase() === trimmed.toLowerCase())) {
+      setLocalDisliked([...localDisliked, trimmed]);
+    }
+    setNewAllergenInput('');
+  };
+
+  const handleRemoveAllergen = (item: string) => {
+    setLocalDisliked(localDisliked.filter(d => d !== item));
+  };
+
   const handleApply = () => {
     if (newCustomFood.trim()) {
       onAddCustom(newCustomFood.trim());
@@ -94,6 +110,7 @@ export function SpinFilterSheet({
       maxPriceVND: localPriceVND,
       categories: localCategories,
       dietary: localDietary,
+      dislikedIngredients: localDisliked,
     });
     onClose();
   };
@@ -103,6 +120,7 @@ export function SpinFilterSheet({
     setLocalPriceVND(1000000);
     setLocalCategories([]);
     setLocalDietary([]);
+    setLocalDisliked([]);
     customCandidates.forEach(c => onRemoveCustom(c.id));
   };
 
@@ -223,7 +241,7 @@ export function SpinFilterSheet({
             {/* Dietary */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionLabel}>🥗 Sở thích / Kiêng khem</Text>
+                <Text style={styles.sectionLabel}>🥗 Sở thích / Chế độ ăn</Text>
                 {localDietary.length > 0 && (
                   <Text style={styles.sectionValue}>{localDietary.length} đã chọn</Text>
                 )}
@@ -245,6 +263,47 @@ export function SpinFilterSheet({
                   );
                 })}
               </View>
+            </View>
+
+            {/* Granular Allergens */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionLabel}>🛡️ Dị ứng & Loại trừ món</Text>
+                {localDisliked.length > 0 && (
+                  <Text style={[styles.sectionValue, { color: '#b52330' }]}>{localDisliked.length} món cấm</Text>
+                )}
+              </View>
+              
+              <View style={styles.customInputRow}>
+                <TextInput
+                  style={styles.customInput}
+                  placeholder="Gõ món dị ứng (VD: Mực, Tôm, Sầu riêng...)"
+                  placeholderTextColor="#8e4e14"
+                  value={newAllergenInput}
+                  onChangeText={setNewAllergenInput}
+                  onSubmitEditing={handleAddAllergen}
+                />
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={handleAddAllergen}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.addButtonText}>➕ Thêm</Text>
+                </TouchableOpacity>
+              </View>
+
+              {localDisliked.length > 0 && (
+                <View style={[styles.chipWrap, { marginTop: 8 }]}>
+                  {localDisliked.map((item, idx) => (
+                    <View key={`${item}-${idx}`} style={[styles.customTag, { borderColor: '#e2bebc', backgroundColor: '#ffdad8', flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+                      <Text style={[styles.customTagText, { color: '#b52330' }]}>🚫 {item}</Text>
+                      <TouchableOpacity onPress={() => handleRemoveAllergen(item)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                        <Text style={{ color: '#b52330', fontWeight: '900', fontSize: 12 }}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
 
             {/* Custom Dishes (Góp món thủ công) */}
