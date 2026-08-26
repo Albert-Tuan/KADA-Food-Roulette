@@ -15,7 +15,7 @@
 
 
 
-## BUG #12: Tab navigation quá nhỏ (Taste Board)
+## BUG #14: Tab navigation quá nhỏ (Taste Board)
 
 **Status**: `[~] Fixed, awaiting verify`
 **Ngày report**: `2026-08-17`

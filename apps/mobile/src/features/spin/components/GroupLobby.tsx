@@ -276,7 +276,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
   }
 
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <SafeAreaView style={styles.container}>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* 1. COMPACT & CLEAN ROOM HEADER */}
@@ -611,7 +611,7 @@ export function GroupLobby({ onSpinEnd }: GroupLobbyProps) {
           </View>
         </View>
       )}
-    </>
+    </View>
   );
 }
 
