@@ -129,7 +129,7 @@ export default function SpinScreen() {
   }, [multiMode]);
 
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <SafeAreaView style={styles.container}>
         <ScrollView
           style={styles.scrollView}
@@ -475,7 +475,7 @@ export default function SpinScreen() {
         onAddCustom={addCustomCandidate}
         onRemoveCustom={removeCustomCandidate}
       />
-    </>
+    </View>
   );
 }
 
