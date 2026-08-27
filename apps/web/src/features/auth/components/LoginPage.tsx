@@ -26,9 +26,9 @@ export const LoginPage: React.FC = () => {
   const handleQuickDemoLogin = async () => {
     setError('');
     try {
-      setEmail('test@foodroulette.app');
+      setEmail('admin@foodroulette.app');
       setPassword('password123');
-      await login({ email: 'test@foodroulette.app', password: 'password123' });
+      await login({ email: 'admin@foodroulette.app', password: 'password123' });
       navigate(ROUTES.HOME);
     } catch {
       setError('Đăng nhập demo thất bại. Vui lòng thử lại.');

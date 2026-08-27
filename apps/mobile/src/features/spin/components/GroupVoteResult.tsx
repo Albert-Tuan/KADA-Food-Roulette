@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'rea
 import Animated, { FadeInDown, BounceIn } from 'react-native-reanimated';
 import { useGroupSpinStore } from '../../../stores/groupSpinStore';
 import { useSpinStore } from '../../../stores/spinStore';
+import { useRouter } from 'expo-router';
 import { CircleAiSuggestion } from './CircleAiSuggestion';
 import type { MemberScore } from '../types';
 
@@ -27,9 +28,22 @@ interface GroupVoteResultProps {
   onCreatePact: () => void;
   onRespin: () => void;
   onDirections: () => void;
+  onGoHome?: () => void;
+  onNewSpinRound?: () => void;
+  onLeaveRoom?: () => void;
+  isHost?: boolean;
 }
 
-export function GroupVoteResult({ onCreatePact, onRespin, onDirections }: GroupVoteResultProps) {
+export function GroupVoteResult({
+  onCreatePact,
+  onRespin,
+  onDirections,
+  onGoHome,
+  onNewSpinRound,
+  onLeaveRoom,
+  isHost = true,
+}: GroupVoteResultProps) {
+  const router = useRouter();
   const { members, votes } = useGroupSpinStore();
   const { currentResult, candidates } = useSpinStore();
 
@@ -38,6 +52,14 @@ export function GroupVoteResult({ onCreatePact, onRespin, onDirections }: GroupV
   const resultData = currentResult || candidates[0];
 
   if (!resultData) return null;
+
+  const handleGoHome = () => {
+    if (onGoHome) {
+      onGoHome();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -86,17 +108,37 @@ export function GroupVoteResult({ onCreatePact, onRespin, onDirections }: GroupV
       {/* Actions */}
       <Animated.View entering={FadeInDown.delay(800)} style={styles.actions}>
         {isAccepted ? (
-          <TouchableOpacity onPress={onCreatePact} style={styles.pactButton}>
-            <Text style={styles.pactButtonText}>🤝 Tạo Khế Ước</Text>
+          <TouchableOpacity onPress={onCreatePact} style={styles.pactButton} activeOpacity={0.88}>
+            <Text style={styles.pactButtonText}>🤝 Tạo Khế Ước Cam Kết</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity onPress={onRespin} style={styles.respinButton}>
+          <TouchableOpacity onPress={onRespin} style={styles.respinButton} activeOpacity={0.88}>
             <Text style={styles.respinButtonText}>🔄 Quay Lại Nhé</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity onPress={onDirections} style={styles.directionsButton}>
-          <Text style={styles.directionsButtonText}>🧭 Chỉ đường</Text>
+
+        <TouchableOpacity onPress={onDirections} style={styles.directionsButton} activeOpacity={0.85}>
+          <Text style={styles.directionsButtonText}>🧭 Chỉ đường đến quán</Text>
         </TouchableOpacity>
+
+        {/* New Round / Reset Room Button */}
+        {onNewSpinRound && (
+          <TouchableOpacity onPress={onNewSpinRound} style={styles.newRoundButton} activeOpacity={0.85}>
+            <Text style={styles.newRoundButtonText}>🎲 Bắt Đầu Lượt Quay Mới</Text>
+          </TouchableOpacity>
+        )}
+
+        <View style={styles.secondaryBtnRow}>
+          <TouchableOpacity onPress={handleGoHome} style={styles.homeButton} activeOpacity={0.85}>
+            <Text style={styles.homeButtonText}>🏠 Về Trang Chủ</Text>
+          </TouchableOpacity>
+
+          {onLeaveRoom && (
+            <TouchableOpacity onPress={onLeaveRoom} style={styles.leaveButton} activeOpacity={0.85}>
+              <Text style={styles.leaveButtonText}>🚪 Tạo Mã Mới</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </Animated.View>
 
       <Text style={styles.footnote}>
@@ -240,6 +282,51 @@ const styles = StyleSheet.create({
   },
   directionsButtonText: {
     fontSize: 15,
+    fontWeight: '800',
+    color: '#b52330',
+  },
+  newRoundButton: {
+    backgroundColor: '#ffdcc4',
+    paddingVertical: 14,
+    borderRadius: 18,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#ffab69',
+  },
+  newRoundButtonText: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#8e4e14',
+  },
+  secondaryBtnRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  homeButton: {
+    flex: 1,
+    backgroundColor: '#fff8ef',
+    paddingVertical: 13,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+  },
+  homeButtonText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#8e4e14',
+  },
+  leaveButton: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    paddingVertical: 13,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+  },
+  leaveButtonText: {
+    fontSize: 14,
     fontWeight: '800',
     color: '#b52330',
   },

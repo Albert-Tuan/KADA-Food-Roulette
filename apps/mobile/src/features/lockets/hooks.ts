@@ -6,6 +6,7 @@ export function useLocketFeed(filter: LocketFeedFilter) {
   return useQuery({
     queryKey: ['lockets', 'feed', filter],
     queryFn: () => locketRepository.getFeed(filter),
+    refetchOnMount: 'always',
   });
 }
 

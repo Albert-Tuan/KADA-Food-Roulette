@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   filterTasteBoardsByCategory,
@@ -40,6 +40,7 @@ const TRENDING_CATEGORIES: { id: TasteBoardCategory; label: string }[] = [
 ];
 
 export default function LocketsScreen() {
+  const router = useRouter();
   const [filter, setFilter] = useState<LocketFeedFilter>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<TasteBoardCategory>('all');
   const feed = useLocketFeed(filter);
@@ -58,11 +59,21 @@ export default function LocketsScreen() {
         ListHeaderComponent={
           <View className="mb-2">
             {/* Top Title Header */}
-            <View className="px-5 pt-3 pb-2">
-              <Text className="text-3xl font-black text-primary tracking-tight">Taste Board Live</Text>
-              <Text className="font-semibold text-sm mt-0.5 text-secondary">
-                Món ngon chân thực từ camera • Đã xác minh GPS
-              </Text>
+            <View className="px-5 pt-3 pb-2 flex-row items-center justify-between">
+              <View style={{ flex: 1 }}>
+                <Text className="text-3xl font-black text-primary tracking-tight">Taste Board Live</Text>
+                <Text className="font-semibold text-sm mt-0.5 text-secondary">
+                  Món ngon chân thực từ camera • Đã xác minh GPS
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => router.push('/friends' as any)}
+                style={{ backgroundColor: '#fff8ef', borderColor: '#e2bebc' }}
+                className="flex-row items-center gap-1.5 px-3 py-2 rounded-2xl border shadow-xs active:bg-red-50"
+              >
+                <Ionicons name="people" size={16} color="#b52330" />
+                <Text className="font-black text-xs text-primary">Bạn bè</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Scope Filter Tabs - 4 Columns Equal Layout (Fix BUG #12) */}

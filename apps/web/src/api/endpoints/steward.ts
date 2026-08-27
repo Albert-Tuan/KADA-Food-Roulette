@@ -32,14 +32,14 @@ interface ApproveRequest {
 
 export const stewardApi = {
   listPending: async (page = 1, pageSize = 20): Promise<PendingListResponse['data']> => {
-    const res = await apiClient.get<PendingListResponse>('/v1/steward/pending-restaurants', {
+    const res = await apiClient.get<PendingListResponse>('/steward/pending-restaurants', {
       params: { page, pageSize },
     });
     return res.data.data;
   },
 
   decide: async (id: string, payload: ApproveRequest) => {
-    const res = await apiClient.post<{ success: boolean; message: string }>(`/v1/steward/approve-restaurant/${id}`, payload);
+    const res = await apiClient.post<{ success: boolean; message: string }>(`/steward/approve-restaurant/${id}`, payload);
     return res.data;
   },
 };

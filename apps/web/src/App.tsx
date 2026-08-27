@@ -36,6 +36,7 @@ import FriendsLeaderboardDetail from './features/restaurants/components/FriendsL
 import NearbyRestaurantsLeaderboard from './features/restaurants/components/NearbyRestaurantsLeaderboard';
 import NearbyRestaurantsMapView from './features/restaurants/components/NearbyRestaurantsMapView';
 import KhCCommitment from './features/restaurants/components/KhCCommitment';
+import StewardDashboard from './features/restaurants/components/StewardDashboard';
 
 // Features - Menu & AI
 import MenuCaptureScreen from './features/menu/components/MenuCaptureScreen';
@@ -89,6 +90,7 @@ function App() {
           <Route path="/leaderboard/map" element={<NearbyRestaurantsMapView />} />
           <Route path="/commitment" element={<KhCCommitment />} />
           <Route path="/share/harvest" element={<ShareYourHarvestSuccess />} />
+          <Route path="/steward" element={<StewardDashboard />} />
         </Route>
       </Routes>
     </BrowserRouter>

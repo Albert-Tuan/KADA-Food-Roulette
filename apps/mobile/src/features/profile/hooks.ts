@@ -6,6 +6,7 @@ export function useMyProfile() {
   return useQuery({
     queryKey: ['profile', 'me'],
     queryFn: () => profileRepository.getMyProfile(),
+    retry: false,
   });
 }
 
@@ -14,6 +15,7 @@ export function usePublicProfile(publicId?: string) {
     queryKey: ['profile', 'public', publicId],
     queryFn: () => profileRepository.getPublicProfile(publicId!),
     enabled: Boolean(publicId),
+    retry: false,
   });
 }
 

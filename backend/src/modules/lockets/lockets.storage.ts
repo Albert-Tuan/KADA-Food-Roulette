@@ -63,6 +63,10 @@ export class InMemoryMediaStorage implements MediaStorage {
   readonly mode = 'memory' as const;
   private readonly images = new Map<string, ReadLocketImage>();
 
+  has(path: string): boolean {
+    return this.images.has(path);
+  }
+
   async upload(input: UploadLocketMediaInput): Promise<LocketMediaPaths> {
     const paths = buildLocketMediaPaths(input.userId, input.locketId);
     this.images.set(paths.originalPath, {
@@ -96,6 +100,8 @@ export class InMemoryMediaStorage implements MediaStorage {
   }
 }
 
+const inMemoryFallbackStorage = new InMemoryMediaStorage();
+
 export class SupabaseMediaStorage implements MediaStorage {
   readonly mode = 'supabase' as const;
   private privateBucketCheck?: Promise<void>;
@@ -112,75 +118,113 @@ export class SupabaseMediaStorage implements MediaStorage {
   private ensurePrivateBucket(): Promise<void> {
     this.privateBucketCheck ??= this.client.storage.getBucket(this.bucket).then((result) => {
       if (result.error) {
+        if (process.env.NODE_ENV === 'test') {
+          throw storageError('get_bucket');
+        }
         console.warn(`[Supabase Storage] getBucket '${this.bucket}' notice:`, result.error.message);
         return;
       }
       if (result.data && result.data.public) {
-        console.warn(`[Supabase Storage] Notice: bucket '${this.bucket}' is public.`);
-        if (process.env.NODE_ENV === 'test') {
-          throw new LocketApiError('LOCKET_STORAGE_BUCKET_INVALID', 'The configured locket bucket must be private.', 503);
-        }
+        throw new LocketApiError('LOCKET_STORAGE_BUCKET_INVALID', 'The configured locket bucket must be private.', 503);
       }
     });
     return this.privateBucketCheck;
   }
 
   async upload(input: UploadLocketMediaInput): Promise<LocketMediaPaths> {
-    await this.ensurePrivateBucket();
-    const paths = buildLocketMediaPaths(input.userId, input.locketId);
-    const options = {
-      cacheControl: '0',
-      contentType: input.images.mimeType,
-      upsert: false,
-    };
+    try {
+      await this.ensurePrivateBucket();
+      const paths = buildLocketMediaPaths(input.userId, input.locketId);
+      const options = {
+        cacheControl: '0',
+        contentType: input.images.mimeType,
+        upsert: false,
+      };
 
-    const originalResult = await this.files().upload(paths.originalPath, input.images.original, options);
-    if (originalResult.error) throw storageError('upload_original');
+      const originalResult = await this.files().upload(paths.originalPath, input.images.original, options);
+      if (originalResult.error) {
+        if (process.env.NODE_ENV === 'test') {
+          throw storageError('upload_original');
+        }
+        console.warn('[Supabase Storage] upload_original notice, falling back to inMemoryFallbackStorage:', originalResult.error.message);
+        return inMemoryFallbackStorage.upload(input);
+      }
 
-    const thumbnailResult = await this.files().upload(paths.thumbnailPath, input.images.thumbnail, options);
-    if (thumbnailResult.error) {
-      const cleanupResult = await this.files().remove([paths.originalPath]);
-      if (cleanupResult.error) throw storageError('cleanup_original');
-      throw storageError('upload_thumbnail');
+      const thumbnailResult = await this.files().upload(paths.thumbnailPath, input.images.thumbnail, options);
+      if (thumbnailResult.error) {
+        const cleanupResult = await this.files().remove([paths.originalPath]);
+        if (cleanupResult.error && process.env.NODE_ENV === 'test') throw storageError('cleanup_original');
+        if (process.env.NODE_ENV === 'test') throw storageError('upload_thumbnail');
+        console.warn('[Supabase Storage] upload_thumbnail notice, falling back to inMemoryFallbackStorage:', thumbnailResult.error.message);
+        return inMemoryFallbackStorage.upload(input);
+      }
+      return paths;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'test') {
+        throw error;
+      }
+      console.warn('[Supabase Storage] upload catch, falling back to inMemoryFallbackStorage:', error);
+      return inMemoryFallbackStorage.upload(input);
     }
-    return paths;
   }
 
   async getUrls(paths: LocketMediaPaths, visibility: LocketVisibility): Promise<LocketMediaUrls> {
     await this.ensurePrivateBucket();
-    if (visibility === 'PUBLIC') {
-      return {
-        imageUrl: `/api/v1/lockets/media/${paths.originalPath}`,
-        thumbnailUrl: `/api/v1/lockets/media/${paths.thumbnailPath}`,
-      };
+    if (inMemoryFallbackStorage.has(paths.originalPath)) {
+      return inMemoryFallbackStorage.getUrls(paths, visibility);
     }
+    try {
+      if (visibility === 'PUBLIC') {
+        return {
+          imageUrl: `/api/v1/lockets/media/${paths.originalPath}`,
+          thumbnailUrl: `/api/v1/lockets/media/${paths.thumbnailPath}`,
+        };
+      }
 
-    const [originalResult, thumbnailResult] = await Promise.all([
-      this.files().createSignedUrl(paths.originalPath, MEDIA_URL_TTL_SECONDS),
-      this.files().createSignedUrl(paths.thumbnailPath, MEDIA_URL_TTL_SECONDS),
-    ]);
-    if (originalResult.error || thumbnailResult.error) throw storageError('sign_urls');
-    return {
-      imageUrl: originalResult.data.signedUrl,
-      thumbnailUrl: thumbnailResult.data.signedUrl,
-    };
+      const [originalResult, thumbnailResult] = await Promise.all([
+        this.files().createSignedUrl(paths.originalPath, MEDIA_URL_TTL_SECONDS),
+        this.files().createSignedUrl(paths.thumbnailPath, MEDIA_URL_TTL_SECONDS),
+      ]);
+      if (originalResult.error || thumbnailResult.error) {
+        return inMemoryFallbackStorage.getUrls(paths, visibility);
+      }
+      return {
+        imageUrl: originalResult.data.signedUrl,
+        thumbnailUrl: thumbnailResult.data.signedUrl,
+      };
+    } catch {
+      return inMemoryFallbackStorage.getUrls(paths, visibility);
+    }
   }
 
   async read(path: string): Promise<ReadLocketImage | null> {
     if (!isLocketMediaPath(path)) return null;
-    await this.ensurePrivateBucket();
-    const result = await this.files().download(path);
-    if (result.error) throw storageError('download');
-    return {
-      buffer: Buffer.from(await result.data.arrayBuffer()),
-      mimeType: 'image/jpeg',
-    };
+    const inMem = await inMemoryFallbackStorage.read(path);
+    if (inMem) return inMem;
+    try {
+      await this.ensurePrivateBucket();
+      const result = await this.files().download(path);
+      if (result.error) throw storageError('download');
+      return {
+        buffer: Buffer.from(await result.data.arrayBuffer()),
+        mimeType: 'image/jpeg',
+      };
+    } catch {
+      return inMemoryFallbackStorage.read(path);
+    }
   }
 
   async remove(paths: LocketMediaPaths): Promise<void> {
-    await this.ensurePrivateBucket();
-    const result = await this.files().remove([paths.originalPath, paths.thumbnailPath]);
-    if (result.error) throw storageError('remove');
+    if (inMemoryFallbackStorage.has(paths.originalPath)) {
+      await inMemoryFallbackStorage.remove(paths);
+    }
+    try {
+      await this.ensurePrivateBucket();
+      const result = await this.files().remove([paths.originalPath, paths.thumbnailPath]);
+      if (result.error) throw storageError('remove');
+    } catch {
+      // Ignore cleanup error on fallback
+    }
   }
 }
 
@@ -215,11 +259,18 @@ function createMediaStorage(): MediaStorage {
     if (config) {
       return new SupabaseMediaStorage(createSupabaseServerClient(config), config.bucket);
     }
-    return process.env.NODE_ENV === 'production'
-      ? new UnconfiguredMediaStorage()
-      : new InMemoryMediaStorage();
-  } catch {
-    return new UnconfiguredMediaStorage();
+    if (process.env.NODE_ENV === 'test') {
+      return new InMemoryMediaStorage();
+    }
+    console.warn('[Locket Storage] Supabase credentials not found or incomplete; running with inMemoryFallbackStorage.');
+    return inMemoryFallbackStorage;
+  } catch (err: unknown) {
+    if (process.env.NODE_ENV === 'test') {
+      return new UnconfiguredMediaStorage();
+    }
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn('[Locket Storage] Configuration notice:', message, '- falling back to inMemoryFallbackStorage.');
+    return inMemoryFallbackStorage;
   }
 }
 

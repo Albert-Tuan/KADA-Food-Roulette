@@ -86,24 +86,35 @@ export default function MenuCaptureScreen() {
     <SafeAreaView className="flex-1" style={{ backgroundColor: '#fff8ef' }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
         {/* Header */}
-        <View className="flex-row items-center mb-6 pt-2">
+        <View className="flex-row items-center justify-between mb-6 pt-2">
+          <View className="flex-row items-center flex-1 mr-2">
+            <TouchableOpacity
+              onPress={handleBack}
+              activeOpacity={0.7}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              style={{ backgroundColor: '#ffffff', borderColor: '#e2bebc' }}
+              className="p-2.5 rounded-2xl border shadow-xs mr-3"
+            >
+              <Feather name="arrow-left" size={20} color="#b52330" />
+            </TouchableOpacity>
+            <View>
+              <Text className="text-2xl font-extrabold" style={{ color: '#b52330' }}>
+                📷 Chụp Menu Tại Quán
+              </Text>
+              <Text className="text-xs font-semibold mt-0.5" style={{ color: '#8e4e14' }}>
+                Gemini AI Vision sẽ tự động quét và bóc tách
+              </Text>
+            </View>
+          </View>
           <TouchableOpacity
-            onPress={handleBack}
+            onPress={() => router.replace('/(tabs)')}
             activeOpacity={0.7}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             style={{ backgroundColor: '#ffffff', borderColor: '#e2bebc' }}
-            className="p-2.5 rounded-2xl border shadow-xs mr-3"
+            className="p-2.5 rounded-2xl border shadow-xs"
           >
-            <Feather name="arrow-left" size={20} color="#b52330" />
+            <Feather name="home" size={20} color="#b52330" />
           </TouchableOpacity>
-          <View>
-            <Text className="text-2xl font-extrabold" style={{ color: '#b52330' }}>
-              📷 Chụp Menu Tại Quán
-            </Text>
-            <Text className="text-xs font-semibold mt-0.5" style={{ color: '#8e4e14' }}>
-              Gemini AI Vision sẽ tự động quét và bóc tách
-            </Text>
-          </View>
         </View>
 
         {/* Selected Images Thumbnail List */}

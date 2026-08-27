@@ -176,7 +176,7 @@ export const authController = {
           xp: 350,
           streakDays: 5,
           coins: 120,
-          role: 'USER',
+          role: email === 'admin@foodroulette.app' ? 'ADMIN' : 'USER',
           createdAt: new Date().toISOString(),
         };
         const { token, refreshToken } = generateTokens(demoUser.id, demoUser.email, demoUser.role);

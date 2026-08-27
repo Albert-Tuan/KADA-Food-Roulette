@@ -12,8 +12,9 @@ import {
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import { useMyProfile, useUpdateProfile } from '@/features/profile';
 
 const MAX_BIO_LENGTH = 160;
@@ -38,7 +39,7 @@ export default function EditProfileScreen() {
   const chooseAvatar = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Cần quyền truy cập ảnh', 'Bạn bật quyền ảnh để đổi avatar nhé.');
+      setError('Cần cấp quyền truy cập ảnh để đổi avatar.');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -47,16 +48,18 @@ export default function EditProfileScreen() {
       aspect: [1, 1],
       quality: 0.8,
     });
-    if (!result.canceled && result.assets[0]?.uri) setAvatarUri(result.assets[0].uri);
+    if (!result.canceled && result.assets[0]?.uri) {
+      setAvatarUri(result.assets[0].uri);
+    }
   };
 
-  const save = async () => {
-    if (privateName.trim().length < 2 || publicName.trim().length < 2) {
-      setError('Tên hiển thị cần ít nhất 2 ký tự.');
+  const handleSave = async () => {
+    if (!publicName.trim()) {
+      setError('Tên công khai không được để trống.');
       return;
     }
-    if (privateName.trim().length > 50 || publicName.trim().length > 50) {
-      setError('Tên hiển thị tối đa 50 ký tự.');
+    if (!privateName.trim()) {
+      setError('Tên trong nhóm không được để trống.');
       return;
     }
     if (bio.length > MAX_BIO_LENGTH) {
@@ -92,7 +95,21 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <SafeAreaView testID="profile-edit-screen" className="flex-1 bg-background" edges={['bottom']}>
+    <SafeAreaView testID="profile-edit-screen" className="flex-1 bg-background" edges={['top', 'bottom']}>
+      <Stack.Screen options={{ headerShown: false }} />
+      {/* Top Header */}
+      <View className="flex-row items-center justify-between px-5 py-3 border-b border-secondary-100 bg-surface-white">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="p-2 rounded-xl border border-secondary-200"
+          activeOpacity={0.7}
+        >
+          <Feather name="arrow-left" size={20} color="#b52330" />
+        </TouchableOpacity>
+        <Text className="text-lg font-bold text-secondary-900">Chỉnh sửa hồ sơ</Text>
+        <View style={{ width: 36 }} />
+      </View>
+
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <View className="items-center">
@@ -129,7 +146,7 @@ export default function EditProfileScreen() {
           {error ? <Text className="text-red-700 mt-4">{error}</Text> : null}
           <TouchableOpacity
             testID="profile-save-button"
-            onPress={save}
+            onPress={handleSave}
             disabled={updateProfile.isPending}
             className="bg-primary rounded-xl py-4 items-center mt-7 disabled:opacity-50"
           >

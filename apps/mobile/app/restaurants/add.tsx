@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import * as Location from 'expo-location';
 import { restaurantApi, stewardApi, DuplicateCheckResult } from '@/api';
 
@@ -134,12 +134,18 @@ export default function AddRestaurantScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
+      <Stack.Screen options={{ headerShown: false }} />
+      <View className="px-5 py-3 flex-row items-center border-b border-border bg-card">
+        <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+          <Text className="text-primary text-xl font-bold">←</Text>
+        </TouchableOpacity>
+        <Text className="text-lg font-bold text-primary">Thêm quán mới</Text>
+      </View>
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
-          <Text className="text-2xl font-bold text-primary mb-1">➕ Thêm quán mới</Text>
           <Text className="text-text-muted text-sm mb-6">
             Quán sẽ được Steward duyệt trước khi hiển thị trong Roulette
           </Text>

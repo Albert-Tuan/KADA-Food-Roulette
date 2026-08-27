@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, AppState, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, AppState, Alert, Pressable, TextInput, ActivityIndicator, Dimensions } from 'react-native';
 import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -7,8 +7,12 @@ import { RewardCard, RewardCardEmpty } from '../../src/components/RewardCard';
 import { FoodRoulette } from '../../src/features/spin/components/FoodRoulette';
 import { SpinFilterSheet } from '../../src/features/spin/components/SpinFilterSheet';
 import { useSpinStore } from '../../src/stores/spinStore';
+import { useGroupSpinStore } from '../../src/stores/groupSpinStore';
+import { useAuthStore } from '../../src/stores/authStore';
 import { restaurantApi, Restaurant as ApiRestaurant } from '../../src/api/endpoints/restaurants';
 import type { Restaurant } from '../../src/features/spin/types';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface Reward {
   id: string;
@@ -33,6 +37,7 @@ const toSpinRestaurant = (r: ApiRestaurant): Restaurant => {
   return {
     id: r.id,
     name: r.name,
+    address: r.address,
     category: r.category ?? 'Ẩm thực',
     rating: r.ratingAvg ?? 0,
     totalReviews: r.ratingCount ?? 0,
@@ -44,9 +49,13 @@ const toSpinRestaurant = (r: ApiRestaurant): Restaurant => {
 
 export default function SpinScreen() {
   const router = useRouter();
+  const currentUser = useAuthStore((s) => s.user);
+  const { joinByCode } = useGroupSpinStore();
   const { candidates, filters, customCandidates, setFilters, setCandidates, addCustomCandidate, removeCustomCandidate, setCurrentResult, resetStore, fetchNearbyCandidates, spin, currentResult } = useSpinStore();
   const [rewards] = useState<Reward[]>(MOCK_REWARDS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [joinCodeInput, setJoinCodeInput] = useState('');
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,60 +70,48 @@ export default function SpinScreen() {
     setNewFoodInput('');
   };
 
+  const handleJoinRoom = async () => {
+    if (!joinCodeInput.trim()) {
+      Alert.alert('Thông báo', 'Vui lòng nhập mã phòng nhóm!');
+      return;
+    }
+    try {
+      const success = await joinByCode(joinCodeInput);
+      if (success) {
+        setIsJoinModalOpen(false);
+        router.push('/group-spin/lobby');
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || 'Không thể vào phòng này. Vui lòng kiểm tra lại mã!';
+      Alert.alert('Lỗi vào phòng', msg);
+    }
+  };
+
   const isMockRepository = process.env.EXPO_PUBLIC_USE_MOCK_REPOSITORIES === 'true';
 
   useEffect(() => {
-    if (isMockRepository) return;
-
     let cancelled = false;
     (async () => {
       try {
+        setIsLoading(true);
+        // Automatically load AI taste and allergy preferences
+        await useSpinStore.getState().loadUserPreferences();
+        
         const list = await restaurantApi.list({ status: 'APPROVED' });
-        if (cancelled) return;
-        setCandidates(list.map(toSpinRestaurant));
+        if (!cancelled && list && list.length > 0) {
+          setCandidates(list.map(toSpinRestaurant));
+        }
       } catch (error) {
-        if (cancelled) return;
         console.error('Load spin candidates failed:', error);
-        setCandidates([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [isMockRepository, setCandidates]);
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active') {
-        resetStore();
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [resetStore]);
-
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Lỗi', 'Không thể lấy vị trí của bạn để tìm quán ăn.');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        let loc = await Location.getCurrentPositionAsync({});
-        setLocation(loc);
-        await fetchNearbyCandidates(loc.coords.latitude, loc.coords.longitude);
-      } catch (error) {
-        console.error('Error fetching location', error);
-      }
-      setIsLoading(false);
-    })();
-  }, [fetchNearbyCandidates]);
+  }, []);
 
   const handleFoodSpinEnd = useCallback((winner: Restaurant, index: number) => {
     if (multiMode === 1) {
@@ -125,19 +122,43 @@ export default function SpinScreen() {
 
   const handleMultiSpinEnd = useCallback((winners: Restaurant[]) => {
     if (multiMode > 1) {
-      setComboWinners(winners);
+      const validWinners = (winners || []).filter(Boolean);
+      setComboWinners(validWinners);
       setIsComboModalOpen(true);
     }
   }, [multiMode]);
 
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <SafeAreaView style={styles.container}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
+          {/* Top Mode Switcher: Personal vs Group Spin */}
+          <View style={styles.modeSwitchContainer}>
+            <TouchableOpacity style={[styles.modeTab, styles.modeTabActive]} activeOpacity={0.9}>
+              <Text style={styles.modeTabTextActive}>👤 Cá Nhân</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modeTab}
+              activeOpacity={0.8}
+              onPress={() => router.push('/group-spin/lobby')}
+            >
+              <Text style={styles.modeTabText}>👥 Tạo Nhóm 👑</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modeTab}
+              activeOpacity={0.8}
+              onPress={() => {
+                setJoinCodeInput('');
+                setIsJoinModalOpen(true);
+              }}
+            >
+              <Text style={styles.modeTabText}>🔑 Nhập Mã</Text>
+            </TouchableOpacity>
+          </View>
           {/* Food Roulette Section */}
           <View style={styles.section}>
             {isLoading ? (
@@ -163,6 +184,20 @@ export default function SpinScreen() {
                   {filters.categories.length > 0 && (
                     <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={styles.contextChip}>
                       <Text style={styles.contextChipText}>🍲 {filters.categories.length} loại</Text>
+                    </TouchableOpacity>
+                  )}
+                  {filters.dislikedIngredients && filters.dislikedIngredients.length > 0 && (
+                    <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={[styles.contextChip, { borderColor: '#e2bebc', backgroundColor: '#ffdad8' }]}>
+                      <Text style={[styles.contextChipText, { color: '#b52330', fontWeight: '800' }]}>
+                        🛡️ {filters.dislikedIngredients.length} dị ứng
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {filters.dietary && filters.dietary.length > 0 && (
+                    <TouchableOpacity onPress={() => setIsFilterOpen(true)} style={[styles.contextChip, { borderColor: '#85d0ab', backgroundColor: '#e2f7ed' }]}>
+                      <Text style={[styles.contextChipText, { color: '#166b47', fontWeight: '800' }]}>
+                        🌿 {filters.dietary.join(', ')}
+                      </Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -337,8 +372,9 @@ export default function SpinScreen() {
       </SafeAreaView>
 
       {/* Combo Winners Reveal Modal (2-3 món cùng lúc) */}
-      <Modal visible={isComboModalOpen} transparent animationType="slide">
+      {isComboModalOpen && (
         <View style={styles.modalOverlay}>
+          <Pressable style={styles.backdrop} onPress={() => setIsComboModalOpen(false)} />
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalBadge}>🎉 COMBO {comboWinners.length} MÓN TRÚNG THƯỞNG 🎉</Text>
@@ -347,11 +383,11 @@ export default function SpinScreen() {
             </View>
 
             <View style={styles.modalBody}>
-              <ScrollView style={{ maxHeight: 260 }}>
+              <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
                 {comboWinners.map((w, i) => (
                   <TouchableOpacity
-                    key={w.id || i}
-                    activeOpacity={0.9}
+                    key={`${w?.id || 'combo-dish'}-${i}`}
+                    activeOpacity={0.88}
                     onPress={() => {
                       setIsComboModalOpen(false);
                       setCurrentResult(w);
@@ -359,16 +395,16 @@ export default function SpinScreen() {
                     }}
                     style={styles.comboWinnerCard}
                   >
-                    <Image source={{ uri: w.imageUrl }} style={styles.comboWinnerImage} />
+                    <Image source={{ uri: w?.imageUrl || FALLBACK_IMAGE_URL }} style={styles.comboWinnerImage} />
                     <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                         <View style={styles.comboNumberBadge}>
-                          <Text style={styles.comboNumberBadgeText}>{i + 1}</Text>
+                          <Text style={styles.comboNumberBadgeText}>#{i + 1}</Text>
                         </View>
-                        <Text style={styles.comboWinnerName}>{w.name}</Text>
+                        <Text style={styles.comboWinnerName} numberOfLines={1}>{w?.name || 'Món ăn trúng thưởng'}</Text>
                       </View>
                       <Text style={styles.comboWinnerInfo}>
-                        ⭐ {w.rating} • {w.category} • {(w.distance / 1000).toFixed(1)}km
+                        ⭐ {w?.rating ?? 5.0} • {w?.category ?? 'Ẩm thực'} • {((w?.distance ?? 0) / 1000).toFixed(1)}km
                       </Text>
                     </View>
                     <Text style={styles.comboArrow}>➔</Text>
@@ -378,6 +414,7 @@ export default function SpinScreen() {
 
               <TouchableOpacity
                 style={styles.modalCloseBtn}
+                activeOpacity={0.88}
                 onPress={() => setIsComboModalOpen(false)}
               >
                 <Text style={styles.modalCloseBtnText}>Đóng & Quay Tiếp 🎲</Text>
@@ -385,7 +422,48 @@ export default function SpinScreen() {
             </View>
           </View>
         </View>
-      </Modal>
+      )}
+
+      {/* Join Group Room Modal */}
+      {isJoinModalOpen && (
+        <View style={styles.joinModalOverlay}>
+          <Pressable style={styles.backdrop} onPress={() => setIsJoinModalOpen(false)} />
+          <View style={styles.joinModalCard}>
+            <Text style={styles.joinModalTitle}>🔑 Nhập Mã Phòng Nhóm</Text>
+            <Text style={styles.joinModalSubtitle}>
+              Nhập mã phòng từ bạn bè (ví dụ: FOOD-8892 hoặc ROOM-4K9X) để cùng tham gia quay và chọn món!
+            </Text>
+
+            <TextInput
+              style={styles.joinModalInput}
+              placeholder="Nhập mã phòng (ví dụ: FOOD-1234)"
+              placeholderTextColor="#8e4e14"
+              value={joinCodeInput}
+              onChangeText={setJoinCodeInput}
+              autoCapitalize="characters"
+              autoFocus
+            />
+
+            <View style={styles.joinModalBtnRow}>
+              <TouchableOpacity
+                style={styles.joinModalCancelBtn}
+                onPress={() => setIsJoinModalOpen(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.joinModalCancelText}>Hủy</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.joinModalConfirmBtn}
+                onPress={handleJoinRoom}
+                activeOpacity={0.88}
+              >
+                <Text style={styles.joinModalConfirmText}>Vào Phòng Ngay 🚀</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* Filter Sheet */}
       <SpinFilterSheet
@@ -397,11 +475,237 @@ export default function SpinScreen() {
         onAddCustom={addCustomCandidate}
         onRemoveCustom={removeCustomCandidate}
       />
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+    elevation: 9999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    width: '90%',
+    maxWidth: 360,
+    backgroundColor: '#fff8ef',
+    borderRadius: 26,
+    padding: 22,
+    borderWidth: 2,
+    borderColor: '#e2bebc',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalBadge: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#8e4e14',
+    backgroundColor: '#ffdcc4',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 12,
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#ffab69',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#b52330',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 12.5,
+    color: '#5a403f',
+    textAlign: 'center',
+    lineHeight: 18,
+    fontWeight: '600',
+  },
+  modalBody: {
+    width: '100%',
+  },
+  comboWinnerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  comboWinnerImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#ffdcc4',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#e2bebc',
+  },
+  comboNumberBadge: {
+    backgroundColor: '#b52330',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  comboNumberBadgeText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  comboWinnerName: {
+    color: '#3d2314',
+    fontSize: 15,
+    fontWeight: '900',
+    flex: 1,
+  },
+  comboWinnerInfo: {
+    color: '#8e4e14',
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  comboArrow: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#b52330',
+    marginLeft: 6,
+  },
+  modalCloseBtn: {
+    backgroundColor: '#b52330',
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    borderBottomWidth: 3,
+    borderBottomColor: '#61000e',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  modalCloseBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  joinModalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+    elevation: 9999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  joinModalCard: {
+    width: '90%',
+    maxWidth: 360,
+    backgroundColor: '#fff8ef',
+    borderRadius: 24,
+    padding: 22,
+    borderWidth: 2,
+    borderColor: '#e2bebc',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  joinModalTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#b52330',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  joinModalSubtitle: {
+    fontSize: 12.5,
+    color: '#5a403f',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  joinModalInput: {
+    backgroundColor: '#fff8ef',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#3d2314',
+    textAlign: 'center',
+    letterSpacing: 1,
+    marginBottom: 18,
+  },
+  joinModalBtnRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  joinModalCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: '#fbf3e4',
+    borderWidth: 1,
+    borderColor: '#e2bebc',
+    alignItems: 'center',
+  },
+  joinModalCancelText: {
+    color: '#5a403f',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  joinModalConfirmBtn: {
+    flex: 1.5,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: '#b52330',
+    borderBottomWidth: 3,
+    borderBottomColor: '#61000e',
+    alignItems: 'center',
+  },
+  joinModalConfirmText: {
+    color: '#ffffff',
+    fontWeight: '900',
+    fontSize: 13,
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff8ef',
@@ -444,122 +748,47 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '900',
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
-    width: '100%',
-    maxWidth: 380,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#FFC107',
-  },
-  modalHeader: {
-    backgroundColor: '#b52330',
-    padding: 18,
-    alignItems: 'center',
-  },
-  modalBadge: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#ffffff',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    marginBottom: 6,
-    letterSpacing: 0.5,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#ffffff',
-  },
-  modalSubtitle: {
-    fontSize: 12,
-    color: '#ffdcc4',
-    marginTop: 2,
-  },
-  modalBody: {
-    padding: 16,
-  },
-  comboWinnerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff8ef',
-    borderWidth: 1.5,
-    borderColor: '#e2bebc',
-    padding: 10,
-    borderRadius: 16,
-    marginBottom: 8,
-    gap: 10,
-  },
-  comboWinnerImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: '#FFC107',
-    backgroundColor: '#ffdcc4',
-  },
-  comboNumberBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#b52330',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  comboNumberBadgeText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#ffffff',
-  },
-  comboWinnerName: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#b52330',
-  },
-  comboWinnerInfo: {
-    fontSize: 11,
-    color: '#8e4e14',
-    marginTop: 2,
-    fontWeight: '700',
-  },
-  comboArrow: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#b52330',
-    marginRight: 4,
-  },
-  modalCloseBtn: {
-    backgroundColor: '#b52330',
-    paddingVertical: 13,
-    borderRadius: 14,
-    alignItems: 'center',
-    marginTop: 10,
-    shadowColor: '#b52330',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  modalCloseBtnText: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#ffffff',
-  },
   scrollView: {
     flex: 1,
   },
   content: {
-    paddingBottom: 24,
+    paddingBottom: 100,
+  },
+  modeSwitchContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+    backgroundColor: '#fff0d4',
+    borderRadius: 16,
+    padding: 4,
+    borderWidth: 1.5,
+    borderColor: '#e2bebc',
+  },
+  modeTab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+  },
+  modeTabActive: {
+    backgroundColor: '#b52330',
+    shadowColor: '#b52330',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modeTabText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#8e4e14',
+  },
+  modeTabTextActive: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#ffffff',
   },
   section: {
     paddingHorizontal: 16,

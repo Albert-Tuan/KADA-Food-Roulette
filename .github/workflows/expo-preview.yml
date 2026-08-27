@@ -31,8 +31,8 @@ jobs:
       - name: 🏗 Setup Expo
         uses: expo/expo-github-action@v8
         with:
-          expo-version: latest
           eas-version: latest
+          packager: npm
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 🚀 Export Preview Bundle

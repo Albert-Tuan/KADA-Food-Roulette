@@ -57,7 +57,7 @@ export const restaurantApi = {
   },
 
   create: async (data: CreateRestaurantRequest): Promise<Restaurant> => {
-    const response = await apiClient.post<{ data: Restaurant }>('/v1/restaurants', data);
+    const response = await apiClient.post<{ data: Restaurant }>('/restaurants', data);
     return response.data.data;
   },
 

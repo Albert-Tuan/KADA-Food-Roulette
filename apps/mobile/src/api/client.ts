@@ -33,6 +33,9 @@ apiClient.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    if (config.headers) {
+      config.headers['Bypass-Tunnel-Reminder'] = 'true';
+    }
     if (config.data instanceof FormData) {
       if (config.headers?.delete) {
         config.headers.delete('Content-Type');

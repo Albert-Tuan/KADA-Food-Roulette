@@ -9,11 +9,12 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import * as Location from 'expo-location';
 import { restaurantApi, Restaurant, placesApi } from '@/api';
 
-import { MapView, Marker, PROVIDER_GOOGLE } from '@/components/MapProvider';
+import { MapView, Marker, PROVIDER_GOOGLE, UrlTile } from '@/components/MapProvider';
+import { WebView } from 'react-native-webview';
 import MapFilterSheet from '@/components/MapFilterSheet';
 import RestaurantList from '@/components/RestaurantList';
 
@@ -66,7 +67,7 @@ export default function DiscoverScreen() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterChip['value']>('all');
   const [seeding, setSeeding] = useState(false);
-  const [showList, setShowList] = useState(false);
+  const [showList, setShowList] = useState(Platform.OS === 'web');
   const [showFilter, setShowFilter] = useState(false);
 
   useEffect(() => {
@@ -96,8 +97,28 @@ export default function DiscoverScreen() {
   const loadRestaurants = async () => {
     try {
       setLoading(true);
-      const data = await restaurantApi.list({ status: 'APPROVED' });
-      console.log(JSON.stringify(data).slice(0, 500)); setRestaurants(data);
+      let data = await restaurantApi.list({ status: 'APPROVED' });
+      
+      // Mới: Định vị bằng địa chỉ và tên quán thay vì dùng kinh độ vĩ độ cố định từ DB
+      const geocodedData = await Promise.all(data.map(async (r) => {
+        try {
+          // Thử tìm theo tên quán + địa chỉ
+          const geocodeName = await Location.geocodeAsync(`${r.name}, ${r.address}`);
+          if (geocodeName && geocodeName.length > 0) {
+            return { ...r, lat: geocodeName[0].latitude, lng: geocodeName[0].longitude };
+          }
+          // Thử tìm theo địa chỉ
+          const geocodeAddr = await Location.geocodeAsync(r.address || '');
+          if (geocodeAddr && geocodeAddr.length > 0) {
+            return { ...r, lat: geocodeAddr[0].latitude, lng: geocodeAddr[0].longitude };
+          }
+        } catch(e) {
+          console.error('[Fallback] Geocode failed for', r.name, e);
+        }
+        return r; // Fallback dùng DB nếu không tìm thấy
+      }));
+
+      setRestaurants(geocodedData);
     } catch (error) {
       console.error('Load restaurants error:', error);
     } finally {
@@ -108,13 +129,13 @@ export default function DiscoverScreen() {
   const handleSeedGooglePlaces = async () => {
     setSeeding(true);
     try {
-      const result = await placesApi.seedNearby(region.latitude, region.longitude, 5);
+      const result = await placesApi.seedNearby(region.latitude, region.longitude, 4);
       alert(
-        `Đã seed từ Google Places!\nThêm mới: ${result.added}\nĐã có: ${result.skipped}`
+        `Đã quét quán thực tế quanh khu vực!\n✨ Thêm mới: ${result.added} quán\n⏩ Đã có: ${result.skipped} quán`
       );
       await loadRestaurants();
     } catch (error: any) {
-      alert('Lỗi seed: ' + (error?.message || 'Unknown'));
+      alert('Lỗi quét quán: ' + (error?.message || 'Vui lòng thử lại'));
     } finally {
       setSeeding(false);
     }
@@ -160,18 +181,139 @@ export default function DiscoverScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-cream">
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Unified Top Navigation Bar */}
+      <View className="flex-row items-center justify-between px-4 py-3 bg-cream-beige border-b border-borderbrown z-10">
+        {/* Back / Home Button */}
+        <TouchableOpacity
+          className="w-10 h-10 rounded-full bg-white border border-borderbrown items-center justify-center shadow-sm"
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <Text className="text-espresso font-bold text-base">←</Text>
+        </TouchableOpacity>
+
+        {/* Center Title */}
+        <View className="items-center">
+          <Text className="text-espresso font-extrabold text-lg">
+            {showList ? 'Danh sách Quán ăn' : 'Bản đồ Khám Phá'}
+          </Text>
+          <Text className="text-warmgray text-xs">
+            {filtered.length} địa điểm
+          </Text>
+        </View>
+
+        {/* Right Actions */}
+        <View className="flex-row items-center gap-2">
+          {/* Scan Nearby Real Places via OpenStreetMap */}
+          <TouchableOpacity
+            className="h-10 px-3 rounded-full bg-white border border-borderbrown flex-row items-center justify-center shadow-sm"
+            onPress={handleSeedGooglePlaces}
+            activeOpacity={0.7}
+            disabled={seeding}
+          >
+            {seeding ? (
+              <ActivityIndicator size="small" color="#8e4e14" />
+            ) : (
+              <>
+                <Text className="text-sm mr-1">📡</Text>
+                <Text className="text-espresso font-bold text-xs">Quét Quán</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* Toggle Map / List */}
+          <TouchableOpacity
+            className="w-10 h-10 rounded-full bg-white border border-borderbrown items-center justify-center shadow-sm"
+            onPress={() => setShowList(!showList)}
+            activeOpacity={0.7}
+          >
+            <Text className="text-base">{showList ? '🗺️' : '📋'}</Text>
+          </TouchableOpacity>
+
+          {/* Add Restaurant */}
+          <TouchableOpacity
+            className="w-10 h-10 rounded-full bg-espresso border border-gold items-center justify-center shadow-sm"
+            onPress={() => router.push('/discover/add-restaurant' as any)}
+            activeOpacity={0.7}
+          >
+            <Text className="text-cream text-base font-bold">➕</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Map or Web fallback */}
       <View className="flex-1">
-        {Platform.OS !== 'web' ? (
+        {Platform.OS === 'android' ? (
+          <WebView
+            style={{ flex: 1 }}
+            source={{ html: `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                <style>
+                  body { padding: 0; margin: 0; background-color: #FDF5E6; }
+                  html, body, #map { height: 100%; width: 100%; }
+                  .leaflet-control-attribution { display: none; }
+                </style>
+              </head>
+              <body>
+                <div id="map"></div>
+                <script>
+                  var map = L.map('map', { zoomControl: false }).setView([${region.latitude}, ${region.longitude}], 14);
+                  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19
+                  }).addTo(map);
+
+                  // User location
+                  L.circleMarker([${region.latitude}, ${region.longitude}], {
+                    color: '#4A90E2', fillColor: '#4A90E2', fillOpacity: 1, radius: 8
+                  }).addTo(map);
+
+                  // Restaurants
+                  var restaurants = ${JSON.stringify(filtered.filter(r => r.lat && r.lng).map(r => ({ id: r.id, lat: r.lat, lng: r.lng, name: r.name })))};
+                  var customIcon = L.divIcon({
+                    html: '<div style="background-color: #C68E17; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>',
+                    className: '',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                  });
+
+                  restaurants.forEach(function(r) {
+                    var m = L.marker([r.lat, r.lng], { icon: customIcon }).addTo(map);
+                    m.on('click', function() {
+                      window.ReactNativeWebView.postMessage(r.id);
+                    });
+                  });
+                </script>
+              </body>
+              </html>
+            ` }}
+            onMessage={(event: any) => {
+              const id = event.nativeEvent.data;
+              if (id) handleMarkerPress(id);
+            }}
+          />
+        ) : Platform.OS === 'ios' ? (
           <MapView
             ref={mapRef}
             className="w-full h-full"
-            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+            provider={undefined}
             initialRegion={region}
             onRegionChangeComplete={setRegion}
             showsUserLocation
             showsMyLocationButton
-            mapType={Platform.select({ android: 'standard', ios: 'mutedStandard' }) as any}
+            mapType="mutedStandard"
           >
             {filtered.map((r, index) => {
               if (!r.lat || !r.lng) return null;
@@ -204,41 +346,6 @@ export default function DiscoverScreen() {
         {/* List View Overlay */}
         <RestaurantList restaurants={filtered} visible={showList} />
 
-        {/* Top controls */}
-        <View className="absolute top-4 left-4 right-4 flex-row justify-between">
-          <TouchableOpacity
-            className="bg-cream-beige border border-borderbrown rounded-full w-12 h-12 items-center justify-center shadow-lg"
-            onPress={() => setShowList(!showList)}
-          >
-            <Text className="text-xl">{showList ? '🗺️' : '📋'}</Text>
-          </TouchableOpacity>
-
-          <View className="flex-row gap-2">
-            {/* Add Restaurant button */}
-            <TouchableOpacity
-              className="bg-cream-beige border border-borderbrown rounded-full w-12 h-12 items-center justify-center shadow-lg"
-              onPress={() => router.push('/discover/add-restaurant' as any)}
-            >
-              <Text className="text-xl">➕</Text>
-            </TouchableOpacity>
-
-            {/* Seed button */}
-            {!showList && (
-              <TouchableOpacity
-                className="bg-espresso border border-gold rounded-full px-5 py-2.5 shadow-lg items-center justify-center"
-                onPress={handleSeedGooglePlaces}
-                disabled={seeding}
-              >
-                {seeding ? (
-                  <ActivityIndicator color="#FDF5E6" size="small" />
-                ) : (
-                  <Text className="text-cream font-bold text-sm">🌐 Seed</Text>
-                )}
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
         {/* Selected restaurant card */}
         {selected && (
           <View
@@ -263,15 +370,15 @@ export default function DiscoverScreen() {
                   {selected.address}
                 </Text>
                 <View className="flex-row items-center mt-1.5 gap-2">
-                  {selected.ratingAvg && (
+                  {(selected.ratingAvg ?? 0) > 0 && (
                     <View className="bg-gold-soft px-2.5 py-1 rounded-xl border border-gold-light flex-row items-center">
                       <Text className="text-gold font-bold text-xs">★</Text>
                       <Text className="text-espresso text-xs font-bold ml-1">
-                        {selected.ratingAvg.toFixed(1)}
+                        {selected.ratingAvg!.toFixed(1)}
                       </Text>
                     </View>
                   )}
-                  {selected.category && (
+                  {!!selected.category && (
                     <Text className="text-espresso-dark font-semibold text-xs">{selected.category}</Text>
                   )}
                 </View>

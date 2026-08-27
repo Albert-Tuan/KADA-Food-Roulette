@@ -1,5 +1,4 @@
 import { Platform } from 'react-native';
-import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import apiClient from '../client';
 
@@ -78,10 +77,7 @@ export const menuApi = {
           );
           base64 = manipResult.base64 || '';
         } catch (manipErr) {
-          console.warn('ImageManipulator failed, falling back to raw file:', manipErr);
-          base64 = await FileSystem.readAsStringAsync(imageUri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
+          console.warn('ImageManipulator failed to compress image:', manipErr);
         }
       }
 

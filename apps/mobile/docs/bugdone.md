@@ -301,3 +301,108 @@ Expo Router lấy nhãn quay lại từ route trước. Stack screen của `/u/[
 2. Chọn "Xem profile công khai".
 3. Xác nhận header chỉ còn biểu tượng quay lại, không hiện `(tabs)`.
 4. Chạm quay lại và xác nhận trở về Profile riêng.
+
+---
+
+## BUG #11: Vòng quay quá lớn và kim chỉ bị lệch vị trí trên điện thoại Android thật (APK build)
+
+**Status**: `[x] Verified`
+**Ngày report**: 2026-08-25
+**Ngày fix**: 2026-08-25
+**Ngày verify**: 2026-08-25
+**Severity**: `P1 major`
+
+### Triệu chứng
+Trên điện thoại Android thật (file APK build qua EAS), vòng quay roulette chiếm gần hết chiều cao màn hình, đẩy nút "QUAY NGAY!" và danh sách đề cử xuống dưới thanh Tab Bar. Các kim chỉ vị trí (pointer) của chế độ 2 món (180°) và 3 món (120°, 240°) bị trượt vào giữa vòng quay hoặc đè lên nút quay.
+
+### Expected
+Vòng quay nằm gọn trong khung hình, chừa khoảng trống cho nút quay và danh sách đề cử. Các kim chỉ luôn nằm chuẩn xác trên mép viền ngoài vòng quay ở mọi chế độ (1, 2, 3 món).
+
+### Root cause
+- `WHEEL_SIZE` được cố định ở `330px`, quá lớn cho màn hình điện thoại thật (đặc biệt sau khi trừ thanh trạng thái, header, và tab bar).
+- Các kim chỉ (pointerContainer, pointerBottomContainer, pointer120Container, pointer240Container) được định vị `position: absolute` theo container bên ngoài (bao gồm cả nút quay), nên khi chế độ hiển thị thay đổi (có/không nút quay), kim bị lệch.
+
+### Fix
+- `apps/mobile/src/features/spin/components/FoodRoulette.tsx`:
+  - Đổi `WHEEL_SIZE` thành `Math.min(SCREEN_WIDTH - 64, 285)` để responsive.
+  - Tạo container `wheelAssembly` bọc vòng quay + tất cả kim chỉ, kích thước cố định `WHEEL_SIZE × WHEEL_SIZE`.
+  - Đặt tất cả kim chỉ `position: absolute` relative tới `wheelAssembly` thay vì container ngoài.
+- `apps/mobile/app/(tabs)/spin.tsx`: Tăng `paddingBottom` content lên `100px`.
+- `apps/mobile/src/features/spin/components/GroupLobby.tsx`: Tăng `paddingBottom` scrollContent lên `110px`.
+
+### Verify steps
+1. Build APK và cài lên điện thoại Android thật.
+2. Mở tab Vòng quay → vòng quay nằm gọn trong khung hình.
+3. Chuyển sang chế độ 2 Món / 3 Món → kim chỉ nằm đúng trên mép viền.
+4. Vào Group Spin Lobby → vòng quay và nút "QUAY CHO CẢ NHÓM" không bị đè lên nhau.
+
+---
+
+## BUG #12: Tất cả Modal/Popup bị thu nhỏ thành chấm vàng hoặc dấu ✕ ở góc trên cùng bên trái trên Android APK (lần 1)
+
+**Status**: `[x] Verified`
+**Ngày report**: 2026-08-25
+**Ngày fix**: 2026-08-25
+**Ngày verify**: 2026-08-25
+**Severity**: `P0 crash`
+
+### Triệu chứng
+Trên điện thoại Android thật (file APK), khi nhấn vào các chức năng popup:
+- Kết quả Combo 2-3 món → chỉ thấy chấm vàng `#1` ở góc trên cùng bên trái.
+- Bộ lọc món ăn → chỉ thấy dấu `✕` trắng ở góc trên cùng bên trái.
+- Mời bạn / Nhập mã phòng → chỉ thấy dấu `✕` trắng ở góc trên cùng bên trái.
+- Khế ước nhóm → không hiện nội dung.
+Tất cả nút bấm bên trong popup đều không hoạt động. Trên web (nhấn `w`) thì vẫn đúng.
+
+### Expected
+Popup hiển thị toàn màn hình với overlay mờ đen, nội dung nằm chính giữa hoặc trượt từ đáy lên, tất cả nút bấm hoạt động bình thường.
+
+### Root cause
+Thẻ `<Modal>` gốc của React Native tạo native `Dialog Window` riêng biệt trên Android. Khi kết hợp với Expo Router stack screen và `statusBarTranslucent`, native Dialog bị lỗi đo đạc kích thước (Layout Measurement collapse) về tọa độ `(0, 0)`. Trên web, `<Modal>` được chuyển đổi thành HTML nên không bị lỗi này.
+
+### Fix
+Thay thế toàn bộ thẻ `<Modal>` gốc bằng **In-tree Absolute Overlay** (`<View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, elevation: 9999 }}>`):
+- `apps/mobile/src/features/spin/components/SpinFilterSheet.tsx`: Đổi `<Modal>` → `<View style={styles.modalContainer}>` (absolute overlay).
+- `apps/mobile/src/features/spin/components/InviteMembersSheet.tsx`: Đổi `<Modal>` → `<View style={styles.modalContainer}>` (absolute overlay).
+- `apps/mobile/src/features/spin/components/GroupPactConfirmationModal.tsx`: Đổi `<Modal>` → `<View style={styles.modalOverlay}>` (absolute overlay) + thêm `<Pressable>` backdrop.
+- `apps/mobile/app/(tabs)/spin.tsx`: Đổi combo modal và join modal từ `<Modal>` → `<View style={styles.modalOverlay / joinModalOverlay}>`.
+- `apps/mobile/src/features/spin/components/GroupLobby.tsx`: Đổi join room modal và kick member modal từ `<Modal>` → `<View style={styles.modalBackdrop}>` + `<Pressable style={styles.backdropOverlay}>`.
+
+### Verify steps
+1. Build APK và cài lên điện thoại Android thật.
+2. Quay combo 2 hoặc 3 món → bảng kết quả hiển thị toàn màn hình, có thể nhấn vào từng món.
+3. Nhấn nút Bộ lọc → bảng bộ lọc trượt lên từ đáy, có thể thao tác tất cả nút.
+4. Nhấn Mời bạn → bảng mời hiển thị đầy đủ nội dung.
+5. Nhấn Nhập mã → form nhập hiện lên, bàn phím xuất hiện, có thể nhập và xác nhận.
+
+---
+
+## BUG #13: Overlay vẫn bị thu nhỏ về góc (0,0) dù đã đổi sang Absolute Overlay (lần 2 — Fragment sizing)
+
+**Status**: `[x] Verified`
+**Ngày report**: 2026-08-26
+**Ngày fix**: 2026-08-26
+**Ngày verify**: 2026-08-26
+**Severity**: `P0 crash`
+
+### Triệu chứng
+Sau khi fix BUG #12 (đổi `<Modal>` → absolute overlay), trên điện thoại Android thật (APK build) tất cả popup vẫn bị thu nhỏ/biến mất ở góc trên cùng bên trái. Triệu chứng hoàn toàn giống BUG #12. Trên web (nhấn `w`) thì vẫn đúng.
+
+### Expected
+Tất cả popup hiển thị toàn màn hình trên điện thoại thật.
+
+### Root cause
+Các overlay dùng `position: 'absolute'` với `top: 0, left: 0, right: 0, bottom: 0` nhưng nằm bên trong React Fragment `<>...</>`. Fragment **không render ra bất kỳ View nào trên native Android** — nó chỉ là nhóm logic trong JavaScript. Trên web, trình duyệt tự xử lý absolute positioning dựa theo viewport nên vẫn đúng. Nhưng trên Android native, `position: absolute` cần parent View **có kích thước cụ thể** để tham chiếu — Fragment không có kích thước → overlay collapse về `(0, 0)`.
+
+### Fix
+Đổi root return của 2 component từ Fragment `<>` sang `<View style={{ flex: 1 }}>`:
+- `apps/mobile/app/(tabs)/spin.tsx` dòng 132: `<>` → `<View style={{ flex: 1 }}>`, dòng 478: `</>` → `</View>`.
+- `apps/mobile/src/features/spin/components/GroupLobby.tsx` dòng 279: `<>` → `<View style={{ flex: 1 }}>`, dòng 614: `</>` → `</View>`.
+
+### Verify steps
+1. Build APK và cài lên điện thoại Android thật.
+2. Quay combo 2 hoặc 3 món → bảng kết quả hiển thị toàn màn hình chính giữa.
+3. Nhấn Bộ lọc → bảng trượt lên từ đáy, mọi nút bấm hoạt động.
+4. Nhấn Mời bạn → bảng mời hiển thị đầy đủ.
+5. Nhấn Nhập mã → form nhập hiện lên, bàn phím hoạt động.
+6. Vào Group Spin Lobby → nhấn Nhập mã / Mời bạn → popup hiển thị đầy đủ.

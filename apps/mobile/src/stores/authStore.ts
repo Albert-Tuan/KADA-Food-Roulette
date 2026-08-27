@@ -63,6 +63,7 @@ export const useAuthStore = create<UserState>()((set, get) => ({
     try {
       const result = await authApi.login({ email, password });
       await setStorageItem('token', result.token);
+      await setStorageItem('user_profile', JSON.stringify(result.user));
       set({ token: result.token, user: result.user, isAuthenticated: true });
     } catch (error) {
       console.error('Login error:', error);
@@ -72,27 +73,43 @@ export const useAuthStore = create<UserState>()((set, get) => ({
 
   logout: async () => {
     await removeStorageItem('token');
+    await removeStorageItem('user_profile');
     await AsyncStorage.removeItem('user-storage');
     set({ token: null, user: null, isAuthenticated: false });
   },
 
   updateUser: (updates) =>
-    set((state) => ({
-      user: state.user ? { ...state.user, ...updates } : null,
-    })),
+    set((state) => {
+      const updatedUser = state.user ? { ...state.user, ...updates } : null;
+      // Persist updated user to storage
+      if (updatedUser) {
+        setStorageItem('user_profile', JSON.stringify(updatedUser));
+      }
+      return { user: updatedUser };
+    }),
 
   checkAuth: async () => {
     try {
       set({ isLoading: true });
       const token = await getStorageItem('token');
       if (token) {
-        set({ token, isAuthenticated: true });
-        // Optionally fetch user data here
-        // const user = await authApi.me();
-        // set({ user });
+        // Restore user profile from storage
+        let user: UserProfile | null = null;
+        try {
+          const userJson = await getStorageItem('user_profile');
+          if (userJson) {
+            user = JSON.parse(userJson);
+          }
+        } catch {
+          // Ignore parse errors
+        }
+        set({ token, user, isAuthenticated: true });
+      } else {
+        set({ token: null, user: null, isAuthenticated: false });
       }
     } catch (error) {
       console.error('Check auth error:', error);
+      set({ token: null, user: null, isAuthenticated: false });
     } finally {
       set({ isLoading: false });
     }
