@@ -214,6 +214,7 @@ KADA-Food-Roulette/
 | `brand/brand.md` | Brand kit (mau, font, tone) |
 | `brand/FOOD-ROULETTE-SITEMAP.md` | Sitemap & feature specs |
 | `docs/API_SPEC.md` | Chi tiet API specification |
+| `docs/CODEX_MULTI_AGENT.md` | Setup Codex multi-agent orchestration |
 | `VIBE_RULES.md` | Golden rules cho vibe coding |
 | `AGENTS.md` | AI agent conventions |
 

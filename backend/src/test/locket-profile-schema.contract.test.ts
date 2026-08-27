@@ -9,7 +9,7 @@ describe('Locket + Profile schema contract', () => {
     const schema = readFileSync(resolve(backendRoot, 'prisma/schema.prisma'), 'utf8');
 
     expect(schema).toMatch(/bio\s+String\?\s+@db\.VarChar\(160\)/);
-    expect(schema).toMatch(/dishName\s+String\s+@map\("dish_name"\) @db\.VarChar\(80\)/);
+    expect(schema).toMatch(/dishName\s+String\?\s+@map\("dish_name"\) @db\.VarChar\(80\)/);
     expect(schema).toMatch(/restaurantName\s+String\?\s+@map\("restaurant_name"\) @db\.VarChar\(120\)/);
     expect(schema).toMatch(/note\s+String\?\s+@db\.VarChar\(280\)/);
     expect(schema).toMatch(/thumbnailUrl\s+String\?\s+@map\("thumbnail_url"\)/);

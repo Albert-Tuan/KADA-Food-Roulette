@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { profileService, UpdateProfileData } from './profile.service.js';
 import { responseHelper } from '../../shared/utils/responseHelper.js';
+import { UserApiError } from '../users/users.errors.js';
 
 interface AuthRequest extends Request {
   user?: {
@@ -8,6 +9,14 @@ interface AuthRequest extends Request {
     email: string;
     role: string;
   };
+}
+
+function sendProfileError(res: Response, error: unknown) {
+  if (error instanceof UserApiError) {
+    return responseHelper.error(res, error.message, error.statusCode);
+  }
+  console.error('Profile request failed:', error);
+  return responseHelper.error(res, 'Lỗi máy chủ.', 500);
 }
 
 export const profileController = {
@@ -19,14 +28,9 @@ export const profileController = {
       }
 
       const profile = await profileService.getMyProfile(userId);
-      if (!profile) {
-        return responseHelper.error(res, 'Không tìm thấy người dùng.', 404);
-      }
-
       return responseHelper.success(res, profile);
     } catch (error) {
-      console.error('Lỗi khi lấy thông tin cá nhân:', error);
-      return responseHelper.error(res, 'Lỗi máy chủ.', 500);
+      return sendProfileError(res, error);
     }
   },
 
@@ -38,14 +42,9 @@ export const profileController = {
       }
 
       const profile = await profileService.getPublicProfile(publicId);
-      if (!profile) {
-        return responseHelper.error(res, 'Không tìm thấy hồ sơ.', 404);
-      }
-
       return responseHelper.success(res, profile);
     } catch (error) {
-      console.error('Lỗi khi lấy hồ sơ công khai:', error);
-      return responseHelper.error(res, 'Lỗi máy chủ.', 500);
+      return sendProfileError(res, error);
     }
   },
 
@@ -67,8 +66,7 @@ export const profileController = {
       const updatedProfile = await profileService.updateProfile(userId, data);
       return responseHelper.success(res, updatedProfile);
     } catch (error) {
-      console.error('Lỗi khi cập nhật hồ sơ:', error);
-      return responseHelper.error(res, 'Lỗi máy chủ.', 500);
+      return sendProfileError(res, error);
     }
   },
 
@@ -82,8 +80,7 @@ export const profileController = {
       const pref = await profileService.getPreferences(userId);
       return responseHelper.success(res, pref);
     } catch (error) {
-      console.error('Lỗi khi lấy sở thích ẩm thực:', error);
-      return responseHelper.error(res, 'Lỗi máy chủ.', 500);
+      return sendProfileError(res, error);
     }
   },
 
@@ -104,8 +101,7 @@ export const profileController = {
       });
       return responseHelper.success(res, pref);
     } catch (error) {
-      console.error('Lỗi khi cập nhật sở thích ẩm thực:', error);
-      return responseHelper.error(res, 'Lỗi máy chủ.', 500);
+      return sendProfileError(res, error);
     }
   },
 
@@ -127,8 +123,7 @@ export const profileController = {
 
       return responseHelper.success(res, result);
     } catch (error) {
-      console.error('Lỗi khi hoàn tất onboarding:', error);
-      return responseHelper.error(res, 'Lỗi máy chủ.', 500);
+      return sendProfileError(res, error);
     }
   }
 };

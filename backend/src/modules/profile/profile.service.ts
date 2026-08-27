@@ -1,4 +1,5 @@
 import { prisma } from '../../shared/utils/prisma.js';
+import { UserApiError } from '../users/users.errors.js';
 
 export interface UpdateProfileData {
   displayNamePrivate?: string;
@@ -23,10 +24,21 @@ export interface CompleteOnboardingData {
   preferences?: UserPreferencesData;
 }
 
+async function requireUser(userId: string) {
+  const user = await prisma.user.findFirst({
+    where: { id: userId, deletedAt: null },
+    select: { id: true },
+  });
+  if (!user) {
+    throw new UserApiError('USER_NOT_FOUND', 'Không tìm thấy người dùng.', 404);
+  }
+  return user;
+}
+
 export const profileService = {
   getMyProfile: async (userId: string) => {
-    return prisma.user.findUnique({
-      where: { id: userId },
+    const profile = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
       include: {
         preference: true,
         _count: {
@@ -38,11 +50,15 @@ export const profileService = {
         }
       }
     });
+    if (!profile) {
+      throw new UserApiError('USER_NOT_FOUND', 'Không tìm thấy người dùng.', 404);
+    }
+    return profile;
   },
 
   getPublicProfile: async (publicId: string) => {
-    return prisma.user.findUnique({
-      where: { publicId },
+    const profile = await prisma.user.findFirst({
+      where: { publicId, deletedAt: null },
       select: {
         displayNamePublic: true,
         publicId: true,
@@ -62,9 +78,14 @@ export const profileService = {
         }
       }
     });
+    if (!profile) {
+      throw new UserApiError('PROFILE_NOT_FOUND', 'Không tìm thấy profile.', 404);
+    }
+    return profile;
   },
 
   updateProfile: async (userId: string, data: UpdateProfileData) => {
+    await requireUser(userId);
     return prisma.user.update({
       where: { id: userId },
       data
@@ -72,6 +93,7 @@ export const profileService = {
   },
 
   getPreferences: async (userId: string) => {
+    await requireUser(userId);
     let pref = await prisma.userPreference.findUnique({
       where: { userId }
     });
@@ -92,6 +114,7 @@ export const profileService = {
   },
 
   updatePreferences: async (userId: string, data: UserPreferencesData) => {
+    await requireUser(userId);
     return prisma.userPreference.upsert({
       where: { userId },
       create: {
@@ -113,6 +136,7 @@ export const profileService = {
   },
 
   completeOnboarding: async (userId: string, data: CompleteOnboardingData) => {
+    await requireUser(userId);
     // 1. Update user profile details and set isOnboarded = true
     const userUpdateData: {
       isOnboarded: boolean;

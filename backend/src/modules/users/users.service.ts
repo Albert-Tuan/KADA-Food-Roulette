@@ -1,7 +1,7 @@
 import prisma from '../../shared/utils/prisma.js';
 import { locketsService } from '../lockets/lockets.service.js';
+import { UserApiError } from './users.errors.js';
 import type { UpdateProfileData } from './users.validation.js';
-import { inMemoryUserStore } from './userStore.js';
 
 const profileSelect = {
   id: true,
@@ -14,78 +14,39 @@ const profileSelect = {
   createdAt: true,
 } as const;
 
-async function profileStats(userId: string, publicLocketCount?: number) {
-  try {
-    const [locketCount, checkInCount, groupCount] = await Promise.all([
-      publicLocketCount === undefined
-        ? prisma.locket.count({ where: { userId, deletedAt: null } })
-        : Promise.resolve(publicLocketCount),
-      prisma.checkIn.count({ where: { userId } }),
-      prisma.groupMember.count({ where: { userId, status: 'ACCEPTED' } }),
-    ]);
-    return {
-      locket_count: locketCount,
-      check_in_count: checkInCount,
-      group_count: groupCount,
-    };
-  } catch {
-    return {
-      locket_count: publicLocketCount ?? 1,
-      check_in_count: 3,
-      group_count: 1,
-    };
-  }
+async function profileStats(userId: string, publicOnly = false) {
+  const [locketCount, checkInCount, groupCount] = await Promise.all([
+    prisma.locket.count({
+      where: {
+        userId,
+        deletedAt: null,
+        ...(publicOnly ? { visibility: 'PUBLIC' } : {}),
+      },
+    }),
+    prisma.checkIn.count({ where: { userId } }),
+    prisma.groupMember.count({ where: { userId, status: 'ACCEPTED' } }),
+  ]);
+  return {
+    locket_count: locketCount,
+    check_in_count: checkInCount,
+    group_count: groupCount,
+  };
 }
 
 class UsersService {
   async getMyProfile(userId: string) {
-    let user = null;
-    try {
-      user = await prisma.user.findFirst({
-        where: { id: userId, deletedAt: null },
-        select: profileSelect,
-      });
-    } catch {
-      console.log('[Users] DB profile notice, using demo profile fallback');
-    }
-
+    const user = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+      select: profileSelect,
+    });
     if (!user) {
-      const memUser = inMemoryUserStore.get(userId);
-      if (memUser) {
-        user = {
-          id: memUser.id,
-          email: memUser.email,
-          displayNamePrivate: memUser.displayNamePrivate,
-          displayNamePublic: memUser.displayNamePublic,
-          publicId: memUser.publicId,
-          avatarUrl: memUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
-          bio: memUser.bio || 'Yêu thích ẩm thực đường phố và khám phá món mới!',
-          createdAt: typeof memUser.createdAt === 'string' ? new Date(memUser.createdAt) : memUser.createdAt,
-        };
-      } else {
-        user = {
-          id: userId,
-          email: 'saucode@gmail.com',
-          displayNamePrivate: 'sau code',
-          displayNamePublic: 'sau code',
-          publicId: `u_${userId.substring(0, 8)}`,
-          avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
-          bio: 'Yêu thích ẩm thực đường phố và khám phá món mới!',
-          createdAt: new Date(),
-        };
-      }
+      throw new UserApiError('USER_NOT_FOUND', 'Không tìm thấy người dùng.', 404);
     }
 
-    let publicLockets: unknown[] = [];
-    let stats = { locket_count: 1, check_in_count: 3, group_count: 1 };
-    try {
-      [publicLockets, stats] = await Promise.all([
-        locketsService.getPublicForUser(user.id),
-        profileStats(user.id),
-      ]);
-    } catch {
-      console.log('[Users] Stats fallback');
-    }
+    const [publicLockets, stats] = await Promise.all([
+      locketsService.getPublicForUser(user.id),
+      profileStats(user.id),
+    ]);
 
     return {
       id: user.id,
@@ -102,42 +63,25 @@ class UsersService {
   }
 
   async getPublicProfile(publicId: string) {
-    let user = null;
-    try {
-      user = await prisma.user.findFirst({
-        where: { publicId, deletedAt: null },
-        select: {
-          id: true,
-          publicId: true,
-          displayNamePublic: true,
-          avatarUrl: true,
-          bio: true,
-          createdAt: true,
-        },
-      });
-    } catch {
-      console.log('[Users] DB getPublicProfile notice');
-    }
-
+    const user = await prisma.user.findFirst({
+      where: { publicId, deletedAt: null },
+      select: {
+        id: true,
+        publicId: true,
+        displayNamePublic: true,
+        avatarUrl: true,
+        bio: true,
+        createdAt: true,
+      },
+    });
     if (!user) {
-      user = {
-        id: `u_${publicId}`,
-        publicId,
-        displayNamePublic: `user_${publicId}`,
-        avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
-        bio: 'Khám phá ẩm thực cùng Food Roulette',
-        createdAt: new Date(),
-      };
+      throw new UserApiError('PROFILE_NOT_FOUND', 'Không tìm thấy profile.', 404);
     }
 
-    let publicLockets: unknown[] = [];
-    let stats = { locket_count: 1, check_in_count: 2, group_count: 1 };
-    try {
-      publicLockets = await locketsService.getPublicForUser(user.id);
-      stats = await profileStats(user.id, publicLockets.length);
-    } catch {
-      console.log('[Users] Public stats fallback');
-    }
+    const [publicLockets, stats] = await Promise.all([
+      locketsService.getPublicForUser(user.id),
+      profileStats(user.id, true),
+    ]);
 
     return {
       id: user.id,
@@ -152,14 +96,11 @@ class UsersService {
   }
 
   async updateMyProfile(userId: string, input: UpdateProfileData) {
-    try {
-      const existing = await prisma.user.findFirst({ where: { id: userId, deletedAt: null }, select: { id: true } });
-      if (existing) {
-        await prisma.user.update({ where: { id: userId }, data: input });
-      }
-    } catch {
-      console.log('[Users] DB updateMyProfile notice');
+    const existing = await prisma.user.findFirst({ where: { id: userId, deletedAt: null }, select: { id: true } });
+    if (!existing) {
+      throw new UserApiError('USER_NOT_FOUND', 'Không tìm thấy người dùng.', 404);
     }
+    await prisma.user.update({ where: { id: userId }, data: input });
     return this.getMyProfile(userId);
   }
 }

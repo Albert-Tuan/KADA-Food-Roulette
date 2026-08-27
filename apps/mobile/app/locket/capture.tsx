@@ -136,17 +136,20 @@ export default function CaptureLocketScreen() {
       const currentLocation = await getFreshLocation();
       setLocation(currentLocation);
 
-      const capturedAt = new Date().toISOString();
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.8,
         skipProcessing: false,
       });
+      const capturedAt = new Date().toISOString();
 
       if (!photo?.uri) {
         throw new Error('Không nhận được ảnh từ camera.');
       }
 
       const deviceHash = await getInstallationDeviceHash();
+      if (!/^[a-f0-9]{64}$/.test(deviceHash)) {
+        throw new Error('Thiếu định danh thiết bị để xác minh ảnh.');
+      }
       setDraft({
         uri: photo.uri,
         capturedAt,

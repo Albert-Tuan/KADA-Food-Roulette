@@ -55,6 +55,18 @@ export interface UploadLocketRequest {
   deviceHash: string;
 }
 
+export function assertValidCaptureMetadata(
+  input: Pick<UploadLocketRequest, 'capturedAt' | 'deviceHash'>,
+): void {
+  if (typeof input.deviceHash !== 'string' || !/^[a-f0-9]{64}$/.test(input.deviceHash)) {
+    throw new Error('Thiếu định danh thiết bị để xác minh ảnh.');
+  }
+
+  if (typeof input.capturedAt !== 'string' || !Number.isFinite(new Date(input.capturedAt).getTime())) {
+    throw new Error('Thiếu thời điểm chụp để xác minh ảnh.');
+  }
+}
+
 export interface UpdateLocketRequest {
   dish_name?: string;
   restaurant_id?: string | null;
@@ -77,6 +89,7 @@ export const locketApi = {
   },
 
   create: async (input: UploadLocketRequest): Promise<LocketDto> => {
+    assertValidCaptureMetadata(input);
     const form = new FormData();
     if (Platform.OS === 'web' && typeof fetch !== 'undefined') {
       try {
@@ -125,8 +138,8 @@ export const locketApi = {
 
     const response = await apiClient.post<ApiResponse<LocketDto>>('/lockets', form, {
       headers: {
-        'X-Device-ID': input.deviceHash || 'a'.repeat(64),
-        'X-Captured-At': input.capturedAt || new Date().toISOString(),
+        'X-Device-ID': input.deviceHash,
+        'X-Captured-At': input.capturedAt,
       },
       timeout: 30_000,
     });
