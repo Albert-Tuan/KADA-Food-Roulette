@@ -24,9 +24,9 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@google/genai": "^2.16.0",
+    "@google/genai": "^2.19.0",
     "@prisma/client": "^5.22.0",
-    "@supabase/supabase-js": "^2.112.2",
+    "@supabase/supabase-js": "^2.112.4",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -37,7 +37,7 @@
     "localtunnel": "^2.0.2",
     "morgan": "^1.11.0",
     "multer": "^2.2.0",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.4",
     "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
